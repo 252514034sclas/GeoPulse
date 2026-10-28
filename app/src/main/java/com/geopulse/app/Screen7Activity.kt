@@ -129,59 +129,13 @@ class Screen7Activity : ComponentActivity() {
                         }
                     }
 
-                    // Decoupled Floating Bottom Navigation Dock Overlay (Stays fixed, never moves with screen content)
+                    // Finger-Dragged Bottom Navigation Dock Overlay (No Tapping - Physically drag and pull)
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
                     ) {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .navigationBarsPadding()
-                                .padding(horizontal = 24.dp, vertical = 12.dp),
-                            shape = RoundedCornerShape(28.dp),
-                            color = DarkSurface.copy(alpha = 0.96f),
-                            shadowElevation = 12.dp,
-                            border = BorderStroke(1.dp, CardBorderColor)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp, horizontal = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceAround,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                FloatingNavTab(
-                                    icon = Icons.Default.Home,
-                                    label = "Home",
-                                    isSelected = pagerState.currentPage == 0
-                                ) {
-                                    coroutineScope.launch { pagerState.scrollToPage(0) }
-                                }
-                                FloatingNavTab(
-                                    icon = Icons.Default.Place,
-                                    label = "Map",
-                                    isSelected = pagerState.currentPage == 1
-                                ) {
-                                    coroutineScope.launch { pagerState.scrollToPage(1) }
-                                }
-                                FloatingNavTab(
-                                    icon = Icons.Default.Assessment,
-                                    label = "Activity",
-                                    isSelected = pagerState.currentPage == 2
-                                ) {
-                                    coroutineScope.launch { pagerState.scrollToPage(2) }
-                                }
-                                FloatingNavTab(
-                                    icon = Icons.Default.Person,
-                                    label = "Profile",
-                                    isSelected = pagerState.currentPage == 3
-                                ) {
-                                    coroutineScope.launch { pagerState.scrollToPage(3) }
-                                }
-                            }
-                        }
+                        DraggableBottomDock(pagerState = pagerState, coroutineScope = coroutineScope)
                     }
                 }
             }
