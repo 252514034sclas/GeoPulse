@@ -67,10 +67,11 @@ class Screen7Activity : ComponentActivity() {
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background)
                 ) {
-                    // Horizontal Pager for smooth, instant sliding between tabs without getting stuck
+                    // Horizontal Pager with explicit userScrollEnabled = true for smooth drag sliding
                     HorizontalPager(
                         state = pagerState,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        userScrollEnabled = true
                     ) { page ->
                         when (page) {
                             0 -> {
