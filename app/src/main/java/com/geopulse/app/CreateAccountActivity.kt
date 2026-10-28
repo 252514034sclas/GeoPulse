@@ -59,11 +59,14 @@ class CreateAccountActivity : ComponentActivity() {
                             .background(bgBrush)
                             .navigationBarsPadding()
                             .statusBarsPadding()
+                            .imePadding()
                             .padding(horizontal = 24.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         LazyColumn(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 480.dp),
                             contentPadding = PaddingValues(vertical = 24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
@@ -71,6 +74,7 @@ class CreateAccountActivity : ComponentActivity() {
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .widthIn(max = 480.dp)
                                         .glassSurface(cornerRadius = 24.dp),
                                     elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                                     colors = CardDefaults.cardColors(containerColor = Color.Transparent)

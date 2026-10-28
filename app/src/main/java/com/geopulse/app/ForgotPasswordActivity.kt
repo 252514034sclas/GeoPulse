@@ -7,7 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
@@ -56,12 +58,15 @@ class ForgotPasswordActivity : ComponentActivity() {
                             .background(bgBrush)
                             .navigationBarsPadding()
                             .statusBarsPadding()
+                            .imePadding()
+                            .verticalScroll(rememberScrollState())
                             .padding(24.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .widthIn(max = 440.dp)
                                 .glassSurface(cornerRadius = 24.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.Transparent)
