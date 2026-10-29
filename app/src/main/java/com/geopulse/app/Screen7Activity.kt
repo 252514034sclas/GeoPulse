@@ -214,15 +214,23 @@ fun FullGisMapTab(
     var selectedLayer by remember { mutableStateOf("NDVI Heatmap") }
     var selectedZone by remember { mutableStateOf(zones[0]) }
 
+    val isDark = ThemePreferences.isDarkTheme
+    val gisBgBrush = if (isDark) {
+        Brush.radialGradient(
+            colors = listOf(EmeraldPrimary.copy(alpha = 0.25f), DarkBackground),
+            radius = 900f
+        )
+    } else {
+        Brush.radialGradient(
+            colors = listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.background),
+            radius = 900f
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(EmeraldPrimary.copy(alpha = 0.25f), DarkBackground),
-                    radius = 900f
-                )
-            )
+            .background(gisBgBrush)
     ) {
         BoxWithConstraints(
             modifier = Modifier.fillMaxSize(),
@@ -374,17 +382,17 @@ fun FullGisMapTab(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text(selectedZone.name, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextLight)
-                                Text("${selectedZone.acreage} · ${selectedZone.crop}", fontSize = 13.sp, color = TextMuted)
+                                Text(selectedZone.name, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
+                                Text("${selectedZone.acreage} · ${selectedZone.crop}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                color = EmeraldPrimary.copy(alpha = 0.2f)
+                                color = MaterialTheme.colorScheme.primaryContainer
                             ) {
                                 Text(
                                     selectedZone.status,
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                    color = EmeraldPrimary,
+                                    color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp
                                 )
@@ -412,7 +420,7 @@ fun FullGisMapTab(
                                 onClick = onVegetationClick,
                                 modifier = Modifier.weight(1f).height(46.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = LeafGreen)
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                             ) {
                                 Text("Vegetation", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             }
@@ -420,9 +428,9 @@ fun FullGisMapTab(
                                 onClick = onBoundaryClick,
                                 modifier = Modifier.weight(1f).height(46.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                border = BorderStroke(1.dp, CardBorderColor)
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                             ) {
-                                Text("Edit Boundary", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextLight)
+                                Text("Edit Boundary", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                     }
@@ -492,15 +500,23 @@ fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
         )
     }
 
+    val isDark = ThemePreferences.isDarkTheme
+    val gisBgBrush = if (isDark) {
+        Brush.radialGradient(
+            colors = listOf(EmeraldPrimary.copy(alpha = 0.25f), DarkBackground),
+            radius = 900f
+        )
+    } else {
+        Brush.radialGradient(
+            colors = listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.background),
+            radius = 900f
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(EmeraldPrimary.copy(alpha = 0.25f), DarkBackground),
-                    radius = 900f
-                )
-            )
+            .background(gisBgBrush)
     ) {
         BoxWithConstraints(
             modifier = Modifier.fillMaxSize(),
@@ -529,8 +545,8 @@ fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        color = DarkSurface,
-                        border = BorderStroke(1.dp, CardBorderColor)
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(
@@ -538,15 +554,15 @@ fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Field 1 · Corn (Maize)", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextLight)
+                                Text("Field 1 · Corn (Maize)", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
-                                    color = EmeraldPrimary.copy(alpha = 0.25f)
+                                    color = MaterialTheme.colorScheme.primaryContainer
                                 ) {
                                     Text(
                                         "Vegetative Stage (Day 52)",
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                        color = LimeAccent,
+                                        color = MaterialTheme.colorScheme.primary,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -556,7 +572,7 @@ fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
                             Text(
                                 "Today's conditions are optimal for foliar nutrient spraying and light weeding. Expected rain on Friday will provide natural irrigation.",
                                 fontSize = 13.sp,
-                                color = TextMuted,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 lineHeight = 18.sp
                             )
                         }
@@ -576,7 +592,7 @@ fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
                 }
 
                 item {
-                    Text("Today's Actionable Tasks (" + tasks.size + ")", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextLight)
+                    Text("Today's Actionable Tasks (" + tasks.size + ")", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
                 }
 
                 items(tasks) { task ->
@@ -586,8 +602,8 @@ fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
                             .clip(RoundedCornerShape(16.dp))
                             .clickable { onTaskClick(task.targetClass) },
                         shape = RoundedCornerShape(16.dp),
-                        color = DarkSurface,
-                        border = BorderStroke(1.dp, CardBorderColor)
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(14.dp),
@@ -610,7 +626,7 @@ fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(task.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextLight)
+                                    Text(task.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
                                         color = task.iconColor.copy(alpha = 0.15f)
@@ -625,10 +641,10 @@ fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
                                     }
                                 }
                                 Spacer(modifier = Modifier.height(3.dp))
-                                Text(task.subtitle, fontSize = 12.sp, color = TextMuted, lineHeight = 16.sp)
+                                Text(task.subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 16.sp)
                             }
 
-                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                         }
                     }
                 }
@@ -650,15 +666,23 @@ fun FullProfileSettingsTab(
     var notificationsEnabled by remember { mutableStateOf(true) }
     var offlineCaching by remember { mutableStateOf(true) }
 
+    val isDark = ThemePreferences.isDarkTheme
+    val gisBgBrush = if (isDark) {
+        Brush.radialGradient(
+            colors = listOf(EmeraldPrimary.copy(alpha = 0.25f), DarkBackground),
+            radius = 900f
+        )
+    } else {
+        Brush.radialGradient(
+            colors = listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.background),
+            radius = 900f
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(EmeraldPrimary.copy(alpha = 0.25f), DarkBackground),
-                    radius = 900f
-                )
-            )
+            .background(gisBgBrush)
     ) {
         BoxWithConstraints(
             modifier = Modifier.fillMaxSize(),
@@ -685,8 +709,8 @@ fun FullProfileSettingsTab(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        color = DarkSurface,
-                        border = BorderStroke(1.dp, CardBorderColor)
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp),
@@ -703,9 +727,9 @@ fun FullProfileSettingsTab(
                                 Text("N", color = PineDark, fontSize = 24.sp, fontWeight = FontWeight.Black)
                             }
                             Column {
-                                Text("Nithish Kumar", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                                Text("Green Valley Farm · 12.5 ha", fontSize = 13.sp, color = TextMuted)
-                                Text("Primary Crops: Corn & Soybean", fontSize = 11.sp, color = LimeAccent, fontWeight = FontWeight.SemiBold)
+                                Text("Nithish Kumar", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Green Valley Farm · 12.5 ha", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Primary Crops: Corn & Soybean", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -716,12 +740,12 @@ fun FullProfileSettingsTab(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        color = DarkSurface,
-                        border = BorderStroke(1.dp, CardBorderColor)
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("Theme & Appearance", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextLight)
-                            Text("Choose your preferred display theme", fontSize = 12.sp, color = TextMuted)
+                            Text("Theme & Appearance", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
+                            Text("Choose your preferred display theme", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -751,7 +775,7 @@ fun FullProfileSettingsTab(
                                 }
                             }
 
-                            HorizontalDivider(color = CardBorderColor.copy(alpha = 0.5f))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -759,13 +783,13 @@ fun FullProfileSettingsTab(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text("Weather & Spray Alerts", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextLight)
-                                    Text("Frost, rain and disease notifications", fontSize = 12.sp, color = TextMuted)
+                                    Text("Weather & Spray Alerts", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    Text("Frost, rain and disease notifications", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Switch(checked = notificationsEnabled, onCheckedChange = { notificationsEnabled = it })
                             }
 
-                            HorizontalDivider(color = CardBorderColor.copy(alpha = 0.5f))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -773,8 +797,8 @@ fun FullProfileSettingsTab(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text("Offline Satellite Map Caching", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextLight)
-                                    Text("Save field satellite maps for offline use", fontSize = 12.sp, color = TextMuted)
+                                    Text("Offline Satellite Map Caching", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    Text("Save field satellite maps for offline use", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Switch(checked = offlineCaching, onCheckedChange = { offlineCaching = it })
                             }
@@ -787,11 +811,11 @@ fun FullProfileSettingsTab(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        color = DarkSurface,
-                        border = BorderStroke(1.dp, CardBorderColor)
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Practical Farm Tools", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextLight)
+                            Text("Practical Farm Tools", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                             Spacer(modifier = Modifier.height(2.dp))
 
                             ProfileItemRow("Local Mandi Market Rates", "Wholesale selling prices for your crops", Icons.AutoMirrored.Filled.TrendingUp) {
@@ -849,18 +873,18 @@ fun ProfileItemRow(title: String, subtitle: String, icon: ImageVector, onClick: 
             modifier = Modifier
                 .size(34.dp)
                 .clip(CircleShape)
-                .background(EmeraldPrimary.copy(alpha = 0.2f)),
+                .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = null, tint = LimeAccent, modifier = Modifier.size(17.dp))
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(17.dp))
         }
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp, color = TextLight)
-            Text(subtitle, fontSize = 11.5.sp, color = TextMuted)
+            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text(subtitle, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(16.dp))
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
     }
 }
 

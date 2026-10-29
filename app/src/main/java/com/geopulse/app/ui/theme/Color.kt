@@ -25,7 +25,7 @@ val MutedGreen = Color(0xFFB3C9BA)
 val TextLight = Color(0xFFFFFFFF)
 val TextMuted = Color(0xFF94A3B8)
 val TextDark = Color(0xFF111811)
-val TextDarkMuted = Color(0xFF5A665A)
+val TextDarkMuted = Color(0xFF3E4D40)
 
 val GoldAccent = Color(0xFFFFC107)
 val CyanAccent = Color(0xFF4FC3F7)

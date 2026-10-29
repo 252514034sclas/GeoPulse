@@ -99,6 +99,10 @@ fun GeoPulseTheme(
     darkTheme: Boolean = ThemePreferences.isDarkTheme,
     content: @Composable () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        ThemePreferences.init(context)
+    }
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(

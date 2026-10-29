@@ -72,10 +72,7 @@ val CardGradientStart = Color(0xFF152E20)
 val CardGradientEnd = Color(0xFF0E1F16)
 
 // Compatibility Aliases
-val LightBackground = DarkBackground
-val PrimaryDark = TextLight
 val AccentGreen = LimeAccent
-val SurfaceCard = DarkSurface
 val GradientGreenStart = GradientHeroStart
 val GradientGreenEnd = GradientHeroMid
 
@@ -84,9 +81,9 @@ val GradientGreenEnd = GradientHeroMid
  */
 @Composable
 fun Modifier.glassSurface(
-    cornerRadius: Dp = 18.dp,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-    borderColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+    cornerRadius: Dp = 16.dp,
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    borderColor: Color = MaterialTheme.colorScheme.outline
 ): Modifier {
     return this
         .clip(RoundedCornerShape(cornerRadius))
@@ -136,14 +133,14 @@ fun GeoTopBar(
 fun MetricChip(label: String, value: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
-        color = DarkSurface,
-        border = BorderStroke(1.dp, CardBorderColor)
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(label, fontSize = 10.sp, color = TextMuted)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextLight)
+        Column(modifier = Modifier.padding(10.dp)) {
+            Text(label, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -342,9 +339,9 @@ fun DraggableBottomDock(
                     }
                 },
             shape = RoundedCornerShape(31.dp),
-            color = Color(0xFA0B160F),
+            color = if (ThemePreferences.isDarkTheme) Color(0xFA0B160F) else MaterialTheme.colorScheme.surface,
             shadowElevation = 10.dp,
-            border = BorderStroke(1.dp, Color(0xFF1E3F2B))
+            border = BorderStroke(1.dp, if (ThemePreferences.isDarkTheme) Color(0xFF1E3F2B) else MaterialTheme.colorScheme.outline)
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 // Sliding indicator pill following finger continuously
@@ -376,8 +373,9 @@ fun DraggableBottomDock(
                 ) {
                     tabs.forEachIndexed { index, label ->
                         val isCurrent = (indicatorFraction.value.roundToInt() == index)
-                        val textColor = if (isCurrent) Color.White else TextMuted
-                        val iconTint = if (isCurrent) LimeAccent else TextMuted
+                        val unselectedTint = if (ThemePreferences.isDarkTheme) Color(0xFF94A3B8) else MaterialTheme.colorScheme.onSurfaceVariant
+                        val textColor = if (isCurrent) Color.White else unselectedTint
+                        val iconTint = if (isCurrent) LimeAccent else unselectedTint
 
                         Box(
                             modifier = Modifier
@@ -422,7 +420,7 @@ fun VegetationHealthModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Satellite Crop Health & Vigor (NDVI)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Sentinel-2 satellite scans measure plant greenness and canopy chlorophyll.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Sentinel-2 satellite scans measure plant greenness and canopy chlorophyll.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -443,8 +441,8 @@ fun VegetationHealthModule() {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Farmer Recommendation", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = LimeAccent)
@@ -452,7 +450,7 @@ fun VegetationHealthModule() {
                     Text(
                         "Crop vigor is strong across Field 1. Plants have healthy dark green leaves. No nitrogen deficiency detected. Maintain regular weed-free conditions.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -475,7 +473,7 @@ fun SoilMoistureModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Satellite Soil Moisture (NDWI Index)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Estimates moisture content in topsoil layers from satellite water absorption bands.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Estimates moisture content in topsoil layers from satellite water absorption bands.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -492,8 +490,8 @@ fun SoilMoistureModule() {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Watering Advice", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = CyanAccent)
@@ -501,7 +499,7 @@ fun SoilMoistureModule() {
                     Text(
                         "Topsoil moisture is 72% (Adequate). Roots have sufficient hydration for the next 48 hours. Hold watering today to prevent waterlogging.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -523,14 +521,14 @@ fun IrrigationTimingModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Safe Watering Timing & Evaporation Guide", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Time irrigation with weather to prevent water loss and leaf scorch.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Time irrigation with weather to prevent water loss and leaf scorch.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Best Irrigation Window: Tomorrow 6:00 AM - 8:30 AM", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
@@ -538,7 +536,7 @@ fun IrrigationTimingModule() {
                     Text(
                         "Early morning watering allows moisture to soak deep before sun rises. Avoid 11 AM - 3 PM watering when high heat causes up to 40% evaporation loss.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -560,14 +558,14 @@ fun WeatherSprayingModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Weather & Safe Spraying Forecast", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Hourly rainfall and wind speed forecast for safe crop spraying.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Hourly rainfall and wind speed forecast for safe crop spraying.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Today's Spray Status: Safe to Spray", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
@@ -575,7 +573,7 @@ fun WeatherSprayingModule() {
                     Text(
                         "Wind is calm at 8 km/h and rain probability is low (10%). Safe to apply nutrient sprays today. Rain expected Friday afternoon will provide natural watering.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -597,14 +595,14 @@ fun PestAdvisoryModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Pest & Disease Advisory Guide", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Early warning based on weather humidity and crop stress zones.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Early warning based on weather humidity and crop stress zones.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Fall Armyworm & Leaf Spot: Low-to-Medium Risk", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = GoldAccent)
@@ -612,7 +610,7 @@ fun PestAdvisoryModule() {
                     Text(
                         "Inspect under-leaf canopy in Field 2 for small pinholes. Organic remedy: Spray 5ml Neem oil per liter of water in early morning. Keep beneficial ladybugs unharmed.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -634,14 +632,14 @@ fun YieldEstimatorModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Expected Harvest & Yield Estimator", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Predicted harvest production based on satellite vegetative growth curve.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Predicted harvest production based on satellite vegetative growth curve.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Estimated Production: 34 - 36 Quintals / acre (Corn)", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
@@ -649,7 +647,7 @@ fun YieldEstimatorModule() {
                     Text(
                         "Growth trajectory is +8.4% above normal 5-year average. Expected harvest window is in ~28 days (Nov 24 - Nov 30). Begin harvest when grain moisture drops below 16%.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -671,14 +669,14 @@ fun FieldBoundaryModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Field Boundary & Land Area", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("GPS perimeter delineation and accurate acreage calculation for your fields.", fontSize = 12.5.sp, color = TextMuted)
+            Text("GPS perimeter delineation and accurate acreage calculation for your fields.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Field 1: 12.5 Hectares (30.8 Acres)", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
@@ -686,7 +684,7 @@ fun FieldBoundaryModule() {
                     Text(
                         "Perimeter: 1,840 meters · 4 GPS boundary vertices verified against Sentinel-2 satellite grid. Ready for input dosage calculations.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -708,14 +706,14 @@ fun CropCalendarModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Crop Calendar & Growth Stages", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Follow your crop milestones from sowing to maturity.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Follow your crop milestones from sowing to maturity.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Current Stage: Tasseling & Silking (Day 52 of 105)", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
@@ -723,7 +721,7 @@ fun CropCalendarModule() {
                     Text(
                         "Grain filling begins in ~10 days. Ensure consistent soil moisture during this stage to prevent poor ear fill.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -745,14 +743,14 @@ fun FieldOperationModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Field Operations & Plowing Planner", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Schedule tilling, weeding, and tractor work based on soil moisture.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Schedule tilling, weeding, and tractor work based on soil moisture.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Soil Condition: Firm & Workable", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
@@ -760,7 +758,7 @@ fun FieldOperationModule() {
                     Text(
                         "Optimal time for inter-row weeding and earthing-up. Avoid heavy machinery on Friday when rains may cause soil compaction.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -783,7 +781,7 @@ fun FertilizationPlanModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Fertilizer & Nutrient Advisory", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Plain-language fertilizer dosages per acre tailored to your crop greenness.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Plain-language fertilizer dosages per acre tailored to your crop greenness.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -802,8 +800,8 @@ fun FertilizationPlanModule() {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Application Timing Tip", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = LimeAccent)
@@ -811,7 +809,7 @@ fun FertilizationPlanModule() {
                     Text(
                         "Apply Urea along rows 12 hours before expected light rain or immediately before morning irrigation for best root uptake.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -833,14 +831,14 @@ fun HarvestStorageModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Harvest Preparation & Storage Tips", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Post-harvest guidelines to prevent mold and storage grain losses.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Post-harvest guidelines to prevent mold and storage grain losses.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Grain Moisture Safety Rule", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
@@ -848,7 +846,7 @@ fun HarvestStorageModule() {
                     Text(
                         "Sun-dry harvested grains on tarpaulins for 2-3 days until moisture drops below 14%. Store bags on raised wooden pallets in a dry, ventilated shed.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -870,14 +868,14 @@ fun FarmBudgetModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Farm Budget & Crop Expense Tracker", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Track seed, fertilizer, and labor costs against expected market selling price.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Track seed, fertilizer, and labor costs against expected market selling price.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Estimated Net Profit: +$320 / acre", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = LimeAccent)
@@ -885,7 +883,7 @@ fun FarmBudgetModule() {
                     Text(
                         "Input Costs: $260/acre (Seed: $60, Nutrients: $110, Field Labor: $90) vs Expected Gross: $580/acre based on 35 Q/ac @ local mandi price.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -907,7 +905,7 @@ fun MyFieldsModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("My Land Parcels & Registered Fields", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Overview of all your registered plots and planted crop varieties.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Overview of all your registered plots and planted crop varieties.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -919,8 +917,8 @@ fun MyFieldsModule() {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
-                        color = DarkSurfaceElevated,
-                        border = BorderStroke(1.dp, CardBorderColor)
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
@@ -928,8 +926,8 @@ fun MyFieldsModule() {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text(name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextLight)
-                                Text(desc, fontSize = 11.5.sp, color = TextMuted)
+                                Text(name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                                Text(desc, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Icon(Icons.Default.CheckCircle, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
                         }
@@ -953,14 +951,14 @@ fun SatelliteHistoryModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Satellite Growth History (30-Day Trend)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Review satellite greenness comparisons over the crop season.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Review satellite greenness comparisons over the crop season.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Steady Growth: Canopy Expanded +56%", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
@@ -968,7 +966,7 @@ fun SatelliteHistoryModule() {
                     Text(
                         "Week 1 (Day 15): Emergence (NDVI 0.28)\nWeek 4 (Day 35): Rapid Canopy Spread (NDVI 0.62)\nToday (Day 52): Peak Vigor & Flowering (NDVI 0.84)",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 18.sp
                     )
                 }
@@ -990,14 +988,14 @@ fun OrganicSoilModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Organic Soil Health & Composting", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Natural methods to build soil fertility without high chemical costs.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Natural methods to build soil fertility without high chemical costs.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = DarkSurfaceElevated,
-                border = BorderStroke(1.dp, CardBorderColor)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Soil Building Recommendations", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
@@ -1005,7 +1003,7 @@ fun OrganicSoilModule() {
                     Text(
                         "Incorporate farmyard cow manure (FYM) or vermicompost before tilling. Rotating with pulse/legume crops naturally fixes atmospheric nitrogen into the soil.",
                         fontSize = 12.sp,
-                        color = TextLight,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
                 }
@@ -1028,12 +1026,12 @@ fun AgronomistChatModule() {
     Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Kisan Advisory: Dr. Elena Vance", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-            Text("Certified Crop Adviser · Agricultural Specialist", fontSize = 12.sp, color = TextMuted)
+            Text("Certified Crop Adviser · Agricultural Specialist", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
             if (sentMessage != null) {
                 Text("You: $sentMessage", fontSize = 13.sp, color = LimeAccent, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("Dr. Vance: Received. Your Field 1 satellite greenness looks optimal. Keep soil moist through the tasseling phase.", fontSize = 12.5.sp, color = TextLight, lineHeight = 17.sp)
+                Text("Dr. Vance: Received. Your Field 1 satellite greenness looks optimal. Keep soil moist through the tasseling phase.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 17.sp)
                 Spacer(modifier = Modifier.height(12.dp))
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1067,7 +1065,7 @@ fun MarketCommodityModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Local Mandi Wholesale Selling Rates", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Today's crop selling prices at regional wholesale agricultural markets.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Today's crop selling prices at regional wholesale agricultural markets.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1080,18 +1078,18 @@ fun MarketCommodityModule() {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
-                        color = DarkSurfaceElevated,
-                        border = BorderStroke(1.dp, CardBorderColor)
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(crop, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = TextLight)
+                            Text(crop, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(price, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp, color = TextLight)
-                                Text(trend, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, color = if (trend.contains("+")) LimeAccent else TextMuted)
+                                Text(price, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                                Text(trend, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, color = if (trend.contains("+")) LimeAccent else MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -1114,35 +1112,35 @@ fun NotificationCenterModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Weather & Crop Warning Center", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Critical agricultural alerts and weather warnings for your area.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Critical agricultural alerts and weather warnings for your area.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
-                    color = DarkSurfaceElevated,
-                    border = BorderStroke(1.dp, CardBorderColor)
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                 ) {
                     Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Cloud, contentDescription = null, tint = CyanAccent, modifier = Modifier.size(20.dp))
                         Column {
-                            Text("Rain Advisory: 12mm Showers on Friday", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextLight)
-                            Text("Cover harvested produce and complete foliar sprays before Friday.", fontSize = 11.5.sp, color = TextMuted)
+                            Text("Rain Advisory: 12mm Showers on Friday", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                            Text("Cover harvested produce and complete foliar sprays before Friday.", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
-                    color = DarkSurfaceElevated,
-                    border = BorderStroke(1.dp, CardBorderColor)
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                 ) {
                     Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Spa, contentDescription = null, tint = LimeAccent, modifier = Modifier.size(20.dp))
                         Column {
-                            Text("Nitrogen Top-Dress Window: Field 1", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextLight)
-                            Text("Optimal soil moisture for applying Urea split dose.", fontSize = 11.5.sp, color = TextMuted)
+                            Text("Nitrogen Top-Dress Window: Field 1", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                            Text("Optimal soil moisture for applying Urea split dose.", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -1165,7 +1163,7 @@ fun AppSettingsSyncModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("App Appearance & Theme Mode", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Switch between Light, Dark, or System Default appearance.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Switch between Light, Dark, or System Default appearance.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1202,7 +1200,7 @@ fun DataPrivacyDeletionModule() {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("Farm Records & Data Export", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Export your field boundaries, spray logs, and expense records.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Export your field boundaries, spray logs, and expense records.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             OutlinedButton(
@@ -1231,7 +1229,7 @@ fun GenericFarmerModule(title: String) {
         Column(modifier = Modifier.padding(18.dp)) {
             Text("$title Guide", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Satellite agronomic intelligence and recommendations for your farm.", fontSize = 12.5.sp, color = TextMuted)
+            Text("Satellite agronomic intelligence and recommendations for your farm.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MetricChip("Status", "Optimal", Modifier.weight(1f))
