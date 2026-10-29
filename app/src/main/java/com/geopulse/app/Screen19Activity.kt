@@ -13,12 +13,12 @@ class Screen19Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Machinery Tracking",
-                    subtitle = "Live telemetry, fuel consumption, and operational status of tractors and harvesters.",
+                    title = "Field Operations & Plowing Planner",
+                    subtitle = "Optimal days for plowing, sowing, weeding, and harrowing according to soil dryness.",
                     icon = Icons.Default.Agriculture,
                     activity = this,
-                    nextActivityClass = Screen20Activity::class.java,
-                    nextButtonText = "View Fertilization Plan"
+                    nextActivityClass = Screen14Activity::class.java,
+                    nextButtonText = "Check Weather Forecast"
                 )
             }
         }

@@ -13,12 +13,12 @@ class Screen15Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Pest Detection",
-                    subtitle = "AI-powered early warning system for crop disease outbreaks and pest infestation.",
+                    title = "Pest & Disease Advisory Guide",
+                    subtitle = "Early seasonal risk warnings and practical prevention steps for common regional crop pests.",
                     icon = Icons.Default.Warning,
                     activity = this,
-                    nextActivityClass = Screen16Activity::class.java,
-                    nextButtonText = "View Yield Analytics"
+                    nextActivityClass = Screen11Activity::class.java,
+                    nextButtonText = "Check Satellite Crop Health"
                 )
             }
         }

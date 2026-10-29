@@ -1,5 +1,7 @@
 package com.geopulse.app.ui.theme
 
+import android.content.Context
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -9,8 +11,43 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 
+enum class ThemeMode {
+    DARK,
+    LIGHT,
+    SYSTEM
+}
+
 object ThemePreferences {
-    var isDarkTheme by mutableStateOf(true)
+    private const val PREFS_NAME = "geopulse_theme_prefs"
+    private const val KEY_MODE = "theme_mode"
+
+    var themeMode by mutableStateOf(ThemeMode.SYSTEM)
+
+    val isDarkTheme: Boolean
+        @Composable
+        get() = when (themeMode) {
+            ThemeMode.DARK -> true
+            ThemeMode.LIGHT -> false
+            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        }
+
+    fun init(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val saved = prefs.getString(KEY_MODE, ThemeMode.SYSTEM.name)
+        themeMode = try {
+            ThemeMode.valueOf(saved ?: ThemeMode.SYSTEM.name)
+        } catch (_: Exception) {
+            ThemeMode.SYSTEM
+        }
+    }
+
+    fun updateThemeMode(context: Context, mode: ThemeMode) {
+        themeMode = mode
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_MODE, mode.name)
+            .apply()
+    }
 }
 
 private val LightColorScheme = lightColorScheme(
@@ -59,9 +96,10 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun GeoPulseTheme(
+    darkTheme: Boolean = ThemePreferences.isDarkTheme,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (ThemePreferences.isDarkTheme) DarkColorScheme else LightColorScheme
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

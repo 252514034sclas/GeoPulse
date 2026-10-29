@@ -13,12 +13,12 @@ class Screen25Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Carbon Sustainability",
-                    subtitle = "Soil carbon sequestration tracking and regenerative agriculture credits reporting.",
+                    title = "Organic Soil Health & Composting",
+                    subtitle = "Improve long-term soil fertility naturally using compost, green manure, and mulching.",
                     icon = Icons.Default.Eco,
                     activity = this,
-                    nextActivityClass = Screen26Activity::class.java,
-                    nextButtonText = "View Agronomist Chat"
+                    nextActivityClass = Screen20Activity::class.java,
+                    nextButtonText = "View Fertilizer Recommendations"
                 )
             }
         }

@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Description
 import com.geopulse.app.ui.theme.GeoPulseTheme
 
 class Screen30Activity : ComponentActivity() {
@@ -13,12 +13,12 @@ class Screen30Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Data Privacy & Deletion",
-                    subtitle = "Manage your personal data, export farm records, or securely request account deletion.",
-                    icon = Icons.Default.DeleteForever,
+                    title = "Farm Records & Data Export",
+                    subtitle = "Safely export crop history, soil reports, and expense logs as PDF or Excel spreadsheets.",
+                    icon = Icons.Default.Description,
                     activity = this,
-                    nextActivityClass = LoginActivity::class.java,
-                    nextButtonText = "Return to Login"
+                    nextActivityClass = null,
+                    nextButtonText = "Return to Dashboard"
                 )
             }
         }

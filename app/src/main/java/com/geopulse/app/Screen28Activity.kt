@@ -13,12 +13,12 @@ class Screen28Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Notification Center",
-                    subtitle = "Comprehensive audit log of system alerts, weather advisories, and sensor triggers.",
+                    title = "Weather & Crop Warning Center",
+                    subtitle = "Immediate alerts for severe thunderstorms, heatwaves, frost, and unseasonal rainfall.",
                     icon = Icons.Default.Notifications,
                     activity = this,
-                    nextActivityClass = Screen29Activity::class.java,
-                    nextButtonText = "View App Settings"
+                    nextActivityClass = Screen14Activity::class.java,
+                    nextButtonText = "View 7-Day Weather Forecast"
                 )
             }
         }

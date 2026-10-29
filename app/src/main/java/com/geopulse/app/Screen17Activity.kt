@@ -13,12 +13,12 @@ class Screen17Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Field Boundary Editor",
-                    subtitle = "Geospatial polygon editing and acreage calculation for precise field management.",
+                    title = "Field Boundary & Land Area",
+                    subtitle = "Satellite GPS mapping of your farm parcels, boundaries, and estimated acreage.",
                     icon = Icons.Default.Map,
                     activity = this,
-                    nextActivityClass = Screen18Activity::class.java,
-                    nextButtonText = "View Sensor Status"
+                    nextActivityClass = Screen23Activity::class.java,
+                    nextButtonText = "View All Farm Parcels"
                 )
             }
         }

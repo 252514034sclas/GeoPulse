@@ -13,12 +13,12 @@ class Screen27Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Market Commodity Prices",
-                    subtitle = "Real-time grain futures, local elevator bids, and supply chain trends.",
+                    title = "Local Mandi Market Rates",
+                    subtitle = "Daily wholesale mandi prices for Wheat, Cotton, Paddy, Mustard, and Soybeans.",
                     icon = Icons.Default.ShowChart,
                     activity = this,
-                    nextActivityClass = Screen28Activity::class.java,
-                    nextButtonText = "View Notifications"
+                    nextActivityClass = Screen22Activity::class.java,
+                    nextButtonText = "View Farm Budget Tracker"
                 )
             }
         }

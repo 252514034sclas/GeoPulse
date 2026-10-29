@@ -18,6 +18,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -49,7 +50,7 @@ class Screen7Activity : ComponentActivity() {
                 val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 4 })
                 val coroutineScope = rememberCoroutineScope()
                 var showLogoutDialog by remember { mutableStateOf(false) }
-                var isDark by remember { mutableStateOf(ThemePreferences.isDarkTheme) }
+                val isDark = ThemePreferences.isDarkTheme
 
                 if (showLogoutDialog) {
                     AlertDialog(
@@ -81,6 +82,7 @@ class Screen7Activity : ComponentActivity() {
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background)
+                        .statusBarsPadding()
                 ) {
                     // Connected screen content transitions in sync with dragging
                     HorizontalPager(
@@ -135,18 +137,17 @@ class Screen7Activity : ComponentActivity() {
                                 )
                             }
                             2 -> {
-                                FullTelemetryActivityTab(
-                                    onEventClick = { targetClass ->
+                                FullAdvisoryTab(
+                                    onTaskClick = { targetClass ->
                                         startActivity(Intent(this@Screen7Activity, targetClass))
                                     }
                                 )
                             }
                             3 -> {
                                 FullProfileSettingsTab(
-                                    isDark = isDark,
-                                    onThemeToggle = {
-                                        isDark = it
-                                        ThemePreferences.isDarkTheme = it
+                                    currentThemeMode = ThemePreferences.themeMode,
+                                    onThemeModeSelected = { mode ->
+                                        ThemePreferences.updateThemeMode(this@Screen7Activity, mode)
                                     },
                                     onNavigate = { targetClass ->
                                         startActivity(Intent(this@Screen7Activity, targetClass))
@@ -268,9 +269,9 @@ fun FullGisMapTab(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(260.dp)
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(16.dp))
                         .background(Color(0xFF0B1910))
-                        .border(1.dp, CardBorderColor, RoundedCornerShape(24.dp))
+                        .border(1.dp, CardBorderColor, RoundedCornerShape(16.dp))
                 ) {
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         val w = size.width
@@ -363,7 +364,7 @@ fun FullGisMapTab(
             // Selected Zone Inspector Card
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 20.dp),
+                    modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
@@ -433,25 +434,61 @@ fun FullGisMapTab(
 }
 
 // -------------------------------------------------------------
-// Tab 2: Full Telemetry Activity Screen
+// Tab 2: Farm Advisory & Daily Action Planner (Practical Layperson Guidance)
 // -------------------------------------------------------------
-data class TelemetryLog(
+data class FarmerAdvisoryItem(
     val title: String,
     val subtitle: String,
-    val timestamp: String,
+    val timeBadge: String,
     val iconColor: Color,
+    val icon: ImageVector,
     val targetClass: Class<*>
 )
 
 @Composable
-fun FullTelemetryActivityTab(onEventClick: (Class<*>) -> Unit) {
-    val events = remember {
+fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
+    val tasks = remember {
         listOf(
-            TelemetryLog("Moisture Deficit in South Pivot", "Root-zone dropped to 48% (Threshold: 55%)", "12m ago", RedAccent, Screen13Activity::class.java),
-            TelemetryLog("Center Pivot #01 Cycle Completed", "Delivered 18,450 Liters across North Quadrant", "45m ago", EmeraldPrimary, Screen13Activity::class.java),
-            TelemetryLog("Sensor Node #04 Battery Low", "Battery at 18%, LoRaWAN signal nominal", "1h ago", GoldAccent, Screen18Activity::class.java),
-            TelemetryLog("Drone Multispectral Scan Processed", "NDVI 0.84 calculated for East Field Beta", "3h ago", CyanAccent, Screen24Activity::class.java),
-            TelemetryLog("Tractor 8R Planter Finished", "Covered 64 acres in North Sector. Fuel at 82%", "5h ago", EmeraldPrimary, Screen19Activity::class.java)
+            FarmerAdvisoryItem(
+                title = "Safe Spraying Window Open Today",
+                subtitle = "Wind is calm at 8 km/h and humidity 58%. Safe to spray foliar nutrients before Friday rains.",
+                timeBadge = "Today",
+                iconColor = LimeAccent,
+                icon = Icons.Default.WbSunny,
+                targetClass = Screen14Activity::class.java
+            ),
+            FarmerAdvisoryItem(
+                title = "Topsoil Moisture Dropping",
+                subtitle = "Satellite water index indicates moisture at 54% in Field 1. Schedule watering tomorrow morning.",
+                timeBadge = "Next 24h",
+                iconColor = CyanAccent,
+                icon = Icons.Default.WaterDrop,
+                targetClass = Screen12Activity::class.java
+            ),
+            FarmerAdvisoryItem(
+                title = "Nitrogen Fertilizer Top-Dressing",
+                subtitle = "Satellite NDVI shows moderate crop vigor. Apply split Urea dose (45 kg/acre) before rains.",
+                timeBadge = "This Week",
+                iconColor = EmeraldPrimary,
+                icon = Icons.Default.Spa,
+                targetClass = Screen20Activity::class.java
+            ),
+            FarmerAdvisoryItem(
+                title = "Pest & Leaf Blight Watch",
+                subtitle = "Warm temperatures favor caterpillar emergence. Inspect under-leaf canopy in Field 2.",
+                timeBadge = "Advisory",
+                iconColor = RedAccent,
+                icon = Icons.Default.BugReport,
+                targetClass = Screen15Activity::class.java
+            ),
+            FarmerAdvisoryItem(
+                title = "Local Mandi Prices Trending Up",
+                subtitle = "Corn wholesale prices rose +3.2% in regional agricultural markets.",
+                timeBadge = "Market",
+                iconColor = GoldAccent,
+                icon = Icons.AutoMirrored.Filled.TrendingUp,
+                targetClass = Screen27Activity::class.java
+            )
         )
     }
 
@@ -470,87 +507,143 @@ fun FullTelemetryActivityTab(onEventClick: (Class<*>) -> Unit) {
             contentAlignment = Alignment.TopCenter
         ) {
             val isTablet = maxWidth > 600.dp
-            val contentWidth = if (isTablet) 640.dp else maxWidth
+            val contentWidth = if (isTablet) 600.dp else maxWidth
             val horizontalPadding = if (maxWidth < 360.dp) 12.dp else 16.dp
 
             LazyColumn(
                 modifier = Modifier
                     .width(contentWidth)
                     .fillMaxHeight(),
-                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 16.dp, bottom = 100.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 104.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-            item {
-                GeoTopBar(title = "Activity & Telemetry", subtitle = "Live IoT Telemetry & Audit Logs")
-            }
-
-            // KPI Row
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    MetricChip("Active Sensors", "48 / 50", Modifier.weight(1f))
-                    MetricChip("LoRa Gateway", "99.8%", Modifier.weight(1f))
-                    MetricChip("Active Alerts", "1 Warning", Modifier.weight(1f))
+                item {
+                    GeoTopBar(
+                        title = "Farm Advisory & Action Plan",
+                        subtitle = "Satellite-derived daily farming recommendations"
+                    )
                 }
-            }
 
-            item {
-                Text("Audit Event Logs (${events.size})", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextLight)
-            }
-
-            items(events) { event ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .glassSurface(cornerRadius = 18.dp)
-                        .clickable { onEventClick(event.targetClass) },
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                // Summary Banner Card
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = DarkSurface,
+                        border = BorderStroke(1.dp, CardBorderColor)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(CircleShape)
-                                .background(event.iconColor.copy(alpha = 0.18f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Sensors, contentDescription = null, tint = event.iconColor, modifier = Modifier.size(20.dp))
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(event.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextLight)
-                                Text(event.timestamp, fontSize = 11.sp, color = TextMuted)
+                                Text("Field 1 · Corn (Maize)", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextLight)
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = EmeraldPrimary.copy(alpha = 0.25f)
+                                ) {
+                                    Text(
+                                        "Vegetative Stage (Day 52)",
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        color = LimeAccent,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Text(event.subtitle, fontSize = 12.sp, color = TextMuted)
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Today's conditions are optimal for foliar nutrient spraying and light weeding. Expected rain on Friday will provide natural irrigation.",
+                                fontSize = 13.sp,
+                                color = TextMuted,
+                                lineHeight = 18.sp
+                            )
                         }
+                    }
+                }
 
-                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(18.dp))
+                // Practical KPI Chips
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        MetricChip("Crop Vigor", "84% (Optimal)", Modifier.weight(1f))
+                        MetricChip("Soil Moisture", "72% (Adequate)", Modifier.weight(1f))
+                        MetricChip("Spraying", "Safe Today", Modifier.weight(1f))
+                    }
+                }
+
+                item {
+                    Text("Today's Actionable Tasks (" + tasks.size + ")", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextLight)
+                }
+
+                items(tasks) { task ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { onTaskClick(task.targetClass) },
+                        shape = RoundedCornerShape(16.dp),
+                        color = DarkSurface,
+                        border = BorderStroke(1.dp, CardBorderColor)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(task.iconColor.copy(alpha = 0.16f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(task.icon, contentDescription = null, tint = task.iconColor, modifier = Modifier.size(18.dp))
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(task.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextLight)
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = task.iconColor.copy(alpha = 0.15f)
+                                    ) {
+                                        Text(
+                                            task.timeBadge,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = task.iconColor,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Text(task.subtitle, fontSize = 12.sp, color = TextMuted, lineHeight = 16.sp)
+                            }
+
+                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(16.dp))
+                        }
                     }
                 }
             }
         }
     }
 }
-}
 
 // -------------------------------------------------------------
-// Tab 3: Full Profile & Settings Screen
+// Tab 3: Farm Profile & Settings (3-Way Theme Switcher & Practical Tools)
 // -------------------------------------------------------------
 @Composable
 fun FullProfileSettingsTab(
-    isDark: Boolean,
-    onThemeToggle: (Boolean) -> Unit,
+    currentThemeMode: ThemeMode,
+    onThemeModeSelected: (ThemeMode) -> Unit,
     onNavigate: (Class<*>) -> Unit,
     onSignOut: () -> Unit
 ) {
@@ -572,150 +665,173 @@ fun FullProfileSettingsTab(
             contentAlignment = Alignment.TopCenter
         ) {
             val isTablet = maxWidth > 600.dp
-            val contentWidth = if (isTablet) 640.dp else maxWidth
+            val contentWidth = if (isTablet) 600.dp else maxWidth
             val horizontalPadding = if (maxWidth < 360.dp) 12.dp else 16.dp
 
             LazyColumn(
                 modifier = Modifier
                     .width(contentWidth)
                     .fillMaxHeight(),
-                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 16.dp, bottom = 100.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 104.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-            item {
-                GeoTopBar(title = "Profile & Settings")
-            }
+                item {
+                    GeoTopBar(title = "Profile & Settings")
+                }
 
-            // Farmer Profile Header Card
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(Brush.linearGradient(listOf(ForestDark, EvergreenDark, PineDark)))
-                        .border(1.dp, CardBorderColor, RoundedCornerShape(24.dp))
-                        .padding(20.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                // Farmer Profile Header Card
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = DarkSurface,
+                        border = BorderStroke(1.dp, CardBorderColor)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .clip(CircleShape)
-                                .background(Brush.linearGradient(listOf(LimeAccent, EmeraldPrimary))),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            Text("J", color = PineDark, fontSize = 30.sp, fontWeight = FontWeight.Black)
-                        }
-                        Column {
-                            Text("Johnathan Doe", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                            Text("Green Valley Farm · Lead Agronomist", fontSize = 13.sp, color = TextMuted)
-                            Text("1,250 Acres · Pro Tier Enterprise", fontSize = 11.sp, color = LimeAccent, fontWeight = FontWeight.SemiBold)
+                            Box(
+                                modifier = Modifier
+                                    .size(54.dp)
+                                    .clip(CircleShape)
+                                    .background(Brush.linearGradient(listOf(LimeAccent, EmeraldPrimary))),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("N", color = PineDark, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                            }
+                            Column {
+                                Text("Nithish Kumar", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text("Green Valley Farm · 12.5 ha", fontSize = 13.sp, color = TextMuted)
+                                Text("Primary Crops: Corn & Soybean", fontSize = 11.sp, color = LimeAccent, fontWeight = FontWeight.SemiBold)
+                            }
                         }
                     }
                 }
-            }
 
-            // System Preferences
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                ) {
-                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Display & System Preferences", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextLight)
+                // Appearance & Theme Mode Selector (3-way: Dark, Light, System)
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = DarkSurface,
+                        border = BorderStroke(1.dp, CardBorderColor)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("Theme & Appearance", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextLight)
+                            Text("Choose your preferred display theme", fontSize = 12.sp, color = TextMuted)
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text("Dark Mode Theme", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextLight)
-                                Text("Deep emerald dark aesthetic", fontSize = 12.sp, color = TextMuted)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf(
+                                    Triple(ThemeMode.LIGHT, "Light", Icons.Default.LightMode),
+                                    Triple(ThemeMode.DARK, "Dark", Icons.Default.DarkMode),
+                                    Triple(ThemeMode.SYSTEM, "System", Icons.Default.SettingsBrightness)
+                                ).forEach { (mode, label, icon) ->
+                                    val isSelected = currentThemeMode == mode
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { onThemeModeSelected(mode) },
+                                        modifier = Modifier.weight(1f),
+                                        leadingIcon = {
+                                            Icon(icon, contentDescription = null, modifier = Modifier.size(15.dp))
+                                        },
+                                        label = {
+                                            Text(
+                                                label,
+                                                fontSize = 12.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                            )
+                                        }
+                                    )
+                                }
                             }
-                            Switch(checked = isDark, onCheckedChange = onThemeToggle)
-                        }
 
-                        HorizontalDivider(color = CardBorderColor.copy(alpha = 0.5f))
+                            HorizontalDivider(color = CardBorderColor.copy(alpha = 0.5f))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text("Push Notifications", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextLight)
-                                Text("Frost warnings & moisture alerts", fontSize = 12.sp, color = TextMuted)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text("Weather & Spray Alerts", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextLight)
+                                    Text("Frost, rain and disease notifications", fontSize = 12.sp, color = TextMuted)
+                                }
+                                Switch(checked = notificationsEnabled, onCheckedChange = { notificationsEnabled = it })
                             }
-                            Switch(checked = notificationsEnabled, onCheckedChange = { notificationsEnabled = it })
-                        }
 
-                        HorizontalDivider(color = CardBorderColor.copy(alpha = 0.5f))
+                            HorizontalDivider(color = CardBorderColor.copy(alpha = 0.5f))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text("Offline GIS Map Caching", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextLight)
-                                Text("Cache satellite raster tiles locally", fontSize = 12.sp, color = TextMuted)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text("Offline Satellite Map Caching", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextLight)
+                                    Text("Save field satellite maps for offline use", fontSize = 12.sp, color = TextMuted)
+                                }
+                                Switch(checked = offlineCaching, onCheckedChange = { offlineCaching = it })
                             }
-                            Switch(checked = offlineCaching, onCheckedChange = { offlineCaching = it })
                         }
                     }
                 }
-            }
 
-            // Quick Operations Navigation
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                ) {
-                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Farm Operations & Intelligence", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextLight)
-                        Spacer(modifier = Modifier.height(4.dp))
+                // Practical Farm Operations & Layperson Tools
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = DarkSurface,
+                        border = BorderStroke(1.dp, CardBorderColor)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Practical Farm Tools", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextLight)
+                            Spacer(modifier = Modifier.height(2.dp))
 
-                        ProfileItemRow("Multi-Farm Portfolio", "Switch properties & regional parcels", Icons.Default.Landscape) {
-                            onNavigate(Screen23Activity::class.java)
-                        }
-                        ProfileItemRow("Financial Summary & ROI", "Seasonal cost vs yield revenue", Icons.Default.MonetizationOn) {
-                            onNavigate(Screen22Activity::class.java)
-                        }
-                        ProfileItemRow("Commodity Futures", "Live Corn, Soy & Wheat ticker", Icons.Default.TrendingUp) {
-                            onNavigate(Screen27Activity::class.java)
-                        }
-                        ProfileItemRow("Agronomist Consultation", "Direct chat with Dr. Elena Vance", Icons.Default.Chat) {
-                            onNavigate(Screen26Activity::class.java)
-                        }
-                        ProfileItemRow("Data Privacy & Deletion", "Export GeoJSON & account erasure", Icons.Default.Security) {
-                            onNavigate(Screen30Activity::class.java)
+                            ProfileItemRow("Local Mandi Market Rates", "Wholesale selling prices for your crops", Icons.AutoMirrored.Filled.TrendingUp) {
+                                onNavigate(Screen27Activity::class.java)
+                            }
+                            ProfileItemRow("Farm Budget & Profit Calculator", "Track seed, fertilizer, and harvest net margin", Icons.Default.MonetizationOn) {
+                                onNavigate(Screen22Activity::class.java)
+                            }
+                            ProfileItemRow("Crop Growth Calendar", "Growth stage milestones and harvest timeline", Icons.Default.CalendarMonth) {
+                                onNavigate(Screen18Activity::class.java)
+                            }
+                            ProfileItemRow("My Land Parcels & Fields", "Switch and manage your registered fields", Icons.Default.Landscape) {
+                                onNavigate(Screen23Activity::class.java)
+                            }
+                            ProfileItemRow("Kisan Advisory & Helpline", "Direct chat with agricultural specialists", Icons.Default.Chat) {
+                                onNavigate(Screen26Activity::class.java)
+                            }
+                            ProfileItemRow("Data Privacy & Farm Records Export", "Download field archive or clear records", Icons.Default.Security) {
+                                onNavigate(Screen30Activity::class.java)
+                            }
                         }
                     }
                 }
-            }
 
-            // Sign Out Button
-            item {
-                Button(
-                    onClick = onSignOut,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Icon(Icons.Default.ExitToApp, contentDescription = null, tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Sign Out of Account", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+                // Sign Out Button
+                item {
+                    Button(
+                        onClick = onSignOut,
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Sign Out of Account", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+                    }
                 }
             }
         }
     }
-}
 }
 
 @Composable
@@ -727,23 +843,24 @@ fun ProfileItemRow(title: String, subtitle: String, icon: ImageVector, onClick: 
             .clickable(onClick = onClick)
             .padding(vertical = 10.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(34.dp)
                 .clip(CircleShape)
                 .background(EmeraldPrimary.copy(alpha = 0.2f)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = null, tint = LimeAccent, modifier = Modifier.size(18.dp))
+            Icon(icon, contentDescription = null, tint = LimeAccent, modifier = Modifier.size(17.dp))
         }
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextLight)
-            Text(subtitle, fontSize = 12.sp, color = TextMuted)
+            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp, color = TextLight)
+            Text(subtitle, fontSize = 11.5.sp, color = TextMuted)
         }
 
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(18.dp))
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(16.dp))
     }
 }
+

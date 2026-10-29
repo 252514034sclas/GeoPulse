@@ -13,12 +13,12 @@ class Screen29Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "App Settings & Sync",
-                    subtitle = "Offline data synchronization preferences, cloud backup, and security configurations.",
+                    title = "App Settings & Appearance",
+                    subtitle = "Select your theme (Dark, Light, or System default), language, and offline sync.",
                     icon = Icons.Default.Settings,
                     activity = this,
-                    nextActivityClass = Screen30Activity::class.java,
-                    nextButtonText = "View Privacy & Deletion"
+                    nextActivityClass = null,
+                    nextButtonText = "Return to Dashboard"
                 )
             }
         }

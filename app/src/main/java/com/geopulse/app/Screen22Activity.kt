@@ -13,12 +13,12 @@ class Screen22Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Financial Summary",
-                    subtitle = "Input cost tracking, yield revenue estimation, and seasonal ROI analytics.",
+                    title = "Farm Budget & Expense Tracker",
+                    subtitle = "Track seeds, fertilizers, diesel, and labor expenses to understand net profit per acre.",
                     icon = Icons.Default.AttachMoney,
                     activity = this,
-                    nextActivityClass = Screen23Activity::class.java,
-                    nextButtonText = "View Multi-Farm Portfolio"
+                    nextActivityClass = Screen27Activity::class.java,
+                    nextButtonText = "View Mandi Market Prices"
                 )
             }
         }

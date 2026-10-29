@@ -13,12 +13,12 @@ class Screen16Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Yield Analytics",
-                    subtitle = "Predictive harvest modeling and historical productivity benchmarking.",
+                    title = "Expected Harvest & Yield Estimator",
+                    subtitle = "Forecast harvest yield based on seasonal satellite growth patterns and historic weather.",
                     icon = Icons.Default.TrendingUp,
                     activity = this,
-                    nextActivityClass = Screen17Activity::class.java,
-                    nextButtonText = "View Field Boundaries"
+                    nextActivityClass = Screen21Activity::class.java,
+                    nextButtonText = "View Harvest Storage Tips"
                 )
             }
         }

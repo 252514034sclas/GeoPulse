@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Flight
+import androidx.compose.material.icons.filled.History
 import com.geopulse.app.ui.theme.GeoPulseTheme
 
 class Screen24Activity : ComponentActivity() {
@@ -13,12 +13,12 @@ class Screen24Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Drone Multispectral Scan",
-                    subtitle = "High-resolution aerial imagery and thermal scan processing for stress detection.",
-                    icon = Icons.Default.Flight,
+                    title = "Satellite Growth History",
+                    subtitle = "Review bi-weekly satellite crop greenness images to see how your crops improved over time.",
+                    icon = Icons.Default.History,
                     activity = this,
-                    nextActivityClass = Screen25Activity::class.java,
-                    nextButtonText = "View Carbon Sustainability"
+                    nextActivityClass = Screen11Activity::class.java,
+                    nextButtonText = "View Current Crop Vigor"
                 )
             }
         }

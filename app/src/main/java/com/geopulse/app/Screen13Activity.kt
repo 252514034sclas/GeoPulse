@@ -13,12 +13,12 @@ class Screen13Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Irrigation Control",
-                    subtitle = "Automated pivot and drip irrigation schedules based on evapotranspiration data.",
+                    title = "Safe Watering Timing Guide",
+                    subtitle = "Practical irrigation advice based on satellite moisture and rainfall forecast to avoid water waste.",
                     icon = Icons.Default.Opacity,
                     activity = this,
                     nextActivityClass = Screen14Activity::class.java,
-                    nextButtonText = "View Weather Forecast"
+                    nextButtonText = "View Rain & Spray Forecast"
                 )
             }
         }

@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.DateRange
 import com.geopulse.app.ui.theme.GeoPulseTheme
 
 class Screen18Activity : ComponentActivity() {
@@ -13,12 +13,12 @@ class Screen18Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Sensor Node Status",
-                    subtitle = "Battery health, signal strength, and firmware status of deployed IoT soil sensors.",
-                    icon = Icons.Default.Memory,
+                    title = "Crop Calendar & Growth Stages",
+                    subtitle = "Simple timetable showing current crop stage (Tillering / Flowering) and recommended care.",
+                    icon = Icons.Default.DateRange,
                     activity = this,
-                    nextActivityClass = Screen19Activity::class.java,
-                    nextButtonText = "View Machinery Tracking"
+                    nextActivityClass = Screen12Activity::class.java,
+                    nextButtonText = "Check Soil Moisture Status"
                 )
             }
         }

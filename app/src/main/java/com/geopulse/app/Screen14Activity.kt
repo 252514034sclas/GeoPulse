@@ -13,12 +13,12 @@ class Screen14Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Weather & Radar",
-                    subtitle = "Hyper-local meteorological forecasting, precipitation tracking, and frost warnings.",
+                    title = "Weather & Spraying Advisory",
+                    subtitle = "Hyperlocal weather with safe spray windows (wind & rain advice) for effective chemical application.",
                     icon = Icons.Default.WbSunny,
                     activity = this,
                     nextActivityClass = Screen15Activity::class.java,
-                    nextButtonText = "View Pest Detection"
+                    nextButtonText = "Check Pest & Disease Risks"
                 )
             }
         }

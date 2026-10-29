@@ -13,12 +13,12 @@ class Screen11Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Vegetation Health",
-                    subtitle = "Normalized Difference Vegetation Index (NDVI) monitoring for optimal crop vigor and chlorophyll content.",
+                    title = "Satellite Crop Health & Vigor",
+                    subtitle = "Satellite greenness (NDVI) monitoring in simple layman terms. Learn which parts of your field need care.",
                     icon = Icons.Default.Eco,
                     activity = this,
-                    nextActivityClass = Screen12Activity::class.java,
-                    nextButtonText = "View Soil Moisture"
+                    nextActivityClass = Screen20Activity::class.java,
+                    nextButtonText = "View Fertilizer Recommendations"
                 )
             }
         }

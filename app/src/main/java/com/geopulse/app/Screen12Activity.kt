@@ -13,12 +13,12 @@ class Screen12Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Soil Moisture Report",
-                    subtitle = "Real-time root-zone moisture tracking across all farm quadrants.",
+                    title = "Satellite Soil Moisture Report",
+                    subtitle = "Satellite-estimated moisture levels in your soil root-zone. Check if your field is dry or healthy.",
                     icon = Icons.Default.Water,
                     activity = this,
                     nextActivityClass = Screen13Activity::class.java,
-                    nextButtonText = "View Irrigation Schedule"
+                    nextButtonText = "View Safe Watering Schedule"
                 )
             }
         }

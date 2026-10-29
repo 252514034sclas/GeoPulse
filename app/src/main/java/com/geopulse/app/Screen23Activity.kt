@@ -13,12 +13,12 @@ class Screen23Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Multi-Farm Portfolio",
-                    subtitle = "Centralized oversight of multiple properties, cooperatives, and regional land parcels.",
+                    title = "My Land Parcels & Crops",
+                    subtitle = "List and manage all your registered land plots, survey numbers, and active crops.",
                     icon = Icons.Default.Domain,
                     activity = this,
-                    nextActivityClass = Screen24Activity::class.java,
-                    nextButtonText = "View Drone Multispectral Scan"
+                    nextActivityClass = Screen17Activity::class.java,
+                    nextButtonText = "Edit Field Boundaries"
                 )
             }
         }

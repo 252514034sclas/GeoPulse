@@ -13,12 +13,12 @@ class Screen20Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Fertilization Plan",
-                    subtitle = "Variable-rate nutrient application mapping to maximize ROI and minimize runoff.",
+                    title = "Fertilizer & Nutrient Guide",
+                    subtitle = "Step-by-step guidance on Urea, DAP, and NPK dosage matching satellite crop vigor zones.",
                     icon = Icons.Default.Science,
                     activity = this,
-                    nextActivityClass = Screen21Activity::class.java,
-                    nextButtonText = "View Harvest Logistics"
+                    nextActivityClass = Screen12Activity::class.java,
+                    nextButtonText = "Check Field Moisture Status"
                 )
             }
         }

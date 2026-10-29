@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.Inventory
 import com.geopulse.app.ui.theme.GeoPulseTheme
 
 class Screen21Activity : ComponentActivity() {
@@ -13,12 +13,12 @@ class Screen21Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Harvest Logistics",
-                    subtitle = "Storage capacity planning, transport coordination, and delivery scheduling.",
-                    icon = Icons.Default.LocalShipping,
+                    title = "Harvest Preparation & Storage Tips",
+                    subtitle = "Practical post-harvest steps: drying methods, safe grain moisture, and pest-free storage.",
+                    icon = Icons.Default.Inventory,
                     activity = this,
-                    nextActivityClass = Screen22Activity::class.java,
-                    nextButtonText = "View Financial Summary"
+                    nextActivityClass = Screen27Activity::class.java,
+                    nextButtonText = "View Mandi Selling Prices"
                 )
             }
         }
