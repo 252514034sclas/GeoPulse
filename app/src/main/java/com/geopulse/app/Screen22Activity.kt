@@ -17,8 +17,8 @@ class Screen22Activity : ComponentActivity() {
                     subtitle = "Track seeds, fertilizers, diesel, and labor expenses to understand net profit per acre.",
                     icon = Icons.Default.AttachMoney,
                     activity = this,
-                    nextActivityClass = Screen30Activity::class.java,
-                    nextButtonText = "View Mandi Market Prices"
+                    nextActivityClass = Screen27Activity::class.java,
+                    nextButtonText = "View Mandi Wholesale Rates"
                 )
             }
         }

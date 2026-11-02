@@ -133,7 +133,7 @@ class Screen7Activity : ComponentActivity() {
                                         startActivity(Intent(this@Screen7Activity, Screen28Activity::class.java))
                                     },
                                     onCropHealthClick = {
-                                        startActivity(Intent(this@Screen7Activity, Screen15Activity::class.java))
+                                        startActivity(Intent(this@Screen7Activity, Screen11Activity::class.java))
                                     },
                                     onFieldBoundaryClick = {
                                         startActivity(Intent(this@Screen7Activity, Screen17Activity::class.java))

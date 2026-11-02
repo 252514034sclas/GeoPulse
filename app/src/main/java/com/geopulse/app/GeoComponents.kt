@@ -1,6 +1,8 @@
 package com.geopulse.app
 
 import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -1000,10 +1002,10 @@ fun FarmBudgetModule() {
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text("Estimated Net Profit: +$320 / acre", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = LimeAccent)
+                    Text("Estimated Net Profit: +₹23,500 / acre", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = LimeAccent)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        "Input Costs: $260/acre (Seed: $60, Nutrients: $110, Field Labor: $90) vs Expected Gross: $580/acre based on 35 Q/ac @ local mandi price.",
+                        "Input Costs: ₹18,500/acre (Seed: ₹4,200, Nutrients: ₹7,800, Field Labor: ₹6,500) vs Expected Gross: ₹42,000/acre based on 35 Q/ac @ local mandi price.",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
@@ -1013,9 +1015,9 @@ fun FarmBudgetModule() {
 
             Spacer(modifier = Modifier.height(14.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MetricChip("Input Costs", "$260/ac", Modifier.weight(1f))
-                MetricChip("Gross Returns", "$580/ac", Modifier.weight(1f))
-                MetricChip("Net Profit", "+$320/ac", Modifier.weight(1f))
+                MetricChip("Input Costs", "₹18.5k/ac", Modifier.weight(1f))
+                MetricChip("Gross Returns", "₹42.0k/ac", Modifier.weight(1f))
+                MetricChip("Net Profit", "+₹23.5k/ac", Modifier.weight(1f))
             }
         }
     }
@@ -1143,18 +1145,54 @@ fun OrganicSoilModule() {
 
 @Composable
 fun AgronomistChatModule() {
+    val context = LocalContext.current
     var messageText by remember { mutableStateOf("") }
     var sentMessage by remember { mutableStateOf<String?>(null) }
     Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Text("Kisan Advisory: Dr. Elena Vance", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-            Text("Certified Crop Adviser · Agricultural Specialist", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(14.dp))
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Government Helpline Banner Card
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = EmeraldPrimary.copy(alpha = 0.15f),
+                border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.4f))
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Kisan Call Center (Govt. of India)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = EmeraldPrimary)
+                            Text("1800-180-1551 · Free Toll-Free Helpline", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Button(
+                        onClick = {
+                            val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:18001801551"))
+                            context.startActivity(dialIntent)
+                        },
+                        modifier = Modifier.fillMaxWidth().height(44.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                    ) {
+                        Icon(Icons.Default.Phone, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Call Kisan Call Center (1800-180-1551)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("Daily 6:00 AM – 10:00 PM · Available in 22 regional languages", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            // Agronomist Direct Advisory
+            Text("Certified Agronomist Consultation", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text("Dr. Elena Vance · Certified Crop Adviser (Agricultural Specialist)", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (sentMessage != null) {
                 Text("You: $sentMessage", fontSize = 13.sp, color = LimeAccent, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(4.dp))
                 Text("Dr. Vance: Received. Your Field 1 satellite greenness looks optimal. Keep soil moist through the tasseling phase.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 17.sp)
-                Spacer(modifier = Modifier.height(12.dp))
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(

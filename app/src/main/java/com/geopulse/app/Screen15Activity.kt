@@ -18,7 +18,7 @@ class Screen15Activity : ComponentActivity() {
                     icon = Icons.Default.Warning,
                     activity = this,
                     nextActivityClass = Screen26Activity::class.java,
-                    nextButtonText = "Check Satellite Crop Health"
+                    nextButtonText = "Consult Kisan Helpline / Expert"
                 )
             }
         }
