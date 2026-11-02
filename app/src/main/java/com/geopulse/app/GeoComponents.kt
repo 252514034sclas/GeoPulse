@@ -40,6 +40,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.geopulse.app.map.MapConfig
+import com.geopulse.app.map.BasemapType
 import com.geopulse.app.network.*
 import com.geopulse.app.ui.theme.*
 import kotlinx.coroutines.CoroutineScope
@@ -1322,6 +1324,153 @@ fun AppSettingsSyncModule() {
                 MetricChip("Offline Maps", "Ready", Modifier.weight(1f))
                 MetricChip("Language", "English", Modifier.weight(1f))
             }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            var serverUrlInput by remember { mutableStateOf(ApiClient.baseUrl) }
+            var testStatus by remember { mutableStateOf<String?>(null) }
+            val coroutineScope = rememberCoroutineScope()
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Backend Server Address (Wi-Fi / Physical Phone)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Configure server URL to connect your physical phone over wireless debugging / Wi-Fi.", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                    OutlinedTextField(
+                        value = serverUrlInput,
+                        onValueChange = {
+                            serverUrlInput = it
+                            ApiClient.baseUrl = it
+                        },
+                        label = { Text("Server URL", fontSize = 12.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    testStatus = "Testing connection..."
+                                    try {
+                                        val resp = ApiClient.service.checkHealth()
+                                        if (resp.isSuccessful) {
+                                            testStatus = "Connected! GeoPulse API v${resp.body()?.version ?: "2.0.0"}"
+                                        } else {
+                                            testStatus = "Server reachable: HTTP ${resp.code()}"
+                                        }
+                                    } catch (e: Exception) {
+                                        testStatus = "Connection failed: ${e.message ?: "Timeout"}"
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f).height(38.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = LimeAccent, contentColor = PineDark)
+                        ) {
+                            Text("Test Connection", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                serverUrlInput = "http://172.23.176.200:8000/"
+                                ApiClient.baseUrl = "http://172.23.176.200:8000/"
+                                testStatus = "Set to Host Wi-Fi IP (172.23.176.200)"
+                            },
+                            modifier = Modifier.weight(1f).height(38.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Set Host IP", fontSize = 12.sp)
+                        }
+                    }
+
+                    if (testStatus != null) {
+                        Text(
+                            text = testStatus!!,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (testStatus!!.contains("Connected")) LimeAccent else MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MapConfigurationModule() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var mapStyleInput by remember { mutableStateOf(MapConfig.getCustomStyleUrl(context) ?: "") }
+    var mapKeyInput by remember { mutableStateOf(MapConfig.getMapApiKey(context) ?: "") }
+    var activeBasemapType by remember { mutableStateOf(MapConfig.getSelectedBasemap(context)) }
+    var mapStatusMsg by remember { mutableStateOf<String?>(null) }
+
+    Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("GIS Map & Basemap Configuration", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text("Configure MapLibre Native SDK basemap presets, custom GL style URLs, and API tokens.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                BasemapType.values().forEach { type ->
+                    val isSel = activeBasemapType == type
+                    FilterChip(
+                        selected = isSel,
+                        onClick = {
+                            activeBasemapType = type
+                            MapConfig.setSelectedBasemap(context, type)
+                            mapStatusMsg = "Default basemap set to ${type.displayName}"
+                        },
+                        modifier = Modifier.weight(1f),
+                        label = { Text("${type.badge} ${type.displayName.split(" ")[0]}", fontSize = 10.5.sp, fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal) }
+                    )
+                }
+            }
+
+            OutlinedTextField(
+                value = mapStyleInput,
+                onValueChange = {
+                    mapStyleInput = it
+                    MapConfig.setCustomStyleUrl(context, if (it.isBlank()) null else it)
+                    mapStatusMsg = if (it.isBlank()) "Using preset basemap styles" else "Custom style URL saved"
+                },
+                label = { Text("Custom Map Style URL (Optional)", fontSize = 12.sp) },
+                placeholder = { Text("https://demotiles.maplibre.org/style.json", fontSize = 11.sp) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = mapKeyInput,
+                onValueChange = {
+                    mapKeyInput = it
+                    MapConfig.setMapApiKey(context, if (it.isBlank()) null else it)
+                    mapStatusMsg = "Provider API Key saved securely"
+                },
+                label = { Text("Map Provider API Key (Optional)", fontSize = 12.sp) },
+                placeholder = { Text("e.g. MapTiler / Stadia key (stored in SharedPreferences)", fontSize = 11.sp) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            if (mapStatusMsg != null) {
+                Text(
+                    text = mapStatusMsg!!,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = LimeAccent
+                )
+            }
+
+            Text(
+                text = "Attribution: ${MapConfig.ATTRIBUTION_TEXT}",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
         }
     }
 }
@@ -1396,11 +1545,6 @@ fun GeoDetailScreenContent(
                     title = title,
                     subtitle = subtitle,
                     onBackClick = {
-                        activity.startActivity(
-                            Intent(activity, Screen7Activity::class.java).apply {
-                                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                            }
-                        )
                         activity.finish()
                     }
                 )
@@ -1507,7 +1651,11 @@ fun GeoDetailScreenContent(
                                 title.contains("Agronomist", ignoreCase = true) || title.contains("Helpline", ignoreCase = true) -> AgronomistChatModule()
                                 title.contains("Commodity", ignoreCase = true) || title.contains("Mandi", ignoreCase = true) || title.contains("Market", ignoreCase = true) -> MarketCommodityModule()
                                 title.contains("Notification", ignoreCase = true) || title.contains("Alert", ignoreCase = true) || title.contains("Warning", ignoreCase = true) -> NotificationCenterModule()
-                                title.contains("Settings", ignoreCase = true) || title.contains("Sync", ignoreCase = true) || title.contains("Appearance", ignoreCase = true) -> AppSettingsSyncModule()
+                                title.contains("Settings", ignoreCase = true) || title.contains("Sync", ignoreCase = true) || title.contains("Appearance", ignoreCase = true) || title.contains("GIS", ignoreCase = true) || title.contains("Basemap", ignoreCase = true) -> {
+                                    AppSettingsSyncModule()
+                                    Spacer(modifier = Modifier.height(14.dp))
+                                    MapConfigurationModule()
+                                }
                                 title.contains("Privacy", ignoreCase = true) || title.contains("Deletion", ignoreCase = true) || title.contains("Export", ignoreCase = true) -> DataPrivacyDeletionModule()
                                 else -> GenericFarmerModule(title)
                             }
@@ -1520,7 +1668,6 @@ fun GeoDetailScreenContent(
                                 Button(
                                     onClick = {
                                         activity.startActivity(Intent(activity, nextActivityClass))
-                                        activity.finish()
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()

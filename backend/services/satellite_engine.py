@@ -8,6 +8,18 @@ def calculate_ndvi(nir: float, red: float) -> float:
     ndvi = (nir - red) / denom
     return round(max(0.0, min(1.0, ndvi)), 3)
 
+def calculate_evi(nir: float, red: float, blue: float) -> float:
+    """
+    Calculate Enhanced Vegetation Index (EVI):
+    Formula: 2.5 * ((NIR - RED) / (NIR + 6*RED - 7.5*BLUE + 1.0))
+    Reduces atmospheric noise and canopy background interference.
+    """
+    denom = nir + (6.0 * red) - (7.5 * blue) + 1.0
+    if denom == 0:
+        return 0.0
+    evi = 2.5 * ((nir - red) / denom)
+    return round(max(-1.0, min(1.0, evi)), 3)
+
 def calculate_ndwi(nir: float, swir: float) -> float:
     """Calculate Normalized Difference Water Index: (NIR - SWIR) / (NIR + SWIR)"""
     denom = nir + swir

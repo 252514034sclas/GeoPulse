@@ -17,7 +17,7 @@ class Screen23Activity : ComponentActivity() {
                     subtitle = "List and manage all your registered land plots, survey numbers, and active crops.",
                     icon = Icons.Default.Domain,
                     activity = this,
-                    nextActivityClass = Screen17Activity::class.java,
+                    nextActivityClass = Screen16Activity::class.java,
                     nextButtonText = "Edit Field Boundaries"
                 )
             }

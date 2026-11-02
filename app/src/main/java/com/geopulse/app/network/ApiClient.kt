@@ -7,9 +7,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    // 10.0.2.2 is Android Emulator's loopback alias to host machine 127.0.0.1
-    // For physical USB devices, replace with your development machine's local Wi-Fi IP (e.g. http://192.168.1.5:8000/)
-    var baseUrl: String = "http://10.0.2.2:8000/"
+    // Workstation LAN IP for physical Android devices over Wi-Fi: 172.23.176.200
+    // Emulator loopback alias: 10.0.2.2:8000
+    // ADB reverse loopback: 127.0.0.1:8000
+    var baseUrl: String = "http://172.23.176.200:8000/"
         set(value) {
             field = if (value.endsWith("/")) value else "$value/"
             retrofitInstance = null

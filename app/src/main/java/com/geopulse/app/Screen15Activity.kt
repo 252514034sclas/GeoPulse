@@ -17,7 +17,7 @@ class Screen15Activity : ComponentActivity() {
                     subtitle = "Early seasonal risk warnings and practical prevention steps for common regional crop pests.",
                     icon = Icons.Default.Warning,
                     activity = this,
-                    nextActivityClass = Screen11Activity::class.java,
+                    nextActivityClass = Screen26Activity::class.java,
                     nextButtonText = "Check Satellite Crop Health"
                 )
             }

@@ -137,7 +137,6 @@ class WelcomeActivity : ComponentActivity() {
                                 OutlinedButton(
                                     onClick = {
                                         startActivity(Intent(this@WelcomeActivity, LoginActivity::class.java))
-                                        finish()
                                     },
                                     modifier = Modifier.fillMaxWidth().height(52.dp),
                                     shape = RoundedCornerShape(14.dp),

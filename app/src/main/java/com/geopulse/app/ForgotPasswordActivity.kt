@@ -156,7 +156,6 @@ class ForgotPasswordActivity : ComponentActivity() {
 
                                 Spacer(modifier = Modifier.height(16.dp))
                                 TextButton(onClick = {
-                                    startActivity(Intent(this@ForgotPasswordActivity, LoginActivity::class.java))
                                     finish()
                                 }) {
                                     Text("Back to Sign In", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)

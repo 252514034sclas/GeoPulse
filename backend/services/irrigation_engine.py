@@ -94,12 +94,17 @@ class IrrigationEngine:
         volume_litres = round(gross_irrigation_mm * area_hectares * 10000.0)
         volume_cubic_meters = round(volume_litres / 1000.0, 1)
 
-        # 8. Decision Logic: Should farmer irrigate or wait?
-        if effective_rain_mm >= net_irrigation_mm and effective_rain_mm > 5.0:
+        # 8. Decision Logic: Scientifically sound irrigation thresholding
+        # If significant rain (> 15mm) is incoming within 48h and soil is not at permanent wilting point, delay to avoid waterlogging
+        if forecast_rain_next_48h_mm >= 15.0 and current_moisture_pct >= 25.0:
+            recommendation = "WAIT FOR RAIN"
+            action_verdict = f"Substantial rainfall ({forecast_rain_next_48h_mm} mm) is forecast within next 48 hours. Postpone irrigation to avoid root asphyxiation, water waste, and nitrogen leaching."
+            recommended_timing = "Re-assess soil moisture 24h after rainfall ceases."
+        elif effective_rain_mm >= net_irrigation_mm and effective_rain_mm > 5.0:
             recommendation = "WAIT FOR RAIN"
             action_verdict = f"Natural rainfall ({forecast_rain_next_48h_mm} mm forecast) will satisfy crop water demand. Delay irrigation to prevent waterlogging and reduce pumping energy costs."
-            recommended_timing = "Re-assess after rainfall on Friday."
-        elif gross_irrigation_mm <= 5.0 or current_moisture_pct >= 70.0:
+            recommended_timing = "Re-assess after rainfall ceases."
+        elif gross_irrigation_mm <= 5.0 or current_moisture_pct >= 68.0:
             recommendation = "NO IRRIGATION NEEDED"
             action_verdict = f"Soil moisture ({current_moisture_pct}%) is within optimal root-zone threshold. Crop has sufficient water storage."
             recommended_timing = "Check moisture again in 3 days."

@@ -20,8 +20,10 @@ class NasaPowerAdapter:
     @staticmethod
     def get_agroclimatology(lat: float, lon: float, days: int = 7) -> Dict[str, Any]:
         """Fetch solar radiation, growing degree units, and climate context for crop growth modeling."""
-        end_date = (datetime.utcnow() - timedelta(days=2)).strftime("%Y%m%d")
-        start_date = (datetime.utcnow() - timedelta(days=2 + days)).strftime("%Y%m%d")
+        # NASA POWER data has an inherent 4-5 day processing latency.
+        # Querying an offset of 5 days avoids -999.0 fill values for uncalculated dates.
+        end_date = (datetime.utcnow() - timedelta(days=5)).strftime("%Y%m%d")
+        start_date = (datetime.utcnow() - timedelta(days=5 + days)).strftime("%Y%m%d")
 
         params = {
             "parameters": "ALLSKY_SFC_SW_DWN,T2M_MAX,T2M_MIN,PRECTOTCORR,RH2M",
@@ -39,14 +41,17 @@ class NasaPowerAdapter:
                 if resp.status_code == 200:
                     data = resp.json()
                     props = data.get("properties", {}).get("parameter", {})
-                    solar_vals = list(props.get("ALLSKY_SFC_SW_DWN", {}).values())
-                    avg_solar = sum(solar_vals) / len(solar_vals) if solar_vals else 18.5
+                    raw_solar = list(props.get("ALLSKY_SFC_SW_DWN", {}).values())
+                    # Filter out NASA -999.0 missing/nodata fill values
+                    valid_solar = [v for v in raw_solar if v >= 0.0]
+                    avg_solar = sum(valid_solar) / len(valid_solar) if valid_solar else 18.5
 
                     return {
                         "status": "LIVE_SUCCESS",
                         "provider": "NASA POWER Agroclimatology (LaRC)",
                         "solar_radiation_mj_m2": round(avg_solar, 2),
                         "growing_degree_days_support": True,
+                        "observation_dates_count": len(valid_solar),
                         "provenance": "NASA Langley Research Center (LaRC) POWER Project supported by NASA Earth Science Directorate."
                     }
         except Exception:
@@ -57,5 +62,6 @@ class NasaPowerAdapter:
             "provider": "NASA POWER Agroclimatology (Regional Baseline)",
             "solar_radiation_mj_m2": 19.4,
             "growing_degree_days_support": True,
+            "observation_dates_count": 0,
             "provenance": "Calibrated NASA POWER Agroclimatology baseline for agricultural vegetative photosynthesis."
         }

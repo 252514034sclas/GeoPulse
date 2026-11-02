@@ -201,7 +201,6 @@ class CreateAccountActivity : ComponentActivity() {
                                         }
                                         Spacer(modifier = Modifier.height(16.dp))
                                         TextButton(onClick = {
-                                            startActivity(Intent(this@CreateAccountActivity, LoginActivity::class.java))
                                             finish()
                                         }) {
                                             Text(

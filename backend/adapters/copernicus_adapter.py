@@ -48,12 +48,24 @@ class CopernicusSentinelAdapter:
                         props = feature.get("properties", {})
                         assets = feature.get("assets", {})
 
-                        # Extract Cloud-Optimized GeoTIFF URLs for red and NIR
+                        # Extract Cloud-Optimized GeoTIFF URLs for Blue, Red, NIR, SWIR
+                        b2_href = assets.get("B02", {}).get("href")
                         b4_href = assets.get("B04", {}).get("href")
                         b8_href = assets.get("B08", {}).get("href")
                         b11_href = assets.get("B11", {}).get("href")
                         cloud_cover = props.get("eo:cloud_cover", 5.0)
                         acq_time = props.get("datetime", datetime.utcnow().isoformat())
+
+                        # Acquire free Planetary Computer SAS token for direct range read access
+                        sas_token = ""
+                        try:
+                            sas_resp = client.get("https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel2l2a01/sentinel2-l2", timeout=4.0)
+                            if sas_resp.status_code == 200:
+                                sas_token = sas_resp.json().get("token", "")
+                        except Exception:
+                            pass
+
+                        sign_url = lambda u: f"{u}?{sas_token}" if u and sas_token else u
 
                         return {
                             "status": "LIVE_SATELLITE_FOUND",
@@ -63,9 +75,11 @@ class CopernicusSentinelAdapter:
                             "spatial_resolution_meters": 10.0,
                             "cloud_cover_pct": round(cloud_cover, 1),
                             "cloud_mask_applied": True,
-                            "b4_red_url": b4_href,
-                            "b8_nir_url": b8_href,
-                            "b11_swir_url": b11_href,
+                            "b2_blue_url": sign_url(b2_href),
+                            "b4_red_url": sign_url(b4_href),
+                            "b8_nir_url": sign_url(b8_href),
+                            "b11_swir_url": sign_url(b11_href),
+                            "sas_token_authenticated": bool(sas_token),
                             "provenance": "European Space Agency (ESA) Copernicus Sentinel data, processed as surface reflectance (Bottom of Atmosphere)."
                         }
         except Exception:

@@ -119,6 +119,81 @@ class SeedSowingEngine:
                     "soil_preparation": "Puddle soil twice with cage wheels to create impermeable hardpan and prevent percolation.",
                     "water_requirement_mm": "1100 - 1250 mm (Alternate wetting and drying AWD method saves 25% water)",
                     "source_reference": "TNAU Directorate of Rice Research / ICAR-NRRI Cuttack"
+                },
+                {
+                    "variety_name": "CR 1009 Sub 1 (Savitri Sub 1)",
+                    "season": "Samba / Thaladi",
+                    "duration_days": "150 - 155 Days",
+                    "suitable_soils": ["Heavy Clay", "Alluvial Lowlands", "Delta Soils"],
+                    "seed_rate_kg_per_ha": 40.0,
+                    "seed_rate_kg_per_acre": 16.2,
+                    "spacing_cm": "20 cm (row) x 15 cm (hill)",
+                    "sowing_depth_cm": "2 - 3 cm",
+                    "expected_yield_quintals_per_acre": "22 - 26 Quintals",
+                    "recommended_sowing_window": "August 01 - September 15",
+                    "soil_preparation": "Submergence-tolerant variety ideal for flood-prone Cauvery Delta areas of Tamil Nadu.",
+                    "water_requirement_mm": "1200 mm",
+                    "source_reference": "TNAU Crop Production Guide & ICAR-NRRI"
+                }
+            ]
+        },
+        "cotton": {
+            "name": "Cotton",
+            "varieties": [
+                {
+                    "variety_name": "MCU 5 (TNAU Long Staple)",
+                    "season": "Winter Irrigated (Aug - Sep)",
+                    "duration_days": "160 - 170 Days",
+                    "suitable_soils": ["Deep Black Soils", "Red Sandy Loam with Clay Subsoil"],
+                    "seed_rate_kg_per_ha": 15.0,  # Delinted variety
+                    "seed_rate_kg_per_acre": 6.1,
+                    "spacing_cm": "75 cm (row) x 30 cm (plant)",
+                    "sowing_depth_cm": "3 - 4 cm",
+                    "expected_yield_quintals_per_acre": "10 - 12 Quintals",
+                    "recommended_sowing_window": "August 01 - August 31 (Tamil Nadu Kharif/Winter)",
+                    "soil_preparation": "Form ridges and furrows at 75 cm spacing. Apply 12.5 tonnes/ha FYM.",
+                    "water_requirement_mm": "650 - 750 mm (Critical stages: Flowering and Boll development)",
+                    "source_reference": "TNAU Agritech Portal & ICAR-Central Institute for Cotton Research (CICR) Nagpur"
+                }
+            ]
+        },
+        "groundnut": {
+            "name": "Groundnut / Peanut",
+            "varieties": [
+                {
+                    "variety_name": "TMV 13 (TNAU Bunch Type)",
+                    "season": "Kharif (June - July) / Rabi (Dec - Jan)",
+                    "duration_days": "100 - 105 Days",
+                    "suitable_soils": ["Red Sandy Loam", "Light Well-Drained Soils"],
+                    "seed_rate_kg_per_ha": 125.0,  # Kernel rate
+                    "seed_rate_kg_per_acre": 50.6,
+                    "spacing_cm": "30 cm (row) x 10 cm (plant)",
+                    "sowing_depth_cm": "4 - 5 cm",
+                    "expected_yield_quintals_per_acre": "12 - 15 Quintals",
+                    "recommended_sowing_window": "June 15 - July 15 (Kharif) or December 01 - January 15 (Rabi/Summer)",
+                    "soil_preparation": "Plough 2-3 times to loose friable tilth. Incorporate 200 kg/ha Gypsum at pegging stage.",
+                    "water_requirement_mm": "400 - 450 mm",
+                    "source_reference": "TNAU Department of Oilseeds & ICAR-Directorate of Groundnut Research (DGR)"
+                }
+            ]
+        },
+        "urad": {
+            "name": "Blackgram (Urad)",
+            "varieties": [
+                {
+                    "variety_name": "VBN 8 (TNAU YMV Resistant)",
+                    "season": "Rabi Rice Fallow / Kharif",
+                    "duration_days": "65 - 70 Days",
+                    "suitable_soils": ["Clay Loam", "Black Cotton", "Alluvial Rice Fallow"],
+                    "seed_rate_kg_per_ha": 20.0,
+                    "seed_rate_kg_per_acre": 8.1,
+                    "spacing_cm": "30 cm (row) x 10 cm (plant) or broadcast in standing rice",
+                    "sowing_depth_cm": "2 - 3 cm",
+                    "expected_yield_quintals_per_acre": "4 - 5 Quintals",
+                    "recommended_sowing_window": "Jan 15 - Feb 15 (Rice Fallow) or June - July (Kharif)",
+                    "soil_preparation": "Rice fallow: Broadcast 7-10 days before paddy harvest into waxy soil condition.",
+                    "water_requirement_mm": "250 - 300 mm",
+                    "source_reference": "TNAU National Pulses Research Centre (NPRC) Vamban"
                 }
             ]
         }

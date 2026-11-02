@@ -75,9 +75,9 @@ def seed_initial_data(db: Session):
                 area_acres=120.4,
                 sowing_date="2026-04-10",
                 status="Healthy",
-                latitude=37.7749,
-                longitude=-122.4194,
-                boundary="POLYGON((-122.425 37.772,-122.415 37.772,-122.415 37.778,-122.425 37.778,-122.425 37.772))"
+                latitude=13.0645,
+                longitude=80.2060,
+                boundary="POLYGON((80.2020 13.0610, 80.2100 13.0615, 80.2090 13.0680, 80.2020 13.0675, 80.2020 13.0610))"
             ),
             models.FieldModel(
                 user_id=default_user.id,
@@ -86,9 +86,9 @@ def seed_initial_data(db: Session):
                 area_acres=84.2,
                 sowing_date="2026-04-20",
                 status="Monitored",
-                latitude=37.7780,
-                longitude=-122.4120,
-                boundary="POLYGON((-122.418 37.775,-122.408 37.775,-122.408 37.782,-122.418 37.782,-122.418 37.775))"
+                latitude=13.0620,
+                longitude=80.2175,
+                boundary="POLYGON((80.2130 13.0580, 80.2220 13.0585, 80.2210 13.0655, 80.2130 13.0650, 80.2130 13.0580))"
             ),
             models.FieldModel(
                 user_id=default_user.id,
@@ -97,9 +97,9 @@ def seed_initial_data(db: Session):
                 area_acres=145.0,
                 sowing_date="2026-03-25",
                 status="Needs Water",
-                latitude=37.7690,
-                longitude=-122.4230,
-                boundary="POLYGON((-122.428 37.765,-122.418 37.765,-122.418 37.771,-122.428 37.771,-122.428 37.765))"
+                latitude=13.0515,
+                longitude=80.2090,
+                boundary="POLYGON((80.2040 13.0470, 80.2140 13.0475, 80.2150 13.0560, 80.2050 13.0555, 80.2040 13.0470))"
             )
         ]
         db.add_all(fields)
@@ -350,7 +350,7 @@ def get_dashboard(user: Optional[models.UserModel] = Depends(get_current_user_op
     fields = db.query(models.FieldModel).all()
     alerts = db.query(models.AlertModel).filter(models.AlertModel.is_resolved == False).all()
     tasks = db.query(models.AdvisoryTaskModel).filter(models.AdvisoryTaskModel.is_completed == False).all()
-    weather = db.query(models.WeatherModel).first()
+    weather = get_current_weather(db)
     mandi = db.query(models.MandiPriceModel).limit(4).all()
 
     moisture_records = db.query(models.SoilMoistureModel).all()
@@ -560,20 +560,61 @@ def get_field_satellite_history(field_id: int, db: Session = Depends(get_db)):
 @app.get("/api/v1/weather", response_model=schemas.WeatherSchema)
 @app.get("/api/v1/weather/current", response_model=schemas.WeatherSchema)
 def get_current_weather(db: Session = Depends(get_db)):
+    first_field = db.query(models.FieldModel).first()
+    lat = first_field.latitude if first_field else 13.0827
+    lon = first_field.longitude if first_field else 80.2707
+
+    live_weather = OpenMeteoAdapter.get_forecast(lat, lon)
     weather = db.query(models.WeatherModel).first()
     if not weather:
-        raise HTTPException(status_code=404, detail="Weather record not found")
+        weather = models.WeatherModel()
+        db.add(weather)
+
+    if live_weather.get("is_live", False):
+        weather.temperature_c = live_weather["temperature_c"]
+        weather.humidity_percent = live_weather["humidity_percent"]
+        weather.precipitation_mm = live_weather["precipitation_mm"]
+        weather.wind_speed_kmh = live_weather["wind_speed_kmh"]
+
+        crop = first_field.crop_type if first_field else "general"
+        spray_eval = evaluate_spray_safety(
+            wind_kmh=weather.wind_speed_kmh,
+            rain_prob_pct=live_weather.get("rain_next_24h_mm", 0.0),
+            temp_c=weather.temperature_c,
+            humidity_pct=weather.humidity_percent,
+            crop_type=crop,
+            operation_type="foliar_nutrient"
+        )
+        weather.spray_safe = spray_eval["is_safe_now"]
+        weather.spray_advice = spray_eval["verdict"]
+        weather.status_message = f"Live Open-Meteo observation: {weather.temperature_c}°C, Wind {weather.wind_speed_kmh} km/h, Humidity {weather.humidity_percent}%."
+        weather.data_source = "Open-Meteo NWP High-Resolution Atmospheric Model"
+        weather.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(weather)
+
     return weather
 
 
 @app.get("/api/v1/weather/spray-window", response_model=schemas.SprayWindowResponse)
-def get_spray_window(db: Session = Depends(get_db)):
-    weather = db.query(models.WeatherModel).first()
+def get_spray_window(
+    crop_type: str = Query("Corn", description="Target crop"),
+    operation_type: str = Query("foliar_nutrient", description="herbicide, fungicide, or foliar_nutrient"),
+    db: Session = Depends(get_db)
+):
+    weather = get_current_weather(db)
     wind = weather.wind_speed_kmh if weather else 8.5
     rain_prob = 0.0
     temp = weather.temperature_c if weather else 28.0
     humidity = weather.humidity_percent if weather else 58.0
-    return evaluate_spray_safety(wind_kmh=wind, rain_prob_pct=rain_prob, temp_c=temp, humidity_pct=humidity)
+    return evaluate_spray_safety(
+        wind_kmh=wind,
+        rain_prob_pct=rain_prob,
+        temp_c=temp,
+        humidity_pct=humidity,
+        crop_type=crop_type,
+        operation_type=operation_type
+    )
 
 
 # -------------------------------------------------------------

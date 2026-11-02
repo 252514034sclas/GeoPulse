@@ -36,13 +36,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.input.pointer.pointerInput
+import org.maplibre.android.geometry.LatLng
+import com.geopulse.app.map.MapLibreGisMap
+import com.geopulse.app.map.BasemapType
+import com.geopulse.app.map.MapConfig
+import com.geopulse.app.map.GeospatialMath
 import com.geopulse.app.network.*
 import com.geopulse.app.ui.premium.*
 import com.geopulse.app.ui.theme.*
 import kotlinx.coroutines.launch
 
 class Screen7Activity : ComponentActivity() {
+
+    private val selectedTargetTab = mutableIntStateOf(-1)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +62,12 @@ class Screen7Activity : ComponentActivity() {
                 val coroutineScope = rememberCoroutineScope()
                 var showLogoutDialog by remember { mutableStateOf(false) }
                 val isDark = ThemePreferences.isDarkTheme
+
+                LaunchedEffect(selectedTargetTab.intValue) {
+                    if (selectedTargetTab.intValue in 0..3 && pagerState.currentPage != selectedTargetTab.intValue) {
+                        pagerState.scrollToPage(selectedTargetTab.intValue)
+                    }
+                }
 
                 if (showLogoutDialog) {
                     AlertDialog(
@@ -91,7 +105,7 @@ class Screen7Activity : ComponentActivity() {
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier.fillMaxSize(),
-                        userScrollEnabled = true
+                        userScrollEnabled = pagerState.currentPage != 1
                     ) { page ->
                         when (page) {
                             0 -> {
@@ -185,7 +199,7 @@ class Screen7Activity : ComponentActivity() {
         val targetTab = intent.getIntExtra("TARGET_TAB", -1)
         if (targetTab in 0..3) {
             // Handled when activity is re-entered
-            recreate()
+            selectedTargetTab.intValue = targetTab
         }
     }
 }
@@ -204,6 +218,7 @@ data class GisZone(
     val status: String,
     val offsetFraction: Offset,
     val polygonPoints: List<Offset> = emptyList(),
+    val geoPoints: List<LatLng> = emptyList(),
     val irrigationVerdict: String = "NO IRRIGATION NEEDED",
     val irrigationDepthMm: Double = 0.0,
     val irrigationVolumeLitres: Long = 0L,
@@ -229,6 +244,12 @@ val initialGisZones = listOf(
         status = "Healthy",
         offsetFraction = Offset(0.35f, 0.35f),
         polygonPoints = listOf(Offset(0.15f, 0.15f), Offset(0.55f, 0.12f), Offset(0.50f, 0.48f), Offset(0.18f, 0.45f)),
+        geoPoints = listOf(
+            LatLng(13.0610, 80.2020),
+            LatLng(13.0615, 80.2100),
+            LatLng(13.0680, 80.2090),
+            LatLng(13.0675, 80.2020)
+        ),
         irrigationVerdict = "NO IRRIGATION NEEDED",
         irrigationDepthMm = 0.0,
         irrigationVolumeLitres = 0L,
@@ -251,6 +272,12 @@ val initialGisZones = listOf(
         status = "Monitored",
         offsetFraction = Offset(0.68f, 0.42f),
         polygonPoints = listOf(Offset(0.58f, 0.18f), Offset(0.88f, 0.22f), Offset(0.85f, 0.55f), Offset(0.54f, 0.52f)),
+        geoPoints = listOf(
+            LatLng(13.0580, 80.2130),
+            LatLng(13.0585, 80.2220),
+            LatLng(13.0655, 80.2210),
+            LatLng(13.0650, 80.2130)
+        ),
         irrigationVerdict = "NO IRRIGATION NEEDED",
         irrigationDepthMm = 0.0,
         irrigationVolumeLitres = 0L,
@@ -273,6 +300,12 @@ val initialGisZones = listOf(
         status = "Needs Water",
         offsetFraction = Offset(0.48f, 0.68f),
         polygonPoints = listOf(Offset(0.35f, 0.60f), Offset(0.62f, 0.60f), Offset(0.62f, 0.85f), Offset(0.35f, 0.85f)),
+        geoPoints = listOf(
+            LatLng(13.0470, 80.2040),
+            LatLng(13.0475, 80.2140),
+            LatLng(13.0560, 80.2150),
+            LatLng(13.0555, 80.2050)
+        ),
         irrigationVerdict = "IRRIGATE TODAY",
         irrigationDepthMm = 35.0,
         irrigationVolumeLitres = 20545000L,
@@ -302,21 +335,71 @@ fun FullGisMapTab(
     onBoundaryClick: () -> Unit,
     onNavigate: ((Class<*>) -> Unit)? = null
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val zones = remember { mutableStateListOf(*initialGisZones.toTypedArray()) }
     var selectedZone by remember { mutableStateOf(zones[0]) }
     var selectedLayer by remember { mutableStateOf("NDVI Heatmap") }
+    var activeBasemap by remember { mutableStateOf(MapConfig.getSelectedBasemap(context)) }
 
-    // Interactive Drawing Mode State
+    // Interactive GIS Drawing Mode State
     var isDrawingMode by remember { mutableStateOf(false) }
-    val drawnPoints = remember { mutableStateListOf<Offset>() }
+    val drawnGeoPoints = remember { mutableStateListOf<LatLng>() }
     var isSubmitting by remember { mutableStateOf(false) }
-    var statusNotice by remember { mutableStateOf<String?>("Tap any parcel pin or switch to 'Interactive Boundary' to draw your farmland.") }
+    var statusNotice by remember { mutableStateOf<String?>("Interactive MapLibre GIS loaded. Tap 'Interactive Boundary' to trace GPS parcel coordinates.") }
     val coroutineScope = rememberCoroutineScope()
     val repository = remember { GeoPulseRepository() }
 
-    val drawnNormArea = calculateShoelaceArea(drawnPoints)
-    val drawnLiveAcres = kotlin.math.round((drawnNormArea * 741.3) * 10.0) / 10.0
-    val drawnLiveHa = kotlin.math.round((drawnLiveAcres / 2.47105) * 10.0) / 10.0
+    // Persist and load drawn fields from backend database
+    LaunchedEffect(Unit) {
+        try {
+            val summary = repository.getDashboardSummary()
+            if (summary.fields.isNotEmpty()) {
+                summary.fields.forEach { field ->
+                    if (zones.none { it.id == field.id.toString() || it.name == field.name }) {
+                        val ha = field.areaAcres / 2.47105
+                        val parsedGeoPoints = if (!field.boundary.isNullOrEmpty()) {
+                            GeospatialMath.parseWktToLatLngList(field.boundary)
+                        } else {
+                            val lat = field.latitude
+                            val lon = field.longitude
+                            listOf(
+                                LatLng(lat - 0.003, lon - 0.004),
+                                LatLng(lat - 0.003, lon + 0.004),
+                                LatLng(lat + 0.003, lon + 0.004),
+                                LatLng(lat + 0.003, lon - 0.004)
+                            )
+                        }
+                        zones.add(
+                            GisZone(
+                                id = field.id.toString(),
+                                name = field.name,
+                                acreage = "${String.format(java.util.Locale.US, "%.1f", field.areaAcres)} Acres (${String.format(java.util.Locale.US, "%.1f", ha)} ha)",
+                                hectares = ha,
+                                crop = field.cropType,
+                                ndvi = "0.82 (Good)",
+                                moisture = "70%",
+                                status = field.status,
+                                offsetFraction = Offset(0.5f, 0.5f),
+                                polygonPoints = emptyList(),
+                                geoPoints = parsedGeoPoints,
+                                irrigationVerdict = "NO IRRIGATION NEEDED",
+                                irrigationDepthMm = 0.0,
+                                irrigationVolumeLitres = 0L,
+                                seedVariety = "DKC 9108 (Bio-Seed)",
+                                seedRateKgHa = 20.0,
+                                totalSeedKg = kotlin.math.round(20.0 * ha * 10.0) / 10.0,
+                                source = "Persisted Field Boundary (GeoPulse Database)"
+                            )
+                        )
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
+    val liveArea = remember(drawnGeoPoints.size) {
+        GeospatialMath.calculateGeodesicArea(drawnGeoPoints.toList())
+    }
 
     val isDark = ThemePreferences.isDarkTheme
     val gisBgBrush = if (isDark) {
@@ -378,6 +461,10 @@ fun FullGisMapTab(
                                         } else {
                                             selectedLayer = layer
                                             isDrawingMode = false
+                                            if (layer == "Satellite RGB") {
+                                                activeBasemap = BasemapType.SATELLITE
+                                                MapConfig.setSelectedBasemap(context, BasemapType.SATELLITE)
+                                            }
                                         }
                                     },
                                     label = { Text(layer, fontWeight = FontWeight.SemiBold) },
@@ -403,18 +490,18 @@ fun FullGisMapTab(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "✏️ Draw Land Boundary (${drawnPoints.size} points)",
+                                            text = "✏️ Draw Land Boundary (${drawnGeoPoints.size} points)",
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 13.sp,
                                             color = LimeAccent
                                         )
-                                        if (drawnPoints.size >= 3) {
+                                        if (drawnGeoPoints.size >= 3) {
                                             Surface(
                                                 shape = RoundedCornerShape(8.dp),
                                                 color = EmeraldPrimary.copy(alpha = 0.25f)
                                             ) {
                                                 Text(
-                                                    text = "Area: $drawnLiveAcres ac ($drawnLiveHa ha)",
+                                                    text = "Area: ${String.format(java.util.Locale.US, "%.1f", liveArea.areaAcres)} ac (${String.format(java.util.Locale.US, "%.1f", liveArea.areaHectares)} ha)",
                                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                                     fontSize = 11.5.sp,
                                                     fontWeight = FontWeight.Bold,
@@ -436,9 +523,9 @@ fun FullGisMapTab(
                                     ) {
                                         OutlinedButton(
                                             onClick = {
-                                                if (drawnPoints.isNotEmpty()) drawnPoints.removeAt(drawnPoints.size - 1)
+                                                if (drawnGeoPoints.isNotEmpty()) drawnGeoPoints.removeAt(drawnGeoPoints.size - 1)
                                             },
-                                            enabled = drawnPoints.isNotEmpty(),
+                                            enabled = drawnGeoPoints.isNotEmpty(),
                                             modifier = Modifier.weight(1f).height(38.dp),
                                             shape = RoundedCornerShape(8.dp)
                                         ) {
@@ -446,8 +533,8 @@ fun FullGisMapTab(
                                         }
 
                                         OutlinedButton(
-                                            onClick = { drawnPoints.clear() },
-                                            enabled = drawnPoints.isNotEmpty(),
+                                            onClick = { drawnGeoPoints.clear() },
+                                            enabled = drawnGeoPoints.isNotEmpty(),
                                             modifier = Modifier.weight(1f).height(38.dp),
                                             shape = RoundedCornerShape(8.dp)
                                         ) {
@@ -456,17 +543,11 @@ fun FullGisMapTab(
 
                                         Button(
                                             onClick = {
-                                                if (drawnPoints.size >= 3) {
+                                                if (drawnGeoPoints.size >= 3) {
                                                     coroutineScope.launch {
                                                         isSubmitting = true
                                                         statusNotice = "Computing geodesic area and Sentinel-2 indices..."
-                                                        val coords = drawnPoints.map { p ->
-                                                            val lon = 80.21 + (p.x - 0.5) * 0.02
-                                                            val lat = 13.06 + (0.5 - p.y) * 0.02
-                                                            "%.6f %.6f".format(java.util.Locale.US, lon, lat)
-                                                        }.toMutableList()
-                                                        coords.add(coords.first())
-                                                        val wkt = "POLYGON ((${coords.joinToString(", ")}))"
+                                                        val wkt = GeospatialMath.latLngListToWkt(drawnGeoPoints.toList())
 
                                                         val newField = repository.createDrawnField(
                                                             name = "My Parcel ${zones.size + 1}",
@@ -474,16 +555,14 @@ fun FullGisMapTab(
                                                             boundaryWkt = wkt
                                                         )
 
-                                                        val finalAcres = newField?.areaAcres ?: drawnLiveAcres.coerceAtLeast(12.0)
+                                                        val finalAcres = newField?.areaAcres ?: liveArea.areaAcres.coerceAtLeast(10.0)
                                                         val finalHa = finalAcres / 2.47105
-                                                        val irri = repository.getIrrigationRecommendation(newField?.id ?: (zones.size + 1))
-                                                        val sow = repository.getSowingRecommendation(newField?.id ?: (zones.size + 1))
-
-                                                        val avgX = drawnPoints.map { it.x }.average().toFloat()
-                                                        val avgY = drawnPoints.map { it.y }.average().toFloat()
+                                                        val fieldId = newField?.id ?: (zones.size + 1)
+                                                        val irri = repository.getIrrigationRecommendation(fieldId)
+                                                        val sow = repository.getSowingRecommendation(fieldId)
 
                                                         val createdZone = GisZone(
-                                                            id = "${zones.size + 1}",
+                                                            id = "$fieldId",
                                                             name = newField?.name ?: "My Parcel ${zones.size + 1}",
                                                             acreage = "${String.format(java.util.Locale.US, "%.1f", finalAcres)} Acres (${String.format(java.util.Locale.US, "%.1f", finalHa)} ha)",
                                                             hectares = finalHa,
@@ -491,8 +570,9 @@ fun FullGisMapTab(
                                                             ndvi = "0.82 (Good)",
                                                             moisture = "70%",
                                                             status = "Registered",
-                                                            offsetFraction = Offset(avgX, avgY),
-                                                            polygonPoints = drawnPoints.toList(),
+                                                            offsetFraction = Offset(0.5f, 0.5f),
+                                                            polygonPoints = emptyList(),
+                                                            geoPoints = drawnGeoPoints.toList(),
                                                             irrigationVerdict = irri.irrigationRecommendation,
                                                             irrigationDepthMm = irri.recommendedDepthMm,
                                                             irrigationVolumeLitres = (irri.recommendedDepthMm * finalHa * 10000.0).toLong(),
@@ -502,20 +582,20 @@ fun FullGisMapTab(
                                                             totalSeedKg = kotlin.math.round(sow.seedRatePerHaKg * finalHa * 10.0) / 10.0,
                                                             approxBags = "${kotlin.math.ceil((sow.seedRatePerHaKg * finalHa) / 25.0).toInt()} bags (25kg)",
                                                             spraySafe = true,
-                                                            sprayExplanation = "Calm winds · Safe foliar spraying",
-                                                            source = "Farmer Drawn Polygon · Geodesic Engine"
+                                                            sprayExplanation = "Calm winds · Safe foliar spraying window",
+                                                            source = "Farmer Drawn Polygon · MapLibre Geodesic Engine"
                                                         )
 
                                                         zones.add(createdZone)
                                                         selectedZone = createdZone
-                                                        drawnPoints.clear()
+                                                        drawnGeoPoints.clear()
                                                         isDrawingMode = false
                                                         isSubmitting = false
                                                         statusNotice = "Field registered! Physical water volume & seeds calculated for your land."
                                                     }
                                                 }
                                             },
-                                            enabled = drawnPoints.size >= 3 && !isSubmitting,
+                                            enabled = drawnGeoPoints.size >= 3 && !isSubmitting,
                                             modifier = Modifier.weight(1.8f).height(38.dp),
                                             shape = RoundedCornerShape(8.dp),
                                             colors = ButtonDefaults.buttonColors(containerColor = LimeAccent, contentColor = PineDark)
@@ -529,157 +609,36 @@ fun FullGisMapTab(
                     }
                 }
 
-                // Interactive GIS Vector & Satellite Map Canvas
+                // Interactive Real MapLibre Native GIS Map
                 item {
-                    Box(
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(280.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF09140D))
-                            .border(1.5.dp, if (isDrawingMode) LimeAccent else CardBorderColor, RoundedCornerShape(16.dp))
-                            .pointerInput(isDrawingMode) {
-                                if (isDrawingMode) {
-                                    detectTapGestures { tapOffset ->
-                                        val normX = (tapOffset.x / size.width).coerceIn(0.04f, 0.96f)
-                                        val normY = (tapOffset.y / size.height).coerceIn(0.04f, 0.96f)
-                                        drawnPoints.add(Offset(normX, normY))
-                                    }
-                                }
-                            }
+                            .height(350.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.5.dp, if (isDrawingMode) LimeAccent else CardBorderColor),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF09140D))
                     ) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            val w = size.width
-                            val h = size.height
-
-                            // 1. Natural satellite landscape simulation background
-                            drawRect(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(Color(0xFF163820), Color(0xFF09150E)),
-                                    center = Offset(w * 0.5f, h * 0.5f),
-                                    radius = w * 0.9f
-                                )
-                            )
-
-                            // 2. Geospatial Grid Lines (10m Sentinel-2 pixel grid simulation)
-                            val step = 38f
-                            var x = 0f
-                            while (x < w) {
-                                drawLine(Color(0x18FFFFFF), Offset(x, 0f), Offset(x, h), strokeWidth = 1f)
-                                x += step
+                        MapLibreGisMap(
+                            modifier = Modifier.fillMaxSize(),
+                            zones = zones,
+                            selectedZone = selectedZone,
+                            onZoneSelected = { zone ->
+                                selectedZone = zone
+                            },
+                            isDrawingMode = isDrawingMode,
+                            drawnPoints = drawnGeoPoints.toList(),
+                            onMapTappedInDrawingMode = { latLng ->
+                                drawnGeoPoints.add(latLng)
+                            },
+                            activeBasemap = activeBasemap,
+                            onBasemapChange = { newType ->
+                                activeBasemap = newType
+                                MapConfig.setSelectedBasemap(context, newType)
                             }
-                            var y = 0f
-                            while (y < h) {
-                                drawLine(Color(0x18FFFFFF), Offset(0f, y), Offset(w, y), strokeWidth = 1f)
-                                y += step
-                            }
-
-                            // 3. Agricultural crop row contours
-                            var contourX = 0f
-                            while (contourX < w + h) {
-                                drawLine(
-                                    color = Color(0x0C81C784),
-                                    start = Offset(contourX, 0f),
-                                    end = Offset(contourX - h * 0.6f, h),
-                                    strokeWidth = 1.2f
-                                )
-                                contourX += 30f
-                            }
-
-                            // 4. Render Established Parcels
-                            zones.forEach { zone ->
-                                if (zone.polygonPoints.size >= 3) {
-                                    val polyPath = Path().apply {
-                                        moveTo(zone.polygonPoints[0].x * w, zone.polygonPoints[0].y * h)
-                                        for (i in 1 until zone.polygonPoints.size) {
-                                            lineTo(zone.polygonPoints[i].x * w, zone.polygonPoints[i].y * h)
-                                        }
-                                        close()
-                                    }
-
-                                    val fillColor = when (selectedLayer) {
-                                        "Soil Moisture" -> if (zone.moisture.contains("48")) Color(0x66FFB74D) else Color(0x6600BCD4)
-                                        "Satellite RGB" -> Color(0x662E7D32)
-                                        else -> if (zone.ndvi.contains("0.8")) Color(0x664CAF50) else Color(0x668BC34A)
-                                    }
-                                    drawPath(polyPath, fillColor)
-
-                                    val isSelected = selectedZone.id == zone.id
-                                    drawPath(
-                                        polyPath,
-                                        if (isSelected) Color.White else EmeraldPrimary,
-                                        style = Stroke(width = if (isSelected) 3.5f else 1.8f)
-                                    )
-                                }
-                            }
-
-                            // 5. Render Active User-Drawn Boundary
-                            if (drawnPoints.isNotEmpty()) {
-                                val drawnPath = Path()
-                                drawnPath.moveTo(drawnPoints[0].x * w, drawnPoints[0].y * h)
-                                for (i in 1 until drawnPoints.size) {
-                                    drawnPath.lineTo(drawnPoints[i].x * w, drawnPoints[i].y * h)
-                                }
-
-                                if (drawnPoints.size >= 3) {
-                                    drawnPath.close()
-                                    drawPath(drawnPath, Color(0x5581C784))
-                                    drawPath(drawnPath, LimeAccent, style = Stroke(width = 3.2f))
-                                } else {
-                                    drawPath(drawnPath, LimeAccent, style = Stroke(width = 2.5f))
-                                }
-
-                                // Draw numbered node handles
-                                drawnPoints.forEach { pt ->
-                                    val nodeCenter = Offset(pt.x * w, pt.y * h)
-                                    drawCircle(Color.White, radius = 9f, center = nodeCenter)
-                                    drawCircle(LimeAccent, radius = 6f, center = nodeCenter)
-                                }
-                            }
-                        }
-
-                        // Interactive Centroid Pins for parcel selection
-                        if (!isDrawingMode) {
-                            zones.forEach { zone ->
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(
-                                            start = (zone.offsetFraction.x * 250).dp,
-                                            top = (zone.offsetFraction.y * 200).dp
-                                        )
-                                ) {
-                                    Surface(
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = if (selectedZone.id == zone.id) LimeAccent else PineDark.copy(alpha = 0.88f),
-                                        border = BorderStroke(1.2.dp, if (selectedZone.id == zone.id) Color.White else LimeAccent),
-                                        modifier = Modifier.clickable { selectedZone = zone }
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Place,
-                                                contentDescription = null,
-                                                tint = if (selectedZone.id == zone.id) PineDark else LimeAccent,
-                                                modifier = Modifier.size(14.dp)
-                                            )
-                                            Text(
-                                                text = zone.name.split(" ")[0],
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = if (selectedZone.id == zone.id) PineDark else Color.White
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        )
                     }
                 }
-
                 // Status Notification Banner
                 if (statusNotice != null) {
                     item {

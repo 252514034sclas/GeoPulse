@@ -157,7 +157,6 @@ class LoginActivity : ComponentActivity() {
                                     }
                                     TextButton(onClick = {
                                         startActivity(Intent(this@LoginActivity, ForgotPasswordActivity::class.java))
-                                        finish()
                                     }) {
                                         Text("Forgot Password?", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                                     }
@@ -189,7 +188,6 @@ class LoginActivity : ComponentActivity() {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 TextButton(onClick = {
                                     startActivity(Intent(this@LoginActivity, CreateAccountActivity::class.java))
-                                    finish()
                                 }) {
                                     Text(
                                         text = "Don't have an account? Sign Up",
