@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Warning
 import com.geopulse.app.ui.theme.GeoPulseTheme
 
 class Screen28Activity : ComponentActivity() {
@@ -15,10 +15,12 @@ class Screen28Activity : ComponentActivity() {
                 GeoDetailScreenContent(
                     title = "Weather & Crop Warning Center",
                     subtitle = "Immediate alerts for severe thunderstorms, heatwaves, frost, and unseasonal rainfall.",
-                    icon = Icons.Default.Notifications,
+                    icon = Icons.Default.Warning,
                     activity = this,
-                    nextActivityClass = Screen14Activity::class.java,
-                    nextButtonText = "View 7-Day Weather Forecast"
+                    primaryActionClass = Screen14Activity::class.java,
+                    primaryActionText = "View 7-Day Weather & Spray Forecast",
+                    secondaryActionClass = Screen13Activity::class.java,
+                    secondaryActionText = "Safe Watering Timing Guide"
                 )
             }
         }

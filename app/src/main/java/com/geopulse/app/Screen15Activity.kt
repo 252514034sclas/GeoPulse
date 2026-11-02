@@ -14,11 +14,13 @@ class Screen15Activity : ComponentActivity() {
             GeoPulseTheme {
                 GeoDetailScreenContent(
                     title = "Pest & Disease Advisory Guide",
-                    subtitle = "Early seasonal risk warnings and practical prevention steps for common regional crop pests.",
+                    subtitle = "Early seasonal risk warnings, biological controls, and practical prevention steps for common regional crop pests.",
                     icon = Icons.Default.Warning,
                     activity = this,
-                    nextActivityClass = Screen26Activity::class.java,
-                    nextButtonText = "Consult Kisan Helpline / Expert"
+                    primaryActionClass = Screen11Activity::class.java,
+                    primaryActionText = "View Satellite Crop Health (NDVI)",
+                    secondaryActionClass = Screen26Activity::class.java,
+                    secondaryActionText = "Consult Kisan Helpline (1800-180-1551)"
                 )
             }
         }

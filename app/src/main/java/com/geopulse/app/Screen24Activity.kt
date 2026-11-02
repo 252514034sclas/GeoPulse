@@ -17,8 +17,10 @@ class Screen24Activity : ComponentActivity() {
                     subtitle = "Review bi-weekly satellite crop greenness images to see how your crops improved over time.",
                     icon = Icons.Default.History,
                     activity = this,
-                    nextActivityClass = Screen11Activity::class.java,
-                    nextButtonText = "View Current Crop Vigor (NDVI)"
+                    primaryActionClass = Screen11Activity::class.java,
+                    primaryActionText = "View Current Crop Vigor (NDVI)",
+                    secondaryActionClass = Screen18Activity::class.java,
+                    secondaryActionText = "View Crop Growth Calendar"
                 )
             }
         }

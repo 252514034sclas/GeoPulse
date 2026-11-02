@@ -140,6 +140,9 @@ class Screen7Activity : ComponentActivity() {
                                     },
                                     onYieldClick = {
                                         startActivity(Intent(this@Screen7Activity, Screen16Activity::class.java))
+                                    },
+                                    onNavigate = { targetClass ->
+                                        startActivity(Intent(this@Screen7Activity, targetClass))
                                     }
                                 )
                             }

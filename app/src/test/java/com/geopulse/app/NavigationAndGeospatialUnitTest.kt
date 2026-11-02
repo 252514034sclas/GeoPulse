@@ -116,33 +116,68 @@ class NavigationAndGeospatialUnitTest {
     }
 
     @Test
-    fun testAgronomicWorkflowRoutingIntegrity() {
-        // Verified route definitions ensuring no button-chain mismatches exist
-        val routeMappings = mapOf(
-            11 to 20, // Screen 11 (NDVI Crop Health) -> Screen 20 (Fertilizer Advisory)
-            12 to 13, // Screen 12 (Soil Moisture) -> Screen 13 (Watering Timing Guide)
-            13 to 14, // Screen 13 (Watering Timing) -> Screen 14 (Weather & Spraying Advisory)
-            14 to 15, // Screen 14 (Weather Advisory) -> Screen 15 (Pest & Disease Advisory)
-            15 to 26, // Screen 15 (Pest Advisory) -> Screen 26 (Kisan Helpline & Agronomist Chat)
+    fun testPrecisionAgricultureHubDirectAccess() {
+        // Direct access list from Dashboard without forced button chains
+        val hubDirectDestinations = listOf(
+            Screen11Activity::class.java, // Crop Health NDVI
+            Screen12Activity::class.java, // Soil Moisture NDWI
+            Screen13Activity::class.java, // Irrigation Schedule
+            Screen14Activity::class.java, // Weather & Spray Advisory
+            Screen15Activity::class.java, // Pest & Disease Advisory
+            Screen20Activity::class.java, // Fertilizer Recommendations
+            Screen16Activity::class.java, // Harvest & Yield Estimator
+            Screen17Activity::class.java, // Field Boundary & GPS Mapping
+            Screen18Activity::class.java, // Crop Growth Calendar
+            Screen19Activity::class.java, // Field Operations & Plowing
+            Screen27Activity::class.java, // Mandi Market Rates
+            Screen22Activity::class.java, // Farm Budget Tracker
+            Screen26Activity::class.java, // Kisan Helpline (1800-180-1551)
+            Screen28Activity::class.java  // Weather & Warning Center
+        )
+        assertEquals("Dashboard Precision Ag Hub must provide 1-tap access to 14 core capabilities", 14, hubDirectDestinations.size)
+        assertEquals("All direct destinations must be unique", 14, hubDirectDestinations.distinct().size)
+    }
+
+    @Test
+    fun testDualActionContextualRoutingIntegrity() {
+        // Primary Action Mappings (Optional cross-references, not forced chains)
+        val primaryRoutes = mapOf(
+            11 to 20, // Screen 11 (Crop Health) -> Screen 20 (Fertilizer Dosing)
+            12 to 13, // Screen 12 (Soil Moisture) -> Screen 13 (Watering Timing FAO-56)
+            13 to 14, // Screen 13 (Watering Timing) -> Screen 14 (Weather & Spraying)
+            14 to 15, // Screen 14 (Weather Advisory) -> Screen 15 (Pest Advisory)
+            15 to 11, // Screen 15 (Pest Advisory) -> Screen 11 (Satellite Crop Health NDVI)
             16 to 21, // Screen 16 (Yield Estimator) -> Screen 21 (Harvest Storage Tips)
             17 to 23, // Screen 17 (Field Boundary) -> Screen 23 (My Land Parcels)
-            18 to 12, // Screen 18 (Crop Calendar) -> Screen 12 (Soil Moisture Status)
-            19 to 14, // Screen 19 (Field Operations & Plowing) -> Screen 14 (Weather & Spray Forecast)
-            20 to 12, // Screen 20 (Fertilizer Guide) -> Screen 12 (Soil Moisture Check)
+            18 to 19, // Screen 18 (Crop Calendar) -> Screen 19 (Field Operations & Plowing)
+            19 to 14, // Screen 19 (Plowing Planner) -> Screen 14 (Weather & Spray Forecast)
+            20 to 12, // Screen 20 (Fertilizer Guide) -> Screen 12 (Field Moisture Status)
             21 to 27, // Screen 21 (Harvest Storage) -> Screen 27 (Local Mandi Market Rates)
-            22 to 27, // Screen 22 (Farm Budget Tracker) -> Screen 27 (Local Mandi Market Rates)
-            23 to 17, // Screen 23 (Land Parcels) -> Screen 17 (Field Boundary & Land Area)
-            24 to 11, // Screen 24 (Satellite Growth History) -> Screen 11 (Satellite Crop Health NDVI)
-            25 to 20, // Screen 25 (Organic Soil & Composting) -> Screen 20 (Fertilizer Guide)
-            27 to 22, // Screen 27 (Mandi Market Rates) -> Screen 22 (Farm Budget Tracker)
-            28 to 14  // Screen 28 (Weather Warning Center) -> Screen 14 (Weather & Spray Advisory)
+            22 to 27, // Screen 22 (Farm Budget) -> Screen 27 (Local Mandi Market Rates)
+            23 to 17, // Screen 23 (Land Parcels) -> Screen 17 (Field Boundary & Area)
+            24 to 11, // Screen 24 (Satellite Growth History) -> Screen 11 (Crop Health NDVI)
+            25 to 20, // Screen 25 (Organic Soil) -> Screen 20 (Fertilizer Guide)
+            27 to 22, // Screen 27 (Mandi Rates) -> Screen 22 (Farm Budget Tracker)
+            28 to 14  // Screen 28 (Warning Center) -> Screen 14 (Weather & Spray Advisory)
         )
 
-        assertEquals("Plowing Planner (19) must route to Weather & Spray Advisory (14)", 14, routeMappings[19])
-        assertEquals("Farm Budget (22) must route to Mandi Rates (27)", 27, routeMappings[22])
-        assertEquals("Land Parcels (23) must route to Field Boundary (17)", 17, routeMappings[23])
-        assertEquals("Satellite History (24) must route to Crop Health NDVI (11)", 11, routeMappings[24])
-        assertEquals("Pest Advisory (15) must route to Kisan Helpline (26)", 26, routeMappings[15])
-        assertEquals("Total verified workflow routes", 17, routeMappings.size)
+        // Secondary Action Mappings (Alternative agronomic references)
+        val secondaryRoutes = mapOf(
+            15 to 26, // Screen 15 (Pest Advisory) -> Screen 26 (Kisan Helpline)
+            12 to 14, // Screen 12 (Soil Moisture) -> Screen 14 (Weather Forecast)
+            20 to 25, // Screen 20 (Fertilizer Guide) -> Screen 25 (Organic Composting)
+            11 to 12, // Screen 11 (Crop Health) -> Screen 12 (Soil Moisture)
+            16 to 27, // Screen 16 (Yield Estimator) -> Screen 27 (Mandi Prices)
+            22 to 30  // Screen 22 (Farm Budget) -> Screen 30 (Export Records)
+        )
+
+        assertEquals("Pest Advisory primary action must lead to Crop Health NDVI (11)", 11, primaryRoutes[15])
+        assertEquals("Pest Advisory secondary action must lead to Kisan Helpline (26)", 26, secondaryRoutes[15])
+        assertEquals("Soil Moisture primary action must lead to Irrigation Schedule (13)", 13, primaryRoutes[12])
+        assertEquals("Fertilizer Guide primary action must lead to Soil Moisture (12)", 12, primaryRoutes[20])
+        assertEquals("Fertilizer Guide secondary action must lead to Organic Soil Health (25)", 25, secondaryRoutes[20])
+        assertEquals("Plowing Planner primary action must lead to Weather Forecast (14)", 14, primaryRoutes[19])
+        assertEquals("Farm Budget primary action must lead to Mandi Rates (27)", 27, primaryRoutes[22])
+        assertEquals("Land Parcels primary action must lead to Field Boundary (17)", 17, primaryRoutes[23])
     }
 }

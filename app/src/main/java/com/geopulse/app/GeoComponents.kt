@@ -1568,9 +1568,15 @@ fun GeoDetailScreenContent(
     subtitle: String,
     icon: ImageVector,
     activity: ComponentActivity,
+    primaryActionClass: Class<*>? = null,
+    primaryActionText: String? = null,
+    secondaryActionClass: Class<*>? = null,
+    secondaryActionText: String? = null,
     nextActivityClass: Class<*>? = null,
     nextButtonText: String = "View Related Advisory"
 ) {
+    val effectivePrimaryClass = primaryActionClass ?: nextActivityClass
+    val effectivePrimaryText = primaryActionText ?: nextButtonText
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         visible = true
@@ -1700,12 +1706,12 @@ fun GeoDetailScreenContent(
                         }
 
                         // Contextual Primary Action Button
-                        if (nextActivityClass != null) {
+                        if (effectivePrimaryClass != null) {
                             item {
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Button(
                                     onClick = {
-                                        activity.startActivity(Intent(activity, nextActivityClass))
+                                        activity.startActivity(Intent(activity, effectivePrimaryClass))
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -1713,7 +1719,26 @@ fun GeoDetailScreenContent(
                                     shape = RoundedCornerShape(14.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                                 ) {
-                                    Text(nextButtonText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                    Text(effectivePrimaryText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+
+                        // Contextual Secondary Action Button (Optional)
+                        if (secondaryActionClass != null && secondaryActionText != null) {
+                            item {
+                                OutlinedButton(
+                                    onClick = {
+                                        activity.startActivity(Intent(activity, secondaryActionClass))
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(50.dp),
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = LimeAccent),
+                                    border = BorderStroke(1.dp, LimeAccent.copy(alpha = 0.6f))
+                                ) {
+                                    Text(secondaryActionText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }

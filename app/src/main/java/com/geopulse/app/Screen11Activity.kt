@@ -17,8 +17,10 @@ class Screen11Activity : ComponentActivity() {
                     subtitle = "Satellite greenness (NDVI) monitoring in simple layman terms. Learn which parts of your field need care.",
                     icon = Icons.Default.Eco,
                     activity = this,
-                    nextActivityClass = Screen20Activity::class.java,
-                    nextButtonText = "View Fertilizer Recommendations"
+                    primaryActionClass = Screen20Activity::class.java,
+                    primaryActionText = "Calculate Fertilizer Dosing",
+                    secondaryActionClass = Screen12Activity::class.java,
+                    secondaryActionText = "Check Soil Hydration Status"
                 )
             }
         }

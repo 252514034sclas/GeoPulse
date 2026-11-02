@@ -17,8 +17,10 @@ class Screen21Activity : ComponentActivity() {
                     subtitle = "Practical post-harvest steps: drying methods, safe grain moisture, and pest-free storage.",
                     icon = Icons.Default.Inventory,
                     activity = this,
-                    nextActivityClass = Screen27Activity::class.java,
-                    nextButtonText = "View Mandi Selling Prices"
+                    primaryActionClass = Screen27Activity::class.java,
+                    primaryActionText = "View Mandi Selling Prices",
+                    secondaryActionClass = Screen16Activity::class.java,
+                    secondaryActionText = "Harvest & Yield Estimator"
                 )
             }
         }

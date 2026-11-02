@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Nature
 import com.geopulse.app.ui.theme.GeoPulseTheme
 
 class Screen25Activity : ComponentActivity() {
@@ -15,10 +15,12 @@ class Screen25Activity : ComponentActivity() {
                 GeoDetailScreenContent(
                     title = "Organic Soil Health & Composting",
                     subtitle = "Improve long-term soil fertility naturally using compost, green manure, and mulching.",
-                    icon = Icons.Default.Eco,
+                    icon = Icons.Default.Nature,
                     activity = this,
-                    nextActivityClass = Screen20Activity::class.java,
-                    nextButtonText = "View Fertilizer Recommendations"
+                    primaryActionClass = Screen20Activity::class.java,
+                    primaryActionText = "View Chemical Fertilizer Guide",
+                    secondaryActionClass = Screen12Activity::class.java,
+                    secondaryActionText = "Check Soil Moisture Status"
                 )
             }
         }

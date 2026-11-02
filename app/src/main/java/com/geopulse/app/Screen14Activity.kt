@@ -17,8 +17,10 @@ class Screen14Activity : ComponentActivity() {
                     subtitle = "Hyperlocal weather with safe spray windows (wind & rain advice) for effective chemical application.",
                     icon = Icons.Default.WbSunny,
                     activity = this,
-                    nextActivityClass = Screen15Activity::class.java,
-                    nextButtonText = "Check Pest & Disease Risks"
+                    primaryActionClass = Screen15Activity::class.java,
+                    primaryActionText = "Check Pest & Disease Risks",
+                    secondaryActionClass = Screen13Activity::class.java,
+                    secondaryActionText = "View Safe Watering Schedule"
                 )
             }
         }

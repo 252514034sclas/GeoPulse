@@ -17,8 +17,10 @@ class Screen19Activity : ComponentActivity() {
                     subtitle = "Optimal days for plowing, sowing, weeding, and harrowing according to soil dryness.",
                     icon = Icons.Default.Agriculture,
                     activity = this,
-                    nextActivityClass = Screen14Activity::class.java,
-                    nextButtonText = "Check Weather & Spray Forecast"
+                    primaryActionClass = Screen14Activity::class.java,
+                    primaryActionText = "Check Weather & Spray Forecast",
+                    secondaryActionClass = Screen18Activity::class.java,
+                    secondaryActionText = "View Crop Growth Calendar"
                 )
             }
         }

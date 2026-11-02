@@ -1,5 +1,8 @@
 package com.geopulse.app.ui.premium
 
+import com.geopulse.app.*
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -105,7 +108,8 @@ fun PremiumHomeScreen(
     onNotificationClick: () -> Unit = {},
     onCropHealthClick: () -> Unit = {},
     onFieldBoundaryClick: () -> Unit = {},
-    onYieldClick: () -> Unit = {}
+    onYieldClick: () -> Unit = {},
+    onNavigate: (Class<*>) -> Unit = {}
 ) {
     val colors = rememberPremiumColors(isDarkTheme)
 
@@ -167,7 +171,15 @@ fun PremiumHomeScreen(
                     )
                 }
 
-                // 4. Compact Weather Forecast Card (Chennai TN, 28°C, 3-day micro forecast)
+                // 4. Precision Agriculture Hub (1-Tap direct access to all 14 agronomic & market tools)
+                item {
+                    PrecisionAgricultureHubSection(
+                        colors = colors,
+                        onNavigate = onNavigate
+                    )
+                }
+
+                // 5. Compact Weather Forecast Card (Chennai TN, 28°C, 3-day micro forecast)
                 item {
                     WeatherForecastCard(
                         colors = colors,
@@ -523,11 +535,13 @@ private fun FieldMapCard(
     onFieldBoundaryClick: () -> Unit
 ) {
     var recenterTrigger by remember { mutableStateOf(0) }
+    var selectedFieldIdx by remember { mutableIntStateOf(0) }
+    val fieldNames = listOf("Field 1 · 12.5 ha (Corn)", "Field 2 · 8.4 ha (Soy)", "Field 3 · 14.5 ha (Wheat)")
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(210.dp)
+            .height(250.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFF0C1F13))
             .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
@@ -605,29 +619,64 @@ private fun FieldMapCard(
             )
         }
 
-        // Bottom-Left Location Chip: Pin + "Field 1 · 12.5 ha"
+        // Top-Left Satellite Freshness & Provenance Header
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(10.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(colors.cardBg.copy(alpha = 0.94f))
+                .border(1.dp, colors.cardBorder, RoundedCornerShape(10.dp))
+                .padding(horizontal = 9.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(Icons.Default.Sensors, contentDescription = null, tint = colors.lime, modifier = Modifier.size(14.dp))
+            Column {
+                Text("🛰️ Sentinel-2 L2A STAC", color = colors.textPrimary, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                Text("Oct 29, 2026 · Cloud: 1.2% · 10m Res", color = colors.textSecondary, fontSize = 8.5.sp)
+            }
+        }
+
+        // Bottom-Left Direct CTA: Open Full GIS Map
         Row(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(12.dp)
+                .padding(10.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(colors.cardBg.copy(alpha = 0.92f))
-                .border(1.dp, colors.cardBorder, RoundedCornerShape(12.dp))
-                .clickable { onFieldBoundaryClick() }
-                .padding(horizontal = 9.dp, vertical = 6.dp),
+                .background(colors.emerald)
+                .clickable { onMapClick() }
+                .padding(horizontal = 10.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Place,
-                contentDescription = "Field boundary",
-                tint = colors.lime,
+                imageVector = Icons.Default.Map,
+                contentDescription = "Open GIS Map",
+                tint = Color.White,
                 modifier = Modifier.size(15.dp)
             )
-            Column {
-                Text("Field 1", color = colors.textPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                Text("12.5 ha", color = colors.textSecondary, fontSize = 9.sp)
-            }
+            Text("Open GIS Map >", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+        }
+
+        // Bottom-Center Active Field Selector
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 10.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(colors.cardBg.copy(alpha = 0.92f))
+                .border(1.dp, colors.cardBorder, RoundedCornerShape(10.dp))
+                .clickable {
+                    selectedFieldIdx = (selectedFieldIdx + 1) % fieldNames.size
+                    onFieldBoundaryClick()
+                }
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(Icons.Default.Place, contentDescription = null, tint = colors.lime, modifier = Modifier.size(13.dp))
+            Text(fieldNames[selectedFieldIdx], color = colors.textPrimary, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
         }
 
         // Bottom-Right GPS Recenter Target Button
@@ -1108,6 +1157,149 @@ private fun NextBestActionCard(
                     tint = colors.bg,
                     modifier = Modifier.size(19.dp)
                 )
+            }
+        }
+    }
+}
+
+
+// -------------------------------------------------------------------------
+// Precision Agriculture Hub (1-Tap Direct Launcher for 14 Core Tools)
+// -------------------------------------------------------------------------
+data class HubTileItem(
+    val title: String,
+    val subtitle: String,
+    val icon: ImageVector,
+    val tint: Color,
+    val targetClass: Class<*>
+)
+
+@Composable
+fun PrecisionAgricultureHubSection(
+    colors: PremiumColors,
+    onNavigate: (Class<*>) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(colors.cardBg)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp)),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Precision Agriculture Hub",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.5.sp,
+                        color = colors.textPrimary
+                    )
+                    Text(
+                        text = "Direct 1-tap access to all field, crop & market tools",
+                        fontSize = 11.sp,
+                        color = colors.textSecondary
+                    )
+                }
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = colors.emerald.copy(alpha = 0.18f)
+                ) {
+                    Text(
+                        text = "14 Tools",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.emerald,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+            }
+
+            val hubItems = remember {
+                listOf(
+                    HubTileItem("Crop Health", "NDVI 0.84", Icons.Default.Eco, colors.lime, Screen11Activity::class.java),
+                    HubTileItem("Soil Moisture", "NDWI 72%", Icons.Default.WaterDrop, colors.blue, Screen12Activity::class.java),
+                    HubTileItem("Irrigation", "FAO-56 Balance", Icons.Default.Water, colors.blue, Screen13Activity::class.java),
+                    HubTileItem("Weather & Spray", "Calm · Safe Window", Icons.Default.WbSunny, colors.amber, Screen14Activity::class.java),
+                    HubTileItem("Pest & Disease", "Low Risk · Neem", Icons.Default.BugReport, colors.coral, Screen15Activity::class.java),
+                    HubTileItem("Fertilizer", "Urea / NPK Dosing", Icons.Default.Spa, colors.emerald, Screen20Activity::class.java),
+                    HubTileItem("Yield Predictor", "35 Q/ac (+8.4%)", Icons.Default.Assessment, colors.lime, Screen16Activity::class.java),
+                    HubTileItem("GPS Boundary", "12.5 ha Verified", Icons.Default.Place, colors.amber, Screen17Activity::class.java),
+                    HubTileItem("Crop Calendar", "Tasseling (DAS 48)", Icons.Default.CalendarToday, colors.blue, Screen18Activity::class.java),
+                    HubTileItem("Field Plowing", "Workable Soil", Icons.Default.Agriculture, colors.amber, Screen19Activity::class.java),
+                    HubTileItem("Mandi Prices", "₹2,380/Q Agmarknet", Icons.AutoMirrored.Filled.TrendingUp, colors.lime, Screen27Activity::class.java),
+                    HubTileItem("Farm Budget", "+₹23.5k/ac Profit", Icons.Default.AttachMoney, colors.emerald, Screen22Activity::class.java),
+                    HubTileItem("Kisan Helpline", "1800-180-1551", Icons.Default.Phone, colors.emerald, Screen26Activity::class.java),
+                    HubTileItem("Alert Center", "Thunderstorm Watch", Icons.Default.Warning, colors.coral, Screen28Activity::class.java)
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                hubItems.chunked(2).forEach { rowPair ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        rowPair.forEach { tile ->
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { onNavigate(tile.targetClass) },
+                                shape = RoundedCornerShape(12.dp),
+                                color = colors.cardBgElevated,
+                                border = BorderStroke(1.dp, colors.cardBorder)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(9.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(CircleShape)
+                                            .background(tile.tint.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = tile.icon,
+                                            contentDescription = tile.title,
+                                            tint = tile.tint,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = tile.title,
+                                            color = colors.textPrimary,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = tile.subtitle,
+                                            color = tile.tint,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 10.sp,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

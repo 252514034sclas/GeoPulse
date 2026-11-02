@@ -17,8 +17,10 @@ class Screen17Activity : ComponentActivity() {
                     subtitle = "Satellite GPS mapping of your farm parcels, boundaries, and estimated acreage.",
                     icon = Icons.Default.Map,
                     activity = this,
-                    nextActivityClass = Screen23Activity::class.java,
-                    nextButtonText = "View All Farm Parcels"
+                    primaryActionClass = Screen23Activity::class.java,
+                    primaryActionText = "View All Farm Parcels",
+                    secondaryActionClass = Screen8Activity::class.java,
+                    secondaryActionText = "Open Interactive GIS Map"
                 )
             }
         }

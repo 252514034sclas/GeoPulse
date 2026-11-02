@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.CalendarToday
 import com.geopulse.app.ui.theme.GeoPulseTheme
 
 class Screen18Activity : ComponentActivity() {
@@ -15,10 +15,12 @@ class Screen18Activity : ComponentActivity() {
                 GeoDetailScreenContent(
                     title = "Crop Calendar & Growth Stages",
                     subtitle = "Simple timetable showing current crop stage (Tillering / Flowering) and recommended care.",
-                    icon = Icons.Default.DateRange,
+                    icon = Icons.Default.CalendarToday,
                     activity = this,
-                    nextActivityClass = Screen12Activity::class.java,
-                    nextButtonText = "Check Soil Moisture Status"
+                    primaryActionClass = Screen19Activity::class.java,
+                    primaryActionText = "Plan Field Operations & Plowing",
+                    secondaryActionClass = Screen12Activity::class.java,
+                    secondaryActionText = "Check Soil Moisture Status"
                 )
             }
         }

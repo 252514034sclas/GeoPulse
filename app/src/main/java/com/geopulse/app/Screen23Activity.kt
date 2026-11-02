@@ -17,8 +17,10 @@ class Screen23Activity : ComponentActivity() {
                     subtitle = "List and manage all your registered land plots, survey numbers, and active crops.",
                     icon = Icons.Default.Domain,
                     activity = this,
-                    nextActivityClass = Screen17Activity::class.java,
-                    nextButtonText = "Edit Field Boundaries & Area"
+                    primaryActionClass = Screen17Activity::class.java,
+                    primaryActionText = "Edit Field Boundaries & Area",
+                    secondaryActionClass = Screen8Activity::class.java,
+                    secondaryActionText = "Open Interactive GIS Map"
                 )
             }
         }
