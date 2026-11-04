@@ -1,0 +1,134 @@
+{
+  "B04 (Red 10m)": {
+    "band": "B04 (Red 10m)",
+    "is_valid_tiff": true,
+    "is_geotiff": true,
+    "imagewidth": 10980,
+    "imagelength": 10980,
+    "tilewidth": 512,
+    "tilelength": 512,
+    "bitspersample": 15,
+    "sampleformat": "1",
+    "compression": "8",
+    "predictor": 1,
+    "fillorder": "Not specified (default 1)",
+    "photometric": "1",
+    "planarconfig": "1",
+    "nodata": null,
+    "model_pixel_scale": [
+      10.0,
+      10.0,
+      0.0
+    ],
+    "model_tiepoint": [
+      0.0,
+      0.0,
+      0.0,
+      399960.0,
+      1500000.0,
+      0.0
+    ],
+    "total_tiles": 484,
+    "first_tile_offset": 64818613,
+    "first_tile_bytecount": 469335
+  },
+  "B08 (NIR 10m)": {
+    "band": "B08 (NIR 10m)",
+    "is_valid_tiff": true,
+    "is_geotiff": true,
+    "imagewidth": 10980,
+    "imagelength": 10980,
+    "tilewidth": 512,
+    "tilelength": 512,
+    "bitspersample": 15,
+    "sampleformat": "1",
+    "compression": "8",
+    "predictor": 1,
+    "fillorder": "Not specified (default 1)",
+    "photometric": "1",
+    "planarconfig": "1",
+    "nodata": null,
+    "model_pixel_scale": [
+      10.0,
+      10.0,
+      0.0
+    ],
+    "model_tiepoint": [
+      0.0,
+      0.0,
+      0.0,
+      399960.0,
+      1500000.0,
+      0.0
+    ],
+    "total_tiles": 484,
+    "first_tile_offset": 64298093,
+    "first_tile_bytecount": 458617
+  },
+  "B11 (SWIR 20m)": {
+    "band": "B11 (SWIR 20m)",
+    "is_valid_tiff": true,
+    "is_geotiff": true,
+    "imagewidth": 5490,
+    "imagelength": 5490,
+    "tilewidth": 512,
+    "tilelength": 512,
+    "bitspersample": 15,
+    "sampleformat": "1",
+    "compression": "8",
+    "predictor": 1,
+    "fillorder": "Not specified (default 1)",
+    "photometric": "1",
+    "planarconfig": "1",
+    "nodata": null,
+    "model_pixel_scale": [
+      20.0,
+      20.0,
+      0.0
+    ],
+    "model_tiepoint": [
+      0.0,
+      0.0,
+      0.0,
+      399960.0,
+      1500000.0,
+      0.0
+    ],
+    "total_tiles": 121,
+    "first_tile_offset": 16088963,
+    "first_tile_bytecount": 431063
+  },
+  "SCL (Scene Class 20m)": {
+    "band": "SCL (Scene Class 20m)",
+    "is_valid_tiff": true,
+    "is_geotiff": true,
+    "imagewidth": 5490,
+    "imagelength": 5490,
+    "tilewidth": 512,
+    "tilelength": 512,
+    "bitspersample": 8,
+    "sampleformat": "1",
+    "compression": "8",
+    "predictor": 1,
+    "fillorder": "Not specified (default 1)",
+    "photometric": "1",
+    "planarconfig": "1",
+    "nodata": null,
+    "model_pixel_scale": [
+      20.0,
+      20.0,
+      0.0
+    ],
+    "model_tiepoint": [
+      0.0,
+      0.0,
+      0.0,
+      399960.0,
+      1500000.0,
+      0.0
+    ],
+    "total_tiles": 121,
+    "first_tile_offset": 547144,
+    "first_tile_bytecount": 13618
+  }
+}

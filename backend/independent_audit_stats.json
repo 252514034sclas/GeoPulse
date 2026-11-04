@@ -1,0 +1,39 @@
+{
+  "valid_pixel_count": 5901,
+  "native_20m_scl_pixels": 1475,
+  "cloud_pct_native_scl": 0.0,
+  "method_1_raw_dn": {
+    "ndvi": {
+      "mean": 0.3272,
+      "min": -0.0828,
+      "max": 0.7622,
+      "std": 0.2315
+    },
+    "ndmi": {
+      "mean": 0.0756,
+      "min": -0.3117,
+      "max": 0.4455,
+      "std": 0.1393
+    }
+  },
+  "method_2_esa_offset_corrected": {
+    "ndvi": {
+      "mean": 0.5015,
+      "min": -0.1467,
+      "max": 1.1868,
+      "std": 0.3509
+    },
+    "ndmi_nearest": {
+      "mean": 0.0975,
+      "min": -0.6078,
+      "max": 0.5419,
+      "std": 0.1925
+    },
+    "ndmi_bilinear": {
+      "mean": 0.0939,
+      "min": -0.7194,
+      "max": 0.536,
+      "std": 0.1952
+    }
+  }
+}
