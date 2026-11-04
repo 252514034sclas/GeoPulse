@@ -26,6 +26,10 @@ from adapters.open_meteo_adapter import OpenMeteoAdapter
 from adapters.copernicus_adapter import CopernicusSentinelAdapter
 from adapters.isro_bhoonidhi_adapter import IsroBhoonidhiAdapter
 from adapters.nasa_power_adapter import NasaPowerAdapter
+from adapters.agmarknet_adapter import AgmarknetAdapter
+from services.multi_source_satellite_service import MultiSourceSatelliteService
+from services.agri_knowledge_service import AgriculturalKnowledgeService
+from services.provider_registry import ProviderRegistry
 
 # Create all database tables
 models.Base.metadata.create_all(bind=engine)
@@ -909,3 +913,137 @@ def get_vegetation_health(db: Session = Depends(get_db)):
 @app.get("/api/v1/soil-moisture", response_model=List[schemas.SoilMoistureSchema])
 def get_soil_moisture(db: Session = Depends(get_db)):
     return db.query(models.SoilMoistureModel).all()
+
+
+# -------------------------------------------------------------
+# 12. Multi-Source Satellite Intelligence (ISRO Bhoonidhi + Copernicus)
+# -------------------------------------------------------------
+@app.get("/api/v1/satellite/multi-source/{field_id}")
+def get_multi_source_satellite_intelligence(
+    field_id: int,
+    priority_need: str = Query("crop_health", description="crop_health, soil_moisture, or all_weather"),
+    db: Session = Depends(get_db)
+):
+    """
+    Unified Dual-Provider Satellite Intelligence Engine.
+    Concurrently evaluates ISRO Bhoonidhi (Resourcesat-2A, EOS-04 SAR) and ESA Copernicus Sentinel-2.
+    Selects the best observation, reports provenance, and provides all candidate observations.
+    """
+    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
+    if not field:
+        raise HTTPException(status_code=404, detail="Field parcel not found")
+
+    delta = 0.015
+    min_lon = field.longitude - delta
+    min_lat = field.latitude - delta
+    max_lon = field.longitude + delta
+    max_lat = field.latitude + delta
+
+    service = MultiSourceSatelliteService()
+    return service.evaluate_field_observations(
+        min_lon=min_lon,
+        min_lat=min_lat,
+        max_lon=max_lon,
+        max_lat=max_lat,
+        crop_type=field.crop_type,
+        priority_need=priority_need
+    )
+
+
+@app.get("/api/v1/satellite/bhoonidhi/collections")
+def list_bhoonidhi_collections():
+    """
+    List authentic Indian Earth Observation satellite collections from ISRO Bhoonidhi:
+    Resourcesat-2A LISS-III (23.5m), Resourcesat-2A AWiFS (56m), EOS-04 C-band SAR (10m), EOS-06 OCM.
+    """
+    adapter = IsroBhoonidhiAdapter()
+    return {
+        "status": "SUCCESS",
+        "total_collections": len(adapter.get_collections()),
+        "collections": adapter.get_collections()
+    }
+
+
+@app.post("/api/v1/satellite/bhoonidhi/search")
+def search_bhoonidhi_products(
+    min_lon: float = Query(80.19),
+    min_lat: float = Query(13.05),
+    max_lon: float = Query(80.23),
+    max_lat: float = Query(13.08),
+    collection: Optional[str] = Query(None, description="RS2A_LISS3, RS2A_AWIFS, or EOS04_SAR")
+):
+    """
+    Geographic search for Indian satellite products covering farm coordinates via ISRO Bhoonidhi.
+    """
+    adapter = IsroBhoonidhiAdapter()
+    products = adapter.search_products(min_lon, min_lat, max_lon, max_lat, collection=collection)
+    return {
+        "status": "SUCCESS",
+        "provider": "ISRO / NRSC Bhoonidhi",
+        "products_count": len(products),
+        "products": products
+    }
+
+
+@app.post("/api/v1/satellite/bhoonidhi/auth-test")
+def test_bhoonidhi_authentication():
+    """
+    Test direct authentication against ISRO Bhoonidhi token endpoint with backend credentials.
+    """
+    adapter = IsroBhoonidhiAdapter()
+    token = adapter.authenticate()
+    return {
+        "is_configured": adapter.is_configured,
+        "authenticated": bool(token),
+        "user_id": adapter.user_id if adapter.is_configured else "NOT_SET",
+        "message": "Bhoonidhi token acquired successfully." if token else (
+            "Bhoonidhi credentials not set in backend/.env. Add BHOONIDHI_USER_ID and BHOONIDHI_PASSWORD to authenticate live API." if not adapter.is_configured else "Bhoonidhi authentication failed with configured credentials."
+        )
+    }
+
+
+# -------------------------------------------------------------
+# 13. AGMARKNET Mandi Commodity Market Rates
+# -------------------------------------------------------------
+@app.get("/api/v1/mandi/prices")
+def get_mandi_prices(
+    commodity: Optional[str] = Query(None, description="e.g. Maize, Paddy, Soybean, Cotton, Wheat"),
+    district: Optional[str] = Query(None, description="e.g. Chennai, Thanjavur, Madurai, Coimbatore")
+):
+    """
+    Query authentic APMC wholesale mandi rates from AGMARKNET / data.gov.in.
+    """
+    adapter = AgmarknetAdapter()
+    prices = adapter.get_mandi_prices(commodity=commodity, district=district)
+    return {
+        "status": "SUCCESS",
+        "source": "AGMARKNET (Ministry of Agriculture & Farmers Welfare, Govt. of India)",
+        "total_records": len(prices),
+        "records": prices
+    }
+
+
+# -------------------------------------------------------------
+# 14. TNAU & ICAR Agricultural Knowledge & Advisory
+# -------------------------------------------------------------
+@app.get("/api/v1/knowledge/crop-advisory")
+def get_crop_advisory(
+    crop: str = Query("Corn (Dent)", description="Crop name: Corn, Soybean, Paddy, Wheat"),
+    growth_stage: Optional[str] = Query(None, description="Current vegetative or reproductive stage")
+):
+    """
+    Official research-backed agricultural advice from TNAU Agritech Portal & ICAR institutes.
+    """
+    return AgriculturalKnowledgeService.get_crop_advisory(crop, growth_stage)
+
+
+# -------------------------------------------------------------
+# 15. Master Provider Registry & Quality Ledger
+# -------------------------------------------------------------
+@app.get("/api/v1/providers/registry")
+def get_providers_registry():
+    """
+    Complete Provider Registry for all 8 integrated data resources:
+    Bhoonidhi, Copernicus, Open-Meteo, IMD, TNAU, ICAR, AGMARKNET, Kisan Call Center.
+    """
+    return ProviderRegistry.get_all_providers_status()
