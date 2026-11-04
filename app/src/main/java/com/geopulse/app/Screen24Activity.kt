@@ -18,7 +18,7 @@ class Screen24Activity : ComponentActivity() {
                     icon = Icons.Default.History,
                     activity = this,
                     primaryActionClass = Screen11Activity::class.java,
-                    primaryActionText = "View Current Crop Vigor (NDVI)",
+                    primaryActionText = "View Current Crop Vigor",
                     secondaryActionClass = Screen18Activity::class.java,
                     secondaryActionText = "View Crop Growth Calendar"
                 )

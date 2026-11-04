@@ -423,7 +423,7 @@ fun VegetationHealthModule() {
     var growthStageSlider by remember { mutableStateOf(0.84f) }
     Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
         Column(modifier = Modifier.padding(18.dp)) {
-            Text("Satellite Crop Health & Vigor (NDVI)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text("Satellite Crop Health & Vigor", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
             Text("Sentinel-2 satellite scans measure plant greenness and canopy chlorophyll.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
@@ -476,7 +476,7 @@ fun SoilMoistureModule() {
     var selectedDepth by remember { mutableStateOf("0-15 cm (Topsoil)") }
     Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
         Column(modifier = Modifier.padding(18.dp)) {
-            Text("Satellite Soil Moisture (NDWI Index)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text("Crop Water Status & Soil Moisture", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
             Text("Estimates moisture content in topsoil layers from satellite water absorption bands.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
@@ -542,7 +542,7 @@ fun IrrigationTimingModule() {
             ) {
                 Column {
                     Text("Safe Watering & Evaporation Guide", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                    Text("FAO-56 Penman-Monteith crop water balance", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Scientific Crop Water Balance calculation", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (data != null) {
                     Surface(
@@ -619,7 +619,7 @@ fun IrrigationTimingModule() {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MetricChip("Crop Demand", "${data?.dailyCropWaterDemandMm ?: 5.4} mm/d", Modifier.weight(1f))
                 MetricChip("Soil Moisture", "${data?.currentMoisturePct?.toInt() ?: 72}%", Modifier.weight(1f))
-                MetricChip("Model", "FAO-56", Modifier.weight(1f))
+                MetricChip("Calculation", "Water Balance", Modifier.weight(1f))
             }
         }
     }
@@ -1088,7 +1088,7 @@ fun SatelliteHistoryModule() {
                     Text("Steady Growth: Canopy Expanded +56%", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        "Week 1 (Day 15): Emergence (NDVI 0.28)\nWeek 4 (Day 35): Rapid Canopy Spread (NDVI 0.62)\nToday (Day 52): Peak Vigor & Flowering (NDVI 0.84)",
+                        "Week 1 (Day 15): Emergence (Greenness 28%)\nWeek 4 (Day 35): Rapid Canopy Spread (Greenness 62%)\nToday (Day 52): Peak Vigor & Flowering (Crop Health 84% Optimal)",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 18.sp

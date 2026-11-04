@@ -18,7 +18,7 @@ class Screen12Activity : ComponentActivity() {
                     icon = Icons.Default.WaterDrop,
                     activity = this,
                     primaryActionClass = Screen13Activity::class.java,
-                    primaryActionText = "View Safe Watering Schedule (FAO-56)",
+                    primaryActionText = "View Safe Watering Schedule",
                     secondaryActionClass = Screen14Activity::class.java,
                     secondaryActionText = "Check Rainfall & Spraying Forecast"
                 )

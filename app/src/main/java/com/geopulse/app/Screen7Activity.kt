@@ -216,7 +216,7 @@ data class GisZone(
     val acreage: String,
     val hectares: Double,
     val crop: String,
-    val ndvi: String,
+    val cropHealth: String,
     val moisture: String,
     val status: String,
     val offsetFraction: Offset,
@@ -242,7 +242,7 @@ val initialGisZones = listOf(
         acreage = "120.4 Acres (48.7 ha)",
         hectares = 48.7,
         crop = "Corn (Dent)",
-        ndvi = "0.84 (Optimal)",
+        cropHealth = "84% (Optimal)",
         moisture = "72%",
         status = "Healthy",
         offsetFraction = Offset(0.35f, 0.35f),
@@ -270,7 +270,7 @@ val initialGisZones = listOf(
         acreage = "84.2 Acres (34.1 ha)",
         hectares = 34.1,
         crop = "Soybeans",
-        ndvi = "0.78 (Good)",
+        cropHealth = "78% (Good)",
         moisture = "65%",
         status = "Monitored",
         offsetFraction = Offset(0.68f, 0.42f),
@@ -298,7 +298,7 @@ val initialGisZones = listOf(
         acreage = "145.0 Acres (58.7 ha)",
         hectares = 58.7,
         crop = "Winter Wheat",
-        ndvi = "0.62 (Moderate)",
+        cropHealth = "62% (Moderate)",
         moisture = "48%",
         status = "Needs Water",
         offsetFraction = Offset(0.48f, 0.68f),
@@ -341,7 +341,7 @@ fun FullGisMapTab(
     val context = androidx.compose.ui.platform.LocalContext.current
     val zones = remember { mutableStateListOf(*initialGisZones.toTypedArray()) }
     var selectedZone by remember { mutableStateOf(zones[0]) }
-    var selectedLayer by remember { mutableStateOf("NDVI Heatmap") }
+    var selectedLayer by remember { mutableStateOf("Crop Health") }
     var activeBasemap by remember { mutableStateOf(MapConfig.getSelectedBasemap(context)) }
 
     // Interactive GIS Drawing Mode State
@@ -379,7 +379,7 @@ fun FullGisMapTab(
                                 acreage = "${String.format(java.util.Locale.US, "%.1f", field.areaAcres)} Acres (${String.format(java.util.Locale.US, "%.1f", ha)} ha)",
                                 hectares = ha,
                                 crop = field.cropType,
-                                ndvi = "0.82 (Good)",
+                                cropHealth = "82% (Good)",
                                 moisture = "70%",
                                 status = field.status,
                                 offsetFraction = Offset(0.5f, 0.5f),
@@ -440,7 +440,7 @@ fun FullGisMapTab(
                 item {
                     GeoTopBar(
                         title = "Geospatial Field Map",
-                        subtitle = "Sentinel-2 L2A STAC · GPS: 13.06° N, 80.21° E · ${zones.size} Parcels",
+                        subtitle = "Satellite Pass: Oct 29, 2026 · GPS: 13.06° N, 80.21° E · ${zones.size} Parcels",
                         actionIcon = Icons.Default.MyLocation
                     )
                 }
@@ -452,7 +452,7 @@ fun FullGisMapTab(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(listOf("NDVI Heatmap", "Soil Moisture", "Satellite RGB", "Interactive Boundary")) { layer ->
+                            items(listOf("Crop Health", "Soil Water", "Satellite View", "Interactive Boundary")) { layer ->
                                 FilterChip(
                                     selected = if (layer == "Interactive Boundary") isDrawingMode else (selectedLayer == layer && !isDrawingMode),
                                     onClick = {
@@ -464,7 +464,7 @@ fun FullGisMapTab(
                                         } else {
                                             selectedLayer = layer
                                             isDrawingMode = false
-                                            if (layer == "Satellite RGB") {
+                                            if (layer == "Satellite View") {
                                                 activeBasemap = BasemapType.SATELLITE
                                                 MapConfig.setSelectedBasemap(context, BasemapType.SATELLITE)
                                             }
@@ -570,7 +570,7 @@ fun FullGisMapTab(
                                                             acreage = "${String.format(java.util.Locale.US, "%.1f", finalAcres)} Acres (${String.format(java.util.Locale.US, "%.1f", finalHa)} ha)",
                                                             hectares = finalHa,
                                                             crop = newField?.cropType ?: "Corn (Dent)",
-                                                            ndvi = "0.82 (Good)",
+                                                            cropHealth = "82% (Good)",
                                                             moisture = "70%",
                                                             status = "Registered",
                                                             offsetFraction = Offset(0.5f, 0.5f),
@@ -586,7 +586,7 @@ fun FullGisMapTab(
                                                             approxBags = "${kotlin.math.ceil((sow.seedRatePerHaKg * finalHa) / 25.0).toInt()} bags (25kg)",
                                                             spraySafe = true,
                                                             sprayExplanation = "Calm winds · Safe foliar spraying window",
-                                                            source = "Farmer Drawn Polygon · MapLibre Geodesic Engine"
+                                                            source = "Farmer Drawn Boundary · MapLibre Geodesic Engine"
                                                         )
 
                                                         zones.add(createdZone)
@@ -721,12 +721,12 @@ fun FullGisMapTab(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                MetricChip("NDVI Vigor", selectedZone.ndvi, Modifier.weight(1f))
+                                MetricChip("Crop Health", selectedZone.cropHealth, Modifier.weight(1f))
                                 MetricChip("Soil Moisture", selectedZone.moisture, Modifier.weight(1f))
                                 MetricChip("Spray Window", if (selectedZone.spraySafe) "Safe Today" else "Wait", Modifier.weight(1f))
                             }
 
-                            // 1. FAO-56 Penman-Monteith Irrigation Water Balance
+                            // 1. Scientific Crop Water Balance
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
                                 color = MaterialTheme.colorScheme.surfaceVariant,
@@ -739,7 +739,7 @@ fun FullGisMapTab(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text("💧 FAO-56 Irrigation Water Balance", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
+                                        Text("💧 Crop Water Balance", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
                                         Surface(
                                             shape = RoundedCornerShape(6.dp),
                                             color = if (selectedZone.irrigationVerdict == "NO IRRIGATION NEEDED") EmeraldPrimary.copy(alpha = 0.3f) else RedAccent.copy(alpha = 0.3f)
@@ -901,7 +901,7 @@ fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
             ),
             FarmerAdvisoryItem(
                 title = "Nitrogen Fertilizer Top-Dressing",
-                subtitle = "Satellite NDVI shows moderate crop vigor. Apply split Urea dose (45 kg/acre) before rains.",
+                subtitle = "Satellite crop health shows moderate vigor. Apply split Urea dose (45 kg/acre) before rains.",
                 timeBadge = "This Week",
                 iconColor = EmeraldPrimary,
                 icon = Icons.Default.Spa,

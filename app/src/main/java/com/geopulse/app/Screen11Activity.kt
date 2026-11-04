@@ -14,7 +14,7 @@ class Screen11Activity : ComponentActivity() {
             GeoPulseTheme {
                 GeoDetailScreenContent(
                     title = "Satellite Crop Health & Vigor",
-                    subtitle = "Satellite greenness (NDVI) monitoring in simple layman terms. Learn which parts of your field need care.",
+                    subtitle = "Satellite crop health and greenness monitoring in clear terms. Learn which parts of your field need care.",
                     icon = Icons.Default.Eco,
                     activity = this,
                     primaryActionClass = Screen20Activity::class.java,

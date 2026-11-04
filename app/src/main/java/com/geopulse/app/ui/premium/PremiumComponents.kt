@@ -1,8 +1,12 @@
 package com.geopulse.app.ui.premium
 
-import com.geopulse.app.*
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
-
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -14,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,13 +31,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.geopulse.app.*
 
 // -------------------------------------------------------------------------
-// Design System Tokens (Matching Reference Mock Exactly)
+// Design System Tokens (Farmer-First Palette with High-Contrast Readability)
 // -------------------------------------------------------------------------
 data class PremiumColors(
     val bg: Color = Color(0xFF0A130C),
@@ -94,7 +101,12 @@ fun rememberPremiumColors(isDarkTheme: Boolean = true): PremiumColors {
 }
 
 // -------------------------------------------------------------------------
-// Premium Home Screen: Clean, Uncluttered, Pixel-Matched Layout
+// Strict 5-Tier Decision-Oriented Farmer-First Home Screen
+// 1. Header (GeoPulse, greeting, farm switcher, notification bell)
+// 2. Farm Map (250dp, real satellite/normal basemap toggle, boundary, image date)
+// 3. Farm Condition (4 simple cards: Crop Health, Soil Water, Weather, Farm Alerts)
+// 4. Today's Advice (What is happening, What to do, When, Why + Action)
+// 5. Quick Actions (6 primary cards + expandable "View All Tools" sheet)
 // -------------------------------------------------------------------------
 @Composable
 fun PremiumHomeScreen(
@@ -138,12 +150,12 @@ fun PremiumHomeScreen(
                 contentPadding = PaddingValues(
                     start = horizontalPadding,
                     end = horizontalPadding,
-                    top = 8.dp,
-                    bottom = 104.dp // Generous clearance for floating bottom dock
+                    top = 10.dp,
+                    bottom = 108.dp // Space for floating bottom dock
                 ),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 1. Clean Top Header: Farm dropdown, notification bell, profile avatar
+                // Tier 1: Top Header (Logo, greeting, farm switcher dropdown, notifications, profile)
                 item {
                     HomeHeader(
                         colors = colors,
@@ -152,17 +164,7 @@ fun PremiumHomeScreen(
                     )
                 }
 
-                // 2. Open Hero Greeting: Sits cleanly on background (no heavy outer card box)
-                item {
-                    GreetingHeroSection(
-                        colors = colors,
-                        onVegetationHealthClick = onVegetationHealthClick,
-                        onSoilMoistureClick = onSoilMoistureClick,
-                        onCropHealthClick = onCropHealthClick
-                    )
-                }
-
-                // 3. Satellite Field Map Card (NDVI heatzones, legend, location chip, GPS target)
+                // Tier 2: Farm Map (250dp, Satellite/Normal Map toggle, observation date, field area)
                 item {
                     FieldMapCard(
                         colors = colors,
@@ -171,38 +173,30 @@ fun PremiumHomeScreen(
                     )
                 }
 
-                // 4. Precision Agriculture Hub (1-Tap direct access to all 14 agronomic & market tools)
+                // Tier 3: Farm Condition (4 simple cards: Crop Health, Soil Water, Weather, Farm Alerts)
                 item {
-                    PrecisionAgricultureHubSection(
+                    FarmConditionSection(
                         colors = colors,
-                        onNavigate = onNavigate
-                    )
-                }
-
-                // 5. Compact Weather Forecast Card (Chennai TN, 28°C, 3-day micro forecast)
-                item {
-                    WeatherForecastCard(
-                        colors = colors,
-                        onClick = onWeatherClick
-                    )
-                }
-
-                // 5. Field Insights (Header with "View All >" + clean 2x2 grid of cards)
-                item {
-                    FieldInsightsSection(
-                        colors = colors,
-                        onVegetationClick = onVegetationHealthClick,
+                        onCropHealthClick = onCropHealthClick,
                         onSoilMoistureClick = onSoilMoistureClick,
-                        onYieldClick = onYieldClick,
+                        onWeatherClick = onWeatherClick,
                         onAlertsClick = onNotificationClick
                     )
                 }
 
-                // 6. Next Best Action Card (Sprout graphic, recommendation, green arrow button)
+                // Tier 4: Today's Advice (What is happening, What to do, When, Why + Action)
                 item {
-                    NextBestActionCard(
+                    TodaysAdviceSection(
                         colors = colors,
-                        onClick = onActionClick
+                        onActionClick = onActionClick
+                    )
+                }
+
+                // Tier 5: Quick Actions (6 primary cards + expandable "View All Tools" sheet)
+                item {
+                    QuickActionsSection(
+                        colors = colors,
+                        onNavigate = onNavigate
                     )
                 }
             }
@@ -211,7 +205,7 @@ fun PremiumHomeScreen(
 }
 
 // -------------------------------------------------------------------------
-// 1. Home Header: Farm Selector, Notification Dot, Profile Avatar
+// 1. Home Header: Farm Selector, Notification Bell, User Avatar
 // -------------------------------------------------------------------------
 @Composable
 private fun HomeHeader(
@@ -221,14 +215,14 @@ private fun HomeHeader(
 ) {
     var showFarmDialog by remember { mutableStateOf(false) }
     var selectedFarmName by remember { mutableStateOf("Green Valley Farm") }
-    var selectedFieldSubtitle by remember { mutableStateOf("Field 1 · 12.5 ha") }
+    var selectedFieldSubtitle by remember { mutableStateOf("Field 1 · 12.5 ha (30.9 ac)") }
 
     val farmsList = remember {
         listOf(
-            "Green Valley Farm" to "Field 1 · 12.5 ha",
-            "East Field Beta" to "Sector 2 · 84.2 ha",
-            "North Sector Alpha" to "Sector 1 · 120.4 ha",
-            "South Center Pivot" to "Sector 3 · 145.0 ha"
+            "Green Valley Farm" to "Field 1 · 12.5 ha (30.9 ac)",
+            "East Field Beta" to "Sector 2 · 34.1 ha (84.2 ac)",
+            "North Sector Alpha" to "Sector 1 · 48.7 ha (120.4 ac)",
+            "South Center Pivot" to "Sector 3 · 58.7 ha (145.0 ac)"
         )
     }
 
@@ -296,7 +290,7 @@ private fun HomeHeader(
         // Circular Leaf Logo Icon
         Box(
             modifier = Modifier
-                .size(38.dp)
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(Brush.linearGradient(listOf(colors.lime, colors.emerald))),
             contentAlignment = Alignment.Center
@@ -305,13 +299,13 @@ private fun HomeHeader(
                 imageVector = Icons.Default.Eco,
                 contentDescription = "Farm Logo",
                 tint = colors.bg,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
 
         Spacer(Modifier.width(10.dp))
 
-        // Farm name dropdown and subtitle
+        // Farm name dropdown and greeting subtitle
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -326,7 +320,7 @@ private fun HomeHeader(
                 Text(
                     text = selectedFarmName,
                     color = colors.textPrimary,
-                    fontSize = 16.sp,
+                    fontSize = 16.5.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -334,21 +328,23 @@ private fun HomeHeader(
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = "Select farm",
-                    tint = colors.textSecondary,
+                    tint = colors.lime,
                     modifier = Modifier.size(18.dp)
                 )
             }
             Text(
-                text = selectedFieldSubtitle,
+                text = "Good Morning, Nithish 👋 · $selectedFieldSubtitle",
                 color = colors.textSecondary,
                 fontSize = 11.5.sp,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
         Spacer(Modifier.width(8.dp))
 
-        // Notification Bell Icon with Red Dot
+        // Notification Bell Icon with Red Alert Indicator
         Box(
             modifier = Modifier
                 .size(38.dp)
@@ -375,7 +371,7 @@ private fun HomeHeader(
             )
         }
 
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(8.dp))
 
         // Profile Avatar Circle
         Box(
@@ -398,135 +394,7 @@ private fun HomeHeader(
 }
 
 // -------------------------------------------------------------------------
-// 2. Greeting Hero Section: Clean, Breathable, Sits Directly on Background
-// -------------------------------------------------------------------------
-@Composable
-private fun GreetingHeroSection(
-    colors: PremiumColors,
-    onVegetationHealthClick: () -> Unit,
-    onSoilMoistureClick: () -> Unit,
-    onCropHealthClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
-        Text(
-            text = "Good Morning, Nithish 👋",
-            color = colors.textPrimary,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(Modifier.height(3.dp))
-        Text(
-            text = "Your fields are performing well today!",
-            color = colors.textSecondary,
-            fontSize = 13.sp
-        )
-
-        Spacer(Modifier.height(14.dp))
-
-        // 3 Working Frosted Metric Pills
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FrostedMetricPill(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Default.WaterDrop,
-                iconColor = colors.blue,
-                label = "Soil Moisture",
-                value = "72%",
-                colors = colors,
-                onClick = onSoilMoistureClick
-            )
-
-            FrostedMetricPill(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Default.Eco,
-                iconColor = colors.lime,
-                label = "NDVI",
-                value = "0.84",
-                colors = colors,
-                onClick = onVegetationHealthClick
-            )
-
-            FrostedMetricPill(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Default.Favorite,
-                iconColor = colors.emerald,
-                label = "Crop Health",
-                value = "Optimal",
-                colors = colors,
-                onClick = onCropHealthClick
-            )
-        }
-    }
-}
-
-@Composable
-private fun FrostedMetricPill(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    iconColor: Color,
-    label: String,
-    value: String,
-    colors: PremiumColors,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
-        color = colors.cardBg,
-        border = BorderStroke(1.dp, colors.cardBorder)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 9.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(iconColor.copy(alpha = 0.16f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconColor,
-                    modifier = Modifier.size(15.dp)
-                )
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = label,
-                    color = colors.textSecondary,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Normal,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(Modifier.height(1.dp))
-                Text(
-                    text = value,
-                    color = colors.textPrimary,
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1
-                )
-            }
-        }
-    }
-}
-
-// -------------------------------------------------------------------------
-// 3. FieldMapCard: High-Res Satellite View, Heatmap, Legend & Target Button
+// 2. FieldMapCard: 250dp, Satellite / Normal Map Toggle, Field Boundary, Date
 // -------------------------------------------------------------------------
 @Composable
 private fun FieldMapCard(
@@ -534,92 +402,114 @@ private fun FieldMapCard(
     onMapClick: () -> Unit,
     onFieldBoundaryClick: () -> Unit
 ) {
-    var recenterTrigger by remember { mutableStateOf(0) }
-    var selectedFieldIdx by remember { mutableIntStateOf(0) }
-    val fieldNames = listOf("Field 1 · 12.5 ha (Corn)", "Field 2 · 8.4 ha (Soy)", "Field 3 · 14.5 ha (Wheat)")
+    var isSatelliteView by remember { mutableStateOf(true) }
+    var recenterTrigger by remember { mutableIntStateOf(0) }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(250.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF0C1F13))
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(18.dp))
+            .background(if (isSatelliteView) Color(0xFF0C1F13) else Color(0xFF1B261E))
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(18.dp))
             .clickable(onClick = onMapClick)
     ) {
-        // Satellite Map Canvas with rendered NDVI Heatmap polygons
+        // High-fidelity GIS Map Canvas (Satellite Imagery vs Normal Topographic/Street View)
         Canvas(modifier = Modifier.fillMaxSize()) {
             val w = size.width
             val h = size.height
 
-            // Base lush aerial landscape with field contours
-            drawRect(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFF1B3D22), Color(0xFF0A180E)),
-                    center = Offset(w * 0.45f, h * 0.5f),
-                    radius = w * 0.85f
+            if (isSatelliteView) {
+                // Base lush aerial landscape with natural agricultural contours
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color(0xFF1B3D22), Color(0xFF0A180E)),
+                        center = Offset(w * 0.45f, h * 0.5f),
+                        radius = w * 0.85f
+                    )
                 )
-            )
 
-            // Crop row texture lines (natural agricultural appearance)
-            var lineX = 0f
-            while (lineX < w + h) {
+                // Natural crop row texture lines
+                var lineX = 0f
+                while (lineX < w + h) {
+                    drawLine(
+                        color = Color(0x0CFFFFFF),
+                        start = Offset(lineX, 0f),
+                        end = Offset(lineX - h * 0.6f, h),
+                        strokeWidth = 1.2f
+                    )
+                    lineX += 28f
+                }
+
+                // Neighbor parcel outline (subtle boundary)
+                val neighborField = Path().apply {
+                    moveTo(w * 0.70f, h * 0.05f)
+                    lineTo(w * 0.95f, h * 0.10f)
+                    lineTo(w * 0.92f, h * 0.75f)
+                    lineTo(w * 0.68f, h * 0.70f)
+                    close()
+                }
+                drawPath(neighborField, Color(0x331B4324))
+                drawPath(neighborField, Color(0x3381C784), style = Stroke(width = 1f))
+
+                // Farmer's Main Field Boundary Polygon
+                val field1 = Path().apply {
+                    moveTo(w * 0.08f, h * 0.12f)
+                    lineTo(w * 0.66f, h * 0.08f)
+                    lineTo(w * 0.60f, h * 0.86f)
+                    lineTo(w * 0.12f, h * 0.82f)
+                    close()
+                }
+                // Healthy crop vigor green zone fill
+                drawPath(field1, Color(0xAA2E7D32))
+                drawPath(field1, Color(0xFF81C784), style = Stroke(width = 2.4f))
+
+                // Natural vegetative vigor variation hotspot inside field
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color(0x99FBC02D), Color(0x00000000)),
+                        center = Offset(w * 0.46f, h * 0.42f),
+                        radius = w * 0.18f
+                    ),
+                    radius = w * 0.18f,
+                    center = Offset(w * 0.46f, h * 0.42f)
+                )
+            } else {
+                // Normal Street / Cadastral Topographic Basemap Styling
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color(0xFF222D25), Color(0xFF161E18))
+                    )
+                )
+
+                // Road grid / access lane network lines
                 drawLine(
-                    color = Color(0x0CFFFFFF),
-                    start = Offset(lineX, 0f),
-                    end = Offset(lineX - h * 0.6f, h),
-                    strokeWidth = 1.2f
+                    color = Color(0x44E0E0E0),
+                    start = Offset(0f, h * 0.50f),
+                    end = Offset(w, h * 0.45f),
+                    strokeWidth = 3.5f
                 )
-                lineX += 28f
+                drawLine(
+                    color = Color(0x33BDBDBD),
+                    start = Offset(w * 0.68f, 0f),
+                    end = Offset(w * 0.64f, h),
+                    strokeWidth = 2.5f
+                )
+
+                // Cadastral cadastral parcel lines
+                val parcelGrid = Path().apply {
+                    moveTo(w * 0.08f, h * 0.12f)
+                    lineTo(w * 0.66f, h * 0.08f)
+                    lineTo(w * 0.60f, h * 0.86f)
+                    lineTo(w * 0.12f, h * 0.82f)
+                    close()
+                }
+                drawPath(parcelGrid, Color(0x554CAF50))
+                drawPath(parcelGrid, Color(0xFF66BB6A), style = Stroke(width = 2.2f))
             }
-
-            // Neighboring field parcel boundaries (subtle)
-            val neighborField = Path().apply {
-                moveTo(w * 0.70f, h * 0.05f)
-                lineTo(w * 0.95f, h * 0.10f)
-                lineTo(w * 0.92f, h * 0.75f)
-                lineTo(w * 0.68f, h * 0.70f)
-                close()
-            }
-            drawPath(neighborField, Color(0x441B4324))
-            drawPath(neighborField, Color(0x444CAF50), style = Stroke(width = 1f))
-
-            // Main Field 1 Polygon
-            val field1 = Path().apply {
-                moveTo(w * 0.06f, h * 0.10f)
-                lineTo(w * 0.68f, h * 0.06f)
-                lineTo(w * 0.62f, h * 0.88f)
-                lineTo(w * 0.10f, h * 0.84f)
-                close()
-            }
-            // Healthy NDVI green zone fill
-            drawPath(field1, Color(0xAA2E7D32))
-            drawPath(field1, Color(0xFF81C784), style = Stroke(width = 2.2f))
-
-            // Amber/Yellow stress hotspot zone inside field
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color(0xEED84315), Color(0xBBFBC02D), Color(0x00000000)),
-                    center = Offset(w * 0.48f, h * 0.40f),
-                    radius = w * 0.20f
-                ),
-                radius = w * 0.20f,
-                center = Offset(w * 0.48f, h * 0.40f)
-            )
-
-            // Secondary mild moisture hotspot
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color(0x99F57F17), Color(0x00000000)),
-                    center = Offset(w * 0.26f, h * 0.60f),
-                    radius = w * 0.15f
-                ),
-                radius = w * 0.15f,
-                center = Offset(w * 0.26f, h * 0.60f)
-            )
         }
 
-        // Top-Left Satellite Freshness & Provenance Header
+        // Top-Start: Satellite Observation Date & Provenance Badge
         Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -631,14 +521,73 @@ private fun FieldMapCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Icon(Icons.Default.Sensors, contentDescription = null, tint = colors.lime, modifier = Modifier.size(14.dp))
+            Icon(
+                imageVector = if (isSatelliteView) Icons.Default.Sensors else Icons.Default.Map,
+                contentDescription = null,
+                tint = colors.lime,
+                modifier = Modifier.size(15.dp)
+            )
             Column {
-                Text("🛰️ Sentinel-2 L2A STAC", color = colors.textPrimary, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
-                Text("Oct 29, 2026 · Cloud: 1.2% · 10m Res", color = colors.textSecondary, fontSize = 8.5.sp)
+                Text(
+                    text = if (isSatelliteView) "🛰️ Satellite: Oct 29, 2026" else "🗺️ Cadastral Map",
+                    color = colors.textPrimary,
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = if (isSatelliteView) "Cloud: 1.2% (Clear view) · 10m Res" else "OpenStreetMap · Tamil Nadu Delta",
+                    color = colors.textSecondary,
+                    fontSize = 8.5.sp
+                )
             }
         }
 
-        // Bottom-Left Direct CTA: Open Full GIS Map
+        // Top-End: Prominent Satellite / Normal Map Toggle Switcher
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(10.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = colors.cardBg.copy(alpha = 0.95f),
+            border = BorderStroke(1.dp, colors.lime.copy(alpha = 0.4f))
+        ) {
+            Row(
+                modifier = Modifier.padding(3.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Satellite Option
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (isSatelliteView) colors.emerald else Color.Transparent,
+                    modifier = Modifier.clickable { isSatelliteView = true }
+                ) {
+                    Text(
+                        text = "🛰️ Satellite",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isSatelliteView) Color.White else colors.textSecondary,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                    )
+                }
+
+                // Normal Map Option
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (!isSatelliteView) colors.emerald else Color.Transparent,
+                    modifier = Modifier.clickable { isSatelliteView = false }
+                ) {
+                    Text(
+                        text = "🗺️ Normal",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (!isSatelliteView) Color.White else colors.textSecondary,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                    )
+                }
+            }
+        }
+
+        // Bottom-Start: Direct CTA to Open Interactive GIS Map
         Row(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -656,30 +605,37 @@ private fun FieldMapCard(
                 tint = Color.White,
                 modifier = Modifier.size(15.dp)
             )
-            Text("Open GIS Map >", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = "Open GIS Map >",
+                color = Color.White,
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
 
-        // Bottom-Center Active Field Selector
+        // Bottom-Center: Active Field Tag & Area Chip
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 10.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(colors.cardBg.copy(alpha = 0.92f))
+                .background(colors.cardBg.copy(alpha = 0.94f))
                 .border(1.dp, colors.cardBorder, RoundedCornerShape(10.dp))
-                .clickable {
-                    selectedFieldIdx = (selectedFieldIdx + 1) % fieldNames.size
-                    onFieldBoundaryClick()
-                }
+                .clickable { onFieldBoundaryClick() }
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Icon(Icons.Default.Place, contentDescription = null, tint = colors.lime, modifier = Modifier.size(13.dp))
-            Text(fieldNames[selectedFieldIdx], color = colors.textPrimary, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = "Field 1 · 12.5 ha (30.9 ac)",
+                color = colors.textPrimary,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold
+            )
         }
 
-        // Bottom-Right GPS Recenter Target Button
+        // Bottom-End: GPS Recenter Target Button
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -698,274 +654,90 @@ private fun FieldMapCard(
                 modifier = Modifier.size(18.dp)
             )
         }
-
-        // Right-Side Vertical NDVI Scale Legend Bar
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(10.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(colors.cardBg.copy(alpha = 0.92f))
-                .border(1.dp, colors.cardBorder, RoundedCornerShape(10.dp))
-                .padding(horizontal = 6.dp, vertical = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("NDVI", color = colors.textSecondary, fontSize = 8.5.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(4.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Vertical gradient line
-                Box(
-                    modifier = Modifier
-                        .width(5.dp)
-                        .height(80.dp)
-                        .clip(RoundedCornerShape(2.5.dp))
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(
-                                    Color(0xFF2E7D32), // 1.0 Green
-                                    Color(0xFF81C784), // 0.8 Lime
-                                    Color(0xFFFFEE58), // 0.6 Yellow
-                                    Color(0xFFFFA726), // 0.4 Orange
-                                    Color(0xFFE53935)  // 0.0 Red
-                                )
-                            )
-                        )
-                )
-
-                Spacer(Modifier.width(4.dp))
-
-                // Scale labels
-                Column(
-                    modifier = Modifier.height(80.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("1.0", color = colors.textPrimary, fontSize = 7.5.sp, fontWeight = FontWeight.Bold)
-                    Text("0.8", color = colors.textSecondary, fontSize = 7.5.sp)
-                    Text("0.6", color = colors.textSecondary, fontSize = 7.5.sp)
-                    Text("0.4", color = colors.textSecondary, fontSize = 7.5.sp)
-                    Text("0.2", color = colors.textSecondary, fontSize = 7.5.sp)
-                    Text("0.0", color = colors.textPrimary, fontSize = 7.5.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
     }
 }
 
 // -------------------------------------------------------------------------
-// 4. WeatherCard: Chennai TN, 28°C, Partly Cloudy, 3-Day Micro Forecast
+// 3. Farm Condition: 4 Simple Status Cards in a 2x2 Grid (Plain Language)
 // -------------------------------------------------------------------------
 @Composable
-private fun WeatherForecastCard(
+private fun FarmConditionSection(
     colors: PremiumColors,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        color = colors.cardBg,
-        border = BorderStroke(1.dp, colors.cardBorder)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Sun behind cloud icon with ambient glow
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.amber.copy(alpha = 0.16f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.WbSunny,
-                    contentDescription = "Weather",
-                    tint = colors.amber,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Spacer(Modifier.width(12.dp))
-
-            // Location & Temperature Column
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Place,
-                        contentDescription = null,
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Spacer(Modifier.width(2.dp))
-                    Text(
-                        text = "Chennai, TN",
-                        color = colors.textSecondary,
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                Spacer(Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "28°C",
-                        color = colors.textPrimary,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = "Partly Cloudy",
-                        color = colors.textSecondary,
-                        fontSize = 11.5.sp
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = colors.emerald.copy(alpha = 0.18f)
-                    ) {
-                        Text(
-                            text = "+8%",
-                            color = colors.lime,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-            }
-
-            // 3-day forecast columns
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                WeatherMiniDay(day = "Today", highLow = "28°/22°", isSun = false, colors = colors)
-                WeatherMiniDay(day = "Mon", highLow = "29°/23°", isSun = false, colors = colors)
-                WeatherMiniDay(day = "Tue", highLow = "30°/24°", isSun = true, colors = colors)
-            }
-        }
-    }
-}
-
-@Composable
-private fun WeatherMiniDay(
-    day: String,
-    highLow: String,
-    isSun: Boolean,
-    colors: PremiumColors
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(day, color = colors.textSecondary, fontSize = 9.sp, fontWeight = FontWeight.Medium)
-        Spacer(Modifier.height(2.dp))
-        Icon(
-            imageVector = if (isSun) Icons.Default.WbSunny else Icons.Default.Cloud,
-            contentDescription = null,
-            tint = if (isSun) colors.amber else colors.textSecondary,
-            modifier = Modifier.size(15.dp)
-        )
-        Spacer(Modifier.height(2.dp))
-        Text(highLow, color = colors.textPrimary, fontSize = 8.5.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-// -------------------------------------------------------------------------
-// 5. Field Insights: Section Header + 2x2 Grid of Cards
-// -------------------------------------------------------------------------
-@Composable
-private fun FieldInsightsSection(
-    colors: PremiumColors,
-    onVegetationClick: () -> Unit,
+    onCropHealthClick: () -> Unit,
     onSoilMoistureClick: () -> Unit,
-    onYieldClick: () -> Unit,
+    onWeatherClick: () -> Unit,
     onAlertsClick: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        // Section Header with working "View All >" button
         Row(
             modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Field Insights",
-                modifier = Modifier.weight(1f),
+                text = "Farm Condition",
                 color = colors.textPrimary,
-                fontSize = 18.sp,
+                fontSize = 16.5.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "View All >",
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .clickable(onClick = onVegetationClick)
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
-                color = colors.lime,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold
+                text = "Live Satellite & Sensor Status",
+                color = colors.textSecondary,
+                fontSize = 11.sp
             )
         }
 
-        // Row 1: Vegetation Health & Soil Moisture
+        // 2x2 Grid: Row 1
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            InsightGridCard(
+            ConditionStatusCard(
                 modifier = Modifier.weight(1f),
+                title = "Crop Health",
+                value = "84% · Good",
+                subtitle = "Optimal green vigor",
                 icon = Icons.Default.Eco,
-                iconColor = colors.lime,
-                title = "Vegetation Health",
-                value = "Good",
-                trend = "+12%",
-                trendColor = colors.lime,
-                sparklinePoints = listOf(0.3f, 0.5f, 0.4f, 0.7f, 0.6f, 0.9f),
+                tint = colors.lime,
                 colors = colors,
-                onClick = onVegetationClick
+                onClick = onCropHealthClick
             )
 
-            InsightGridCard(
+            ConditionStatusCard(
                 modifier = Modifier.weight(1f),
+                title = "Soil Water",
+                value = "72% · Moist",
+                subtitle = "Adequate root moisture",
                 icon = Icons.Default.WaterDrop,
-                iconColor = colors.blue,
-                title = "Soil Moisture",
-                value = "72%",
-                trend = "+5%",
-                trendColor = colors.blue,
-                sparklinePoints = listOf(0.5f, 0.3f, 0.6f, 0.4f, 0.8f, 0.7f),
+                tint = colors.blue,
                 colors = colors,
                 onClick = onSoilMoistureClick
             )
         }
 
-        // Row 2: Crop Yield Prediction & Alerts
+        // 2x2 Grid: Row 2
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            InsightGridCard(
+            ConditionStatusCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.Spa,
-                iconColor = Color(0xFFC0CA33),
-                title = "Crop Yield Prediction",
-                value = "8.4 t/ha",
-                trend = "+8%",
-                trendColor = Color(0xFFC0CA33),
-                sparklinePoints = listOf(0.4f, 0.45f, 0.6f, 0.55f, 0.75f, 0.85f),
+                title = "Weather",
+                value = "28°C · Spray Safe",
+                subtitle = "Wind 8 km/h · Calm",
+                icon = Icons.Default.WbSunny,
+                tint = colors.amber,
                 colors = colors,
-                onClick = onYieldClick
+                onClick = onWeatherClick
             )
 
-            InsightGridCard(
+            ConditionStatusCard(
                 modifier = Modifier.weight(1f),
+                title = "Farm Alerts",
+                value = "1 Notice",
+                subtitle = "Rain expected Friday",
                 icon = Icons.Default.Notifications,
-                iconColor = colors.coral,
-                title = "Alerts",
-                value = "2 Active",
-                trend = "● Active",
-                trendColor = colors.coral,
-                sparklinePoints = null,
+                tint = colors.coral,
                 colors = colors,
                 onClick = onAlertsClick
             )
@@ -974,197 +746,245 @@ private fun FieldInsightsSection(
 }
 
 @Composable
-private fun InsightGridCard(
+private fun ConditionStatusCard(
     modifier: Modifier = Modifier,
-    icon: ImageVector,
-    iconColor: Color,
     title: String,
     value: String,
-    trend: String,
-    trendColor: Color,
-    sparklinePoints: List<Float>?,
+    subtitle: String,
+    icon: ImageVector,
+    tint: Color,
     colors: PremiumColors,
     onClick: () -> Unit
 ) {
     Surface(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         color = colors.cardBg,
         border = BorderStroke(1.dp, colors.cardBorder)
     ) {
-        Column(modifier = Modifier.padding(13.dp)) {
-            // Icon badge
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(iconColor.copy(alpha = 0.16f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconColor,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-
-            Spacer(Modifier.height(9.dp))
-
-            Text(
-                text = title,
-                color = colors.textSecondary,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = value,
-                color = colors.textPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            // Sparkline and trend indicator
+        Column(modifier = Modifier.padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (sparklinePoints != null) {
-                    // Smooth wave sparkline canvas
-                    Canvas(
-                        modifier = Modifier
-                            .widthIn(min = 36.dp, max = 56.dp)
-                            .height(18.dp)
-                    ) {
-                        val w = size.width
-                        val h = size.height
-                        val step = w / (sparklinePoints.size - 1)
-                        val path = Path().apply {
-                            moveTo(0f, h - (sparklinePoints[0] * h))
-                            for (i in 1 until sparklinePoints.size) {
-                                val prevX = (i - 1) * step
-                                val prevY = h - (sparklinePoints[i - 1] * h)
-                                val curX = i * step
-                                val curY = h - (sparklinePoints[i] * h)
-                                cubicTo(
-                                    (prevX + curX) / 2f, prevY,
-                                    (prevX + curX) / 2f, curY,
-                                    curX, curY
-                                )
-                            }
-                        }
-                        drawPath(path, trendColor, style = Stroke(width = 2.2f))
-                    }
-                } else {
-                    Spacer(Modifier.width(1.dp))
-                }
-
                 Text(
-                    text = trend,
-                    color = trendColor,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
+                    text = title,
+                    color = colors.textSecondary,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Medium
                 )
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(tint.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = tint,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
             }
+
+            Spacer(Modifier.height(6.dp))
+
+            Text(
+                text = value,
+                color = colors.textPrimary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(Modifier.height(2.dp))
+
+            Text(
+                text = subtitle,
+                color = tint,
+                fontSize = 10.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
 
 // -------------------------------------------------------------------------
-// 6. Next Best Action Card: Clean Horizontal Card with Seedling & Action Arrow
+// 4. Today's Advice: Clear Practical Answers (What, What to do, When, Why)
 // -------------------------------------------------------------------------
 @Composable
-private fun NextBestActionCard(
+private fun TodaysAdviceSection(
     colors: PremiumColors,
-    onClick: () -> Unit
+    onActionClick: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = colors.cardBg,
-        border = BorderStroke(1.dp, colors.cardBorder)
+        color = colors.cardBgElevated,
+        border = BorderStroke(1.dp, colors.lime.copy(alpha = 0.35f))
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(15.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Seedling Sprout Graphic Container
-            Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF132F1D))
-                    .border(1.dp, colors.lime.copy(alpha = 0.25f), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
+            // Header with Sprout Badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Spa,
-                    contentDescription = null,
-                    tint = colors.lime,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(colors.lime.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Spa,
+                            contentDescription = null,
+                            tint = colors.lime,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "TODAY'S FARM ADVICE",
+                            color = colors.lime,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.6.sp
+                        )
+                        Text(
+                            text = "Timely guidance based on soil and weather",
+                            color = colors.textSecondary,
+                            fontSize = 10.5.sp
+                        )
+                    }
+                }
 
-            Spacer(Modifier.width(12.dp))
-
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = "NEXT BEST ACTION",
-                    color = colors.lime,
-                    fontSize = 10.sp,
-                    letterSpacing = 0.8.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    text = "Apply nitrogen fertilizer in Field 1 (recommended)",
-                    color = colors.textPrimary,
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    lineHeight = 17.sp
-                )
-            }
-
-            Spacer(Modifier.width(8.dp))
-
-            // Circular Green Action Arrow Button
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.linearGradient(listOf(colors.lime, colors.emerald))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = colors.emerald.copy(alpha = 0.2f)
+                ) {
+                    Text(
+                        text = "High Priority",
+                        color = colors.lime,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
-                    .clickable(onClick = onClick),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = "Action",
-                    tint = colors.bg,
-                    modifier = Modifier.size(19.dp)
+                }
+            }
+
+            HorizontalDivider(color = colors.cardBorder)
+
+            // 4 Clear Farmer Guidance Rows
+            AdviceRow(label = "What is happening:", detail = "Soil moisture is good (72%) and light rain is forecasted for Friday afternoon.", colors = colors)
+            AdviceRow(label = "What to do:", detail = "Apply top-dress Nitrogen (Urea) fertilizer at 45 kg/acre in Field 1.", colors = colors)
+            AdviceRow(label = "When:", detail = "Today morning before 11:00 AM while winds remain calm below 10 km/h.", colors = colors)
+            AdviceRow(label = "Why:", detail = "Incoming rain will dissolve and carry nutrients directly to root zone without fertilizer burn or surface runoff.", colors = colors)
+
+            Spacer(Modifier.height(4.dp))
+
+            // Primary Action Button
+            Button(
+                onClick = onActionClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.lime,
+                    contentColor = Color(0xFF07140B)
                 )
+            ) {
+                Text(
+                    text = "View Fertilizer Recommendation >",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.5.sp
+                )
+            }
+
+            // Secondary Call Kisan Helpline Prompt
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:18001801551"))
+                        context.startActivity(dialIntent)
+                    },
+                shape = RoundedCornerShape(10.dp),
+                color = colors.cardBg,
+                border = BorderStroke(1.dp, colors.cardBorder)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Phone,
+                        contentDescription = null,
+                        tint = colors.emerald,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "Need agronomist guidance? Call Kisan Helpline 1800-180-1551",
+                        fontSize = 11.sp,
+                        color = colors.textSecondary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }
 }
 
+@Composable
+private fun AdviceRow(
+    label: String,
+    detail: String,
+    colors: PremiumColors
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = label,
+            fontWeight = FontWeight.Bold,
+            color = colors.textPrimary,
+            fontSize = 12.sp,
+            modifier = Modifier.width(115.dp)
+        )
+        Text(
+            text = detail,
+            color = colors.textSecondary,
+            fontSize = 12.sp,
+            lineHeight = 16.5.sp,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
 
 // -------------------------------------------------------------------------
-// Precision Agriculture Hub (1-Tap Direct Launcher for 14 Core Tools)
+// 5. Quick Actions: Exactly 6 Primary Cards + Expandable "All 14 Tools"
 // -------------------------------------------------------------------------
 data class HubTileItem(
     val title: String,
@@ -1175,75 +995,158 @@ data class HubTileItem(
 )
 
 @Composable
-fun PrecisionAgricultureHubSection(
+private fun QuickActionsSection(
     colors: PremiumColors,
     onNavigate: (Class<*>) -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(colors.cardBg)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Precision Agriculture Hub",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.5.sp,
-                        color = colors.textPrimary
-                    )
-                    Text(
-                        text = "Direct 1-tap access to all field, crop & market tools",
-                        fontSize = 11.sp,
-                        color = colors.textSecondary
-                    )
-                }
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = colors.emerald.copy(alpha = 0.18f)
-                ) {
-                    Text(
-                        text = "14 Tools",
-                        fontSize = 10.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.emerald,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
-                }
-            }
+    var showAllTools by remember { mutableStateOf(false) }
 
-            val hubItems = remember {
-                listOf(
-                    HubTileItem("Crop Health", "NDVI 0.84", Icons.Default.Eco, colors.lime, Screen11Activity::class.java),
-                    HubTileItem("Soil Moisture", "NDWI 72%", Icons.Default.WaterDrop, colors.blue, Screen12Activity::class.java),
-                    HubTileItem("Irrigation", "FAO-56 Balance", Icons.Default.Water, colors.blue, Screen13Activity::class.java),
-                    HubTileItem("Weather & Spray", "Calm · Safe Window", Icons.Default.WbSunny, colors.amber, Screen14Activity::class.java),
-                    HubTileItem("Pest & Disease", "Low Risk · Neem", Icons.Default.BugReport, colors.coral, Screen15Activity::class.java),
-                    HubTileItem("Fertilizer", "Urea / NPK Dosing", Icons.Default.Spa, colors.emerald, Screen20Activity::class.java),
-                    HubTileItem("Yield Predictor", "35 Q/ac (+8.4%)", Icons.Default.Assessment, colors.lime, Screen16Activity::class.java),
-                    HubTileItem("GPS Boundary", "12.5 ha Verified", Icons.Default.Place, colors.amber, Screen17Activity::class.java),
-                    HubTileItem("Crop Calendar", "Tasseling (DAS 48)", Icons.Default.CalendarToday, colors.blue, Screen18Activity::class.java),
-                    HubTileItem("Field Plowing", "Workable Soil", Icons.Default.Agriculture, colors.amber, Screen19Activity::class.java),
-                    HubTileItem("Mandi Prices", "₹2,380/Q Agmarknet", Icons.AutoMirrored.Filled.TrendingUp, colors.lime, Screen27Activity::class.java),
-                    HubTileItem("Farm Budget", "+₹23.5k/ac Profit", Icons.Default.AttachMoney, colors.emerald, Screen22Activity::class.java),
-                    HubTileItem("Kisan Helpline", "1800-180-1551", Icons.Default.Phone, colors.emerald, Screen26Activity::class.java),
-                    HubTileItem("Alert Center", "Thunderstorm Watch", Icons.Default.Warning, colors.coral, Screen28Activity::class.java)
+    // 6 Primary Daily Operations Tools (Never overwhelming)
+    val primaryTools = remember {
+        listOf(
+            HubTileItem("Watering Advice", "Next in 3 days", Icons.Default.WaterDrop, colors.blue, Screen13Activity::class.java),
+            HubTileItem("Crop Health", "Optimal vigor · 84%", Icons.Default.Eco, colors.lime, Screen11Activity::class.java),
+            HubTileItem("Weather Forecast", "28°C · Safe to Spray", Icons.Default.WbSunny, colors.amber, Screen14Activity::class.java),
+            HubTileItem("Fertilizer Guide", "Urea 45 kg/ac needed", Icons.Default.Spa, colors.emerald, Screen20Activity::class.java),
+            HubTileItem("Pest Advisory", "Low risk · Neem spray", Icons.Default.BugReport, colors.coral, Screen15Activity::class.java),
+            HubTileItem("Mandi Prices", "Corn ₹2,380/Q · Steady", Icons.AutoMirrored.Filled.TrendingUp, colors.lime, Screen27Activity::class.java)
+        )
+    }
+
+    // Additional Specialized Tools (Cleanly accessible when needed)
+    val secondaryTools = remember {
+        listOf(
+            HubTileItem("Yield Predictor", "35 Q/ac (+8.4%)", Icons.Default.Assessment, colors.lime, Screen16Activity::class.java),
+            HubTileItem("GPS Boundary", "12.5 ha Verified", Icons.Default.Place, colors.amber, Screen17Activity::class.java),
+            HubTileItem("Crop Calendar", "Tasseling (Day 48)", Icons.Default.CalendarToday, colors.blue, Screen18Activity::class.java),
+            HubTileItem("Field Plowing", "Workable soil", Icons.Default.Agriculture, colors.amber, Screen19Activity::class.java),
+            HubTileItem("Farm Budget", "+₹23.5k/ac profit", Icons.Default.AttachMoney, colors.emerald, Screen22Activity::class.java),
+            HubTileItem("Kisan Helpline", "1800-180-1551", Icons.Default.Phone, colors.emerald, Screen26Activity::class.java),
+            HubTileItem("Alert Center", "Rain Friday", Icons.Default.Warning, colors.coral, Screen28Activity::class.java),
+            HubTileItem("Organic Soil", "Compost & Biochar", Icons.Default.Spa, colors.lime, Screen25Activity::class.java)
+        )
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Quick Farm Actions",
+                    color = colors.textPrimary,
+                    fontSize = 16.5.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Direct 1-tap access to everyday farming operations",
+                    color = colors.textSecondary,
+                    fontSize = 11.sp
                 )
             }
 
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = colors.emerald.copy(alpha = 0.18f)
+            ) {
+                Text(
+                    text = "6 Core Actions",
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.emerald,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                )
+            }
+        }
+
+        // 6 Primary Cards (2 Columns x 3 Rows)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            primaryTools.chunked(2).forEach { rowPair ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rowPair.forEach { tile ->
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onNavigate(tile.targetClass) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = colors.cardBg,
+                            border = BorderStroke(1.dp, colors.cardBorder)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 11.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(9.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(CircleShape)
+                                        .background(tile.tint.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = tile.icon,
+                                        contentDescription = tile.title,
+                                        tint = tile.tint,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = tile.title,
+                                        color = colors.textPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = tile.subtitle,
+                                        color = tile.tint,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 10.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Expandable / Bottom Sheet Drawer Button for Remaining Tools
+        OutlinedButton(
+            onClick = { showAllTools = !showAllTools },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(42.dp),
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, colors.lime.copy(alpha = 0.4f)),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.lime)
+        ) {
+            Text(
+                text = if (showAllTools) "Hide Additional Tools ▴" else "View All 14 Farming Tools ▾",
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        // Expandable Additional Tools
+        AnimatedVisibility(
+            visible = showAllTools,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                hubItems.chunked(2).forEach { rowPair ->
+                secondaryTools.chunked(2).forEach { rowPair ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1259,13 +1162,13 @@ fun PrecisionAgricultureHubSection(
                                 border = BorderStroke(1.dp, colors.cardBorder)
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(9.dp)
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(34.dp)
+                                            .size(32.dp)
                                             .clip(CircleShape)
                                             .background(tile.tint.copy(alpha = 0.15f)),
                                         contentAlignment = Alignment.Center
@@ -1274,7 +1177,7 @@ fun PrecisionAgricultureHubSection(
                                             imageVector = tile.icon,
                                             contentDescription = tile.title,
                                             tint = tile.tint,
-                                            modifier = Modifier.size(18.dp)
+                                            modifier = Modifier.size(17.dp)
                                         )
                                     }
                                     Column(modifier = Modifier.weight(1f)) {
@@ -1290,7 +1193,7 @@ fun PrecisionAgricultureHubSection(
                                             text = tile.subtitle,
                                             color = tile.tint,
                                             fontWeight = FontWeight.SemiBold,
-                                            fontSize = 10.sp,
+                                            fontSize = 9.5.sp,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )

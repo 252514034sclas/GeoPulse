@@ -18,7 +18,7 @@ class Screen15Activity : ComponentActivity() {
                     icon = Icons.Default.Warning,
                     activity = this,
                     primaryActionClass = Screen11Activity::class.java,
-                    primaryActionText = "View Satellite Crop Health (NDVI)",
+                    primaryActionText = "View Satellite Crop Health",
                     secondaryActionClass = Screen26Activity::class.java,
                     secondaryActionText = "Consult Kisan Helpline (1800-180-1551)"
                 )
