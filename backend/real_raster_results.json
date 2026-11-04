@@ -1,0 +1,51 @@
+{
+  "status": "VERIFIED_REAL_RASTER",
+  "scene_metadata": {
+    "scene_id": "S2C_MSIL2A_20261011T045721_R119_T44PMV_20261011T095104",
+    "provider": "European Space Agency (ESA) Copernicus Data Space / Planetary Computer",
+    "satellite": "Sentinel-2C",
+    "sensor": "MSI (MultiSpectral Instrument)",
+    "acquisition_date": "2026-10-11T04:57:21Z",
+    "tile_id": "T44PMV",
+    "cloud_cover_scene_pct": 5.89,
+    "cloud_cover_field_pct": 0.0,
+    "spatial_resolution_m": 10.0,
+    "bands_downloaded": [
+      "B04 (Red 10m)",
+      "B08 (NIR 10m)",
+      "B11 (SWIR 20m)",
+      "SCL (Scene Classification 20m)"
+    ],
+    "crs": "WGS 84 / UTM zone 44N (EPSG:32644)"
+  },
+  "field_statistics": {
+    "field_id": 1,
+    "field_name": "North Sector Alpha",
+    "crop_type": "Corn (Dent)",
+    "total_pixels_in_boundary": 5901,
+    "valid_clear_pixels": 5901,
+    "cloud_pixels": 0,
+    "ndvi": {
+      "mean": 0.3272,
+      "min": -0.0828,
+      "max": 0.7622,
+      "std": 0.2315,
+      "crop_health_percentage": 33,
+      "vigor_classification": "Stressed"
+    },
+    "ndmi": {
+      "mean": 0.0756,
+      "min": -0.3117,
+      "max": 0.4455,
+      "std": 0.1393,
+      "soil_moisture_percentage": 34,
+      "water_stress_status": "Mild Water Deficit"
+    }
+  },
+  "processing_metrics": {
+    "execution_duration_sec": 48.074,
+    "pixel_sampling_method": "Exact Polygon Boundary Clipping + SCL Cloud Masking",
+    "synthetic_data_used": false,
+    "provenance": "Copernicus Sentinel-2C Level-2A Surface Reflectance BOA Archive"
+  }
+}

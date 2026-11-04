@@ -43,6 +43,11 @@ interface GeoPulseApiService {
         @Path("field_id") fieldId: Int
     ): Response<SatelliteRecordDto>
 
+    @GET("api/v1/satellite/moisture/{field_id}")
+    suspend fun getSatelliteMoisture(
+        @Path("field_id") fieldId: Int
+    ): Response<SoilMoistureDto>
+
     @GET("api/v1/weather/current")
     suspend fun getCurrentWeather(): Response<WeatherDto>
 

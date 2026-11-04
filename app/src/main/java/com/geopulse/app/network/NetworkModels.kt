@@ -95,7 +95,7 @@ data class SowingDto(
 )
 
 // -------------------------------------------------------------
-// Satellite Health (NDVI)
+// Satellite Health (NDVI) & Soil Moisture
 // -------------------------------------------------------------
 data class SatelliteRecordDto(
     val id: Int,
@@ -106,7 +106,18 @@ data class SatelliteRecordDto(
     @SerializedName("chlorophyll_spad") val chlorophyllSpad: Double,
     @SerializedName("canopy_cover_pct") val canopyCoverPct: Double,
     @SerializedName("health_status") val healthStatus: String,
-    @SerializedName("layman_advice") val laymanAdvice: String
+    @SerializedName("layman_advice") val laymanAdvice: String,
+    @SerializedName("disclaimer") val disclaimer: String? = null
+)
+
+data class SoilMoistureDto(
+    val id: Int,
+    @SerializedName("field_id") val fieldId: Int,
+    @SerializedName("moisture_percentage") val moisturePercentage: Double,
+    @SerializedName("depth_cm") val depthCm: Double,
+    val status: String,
+    @SerializedName("watering_advice") val wateringAdvice: String,
+    @SerializedName("data_source") val dataSource: String? = null
 )
 
 // -------------------------------------------------------------
