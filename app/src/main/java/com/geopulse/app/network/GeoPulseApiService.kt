@@ -17,6 +17,10 @@ interface GeoPulseApiService {
     @GET("api/v1/fields")
     suspend fun getFields(): Response<List<FieldDto>>
 
+    @GET("api/v1/fields/geojson")
+    suspend fun getFieldsGeoJson(): Response<GeoJsonFeatureCollectionDto>
+
+
     @POST("api/v1/fields/draw")
     suspend fun createDrawnField(
         @Query("name") name: String,

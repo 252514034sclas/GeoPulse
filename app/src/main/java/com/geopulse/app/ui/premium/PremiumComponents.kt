@@ -1,4 +1,5 @@
 package com.geopulse.app.ui.premium
+import com.geopulse.app.map.*
 
 import android.content.Intent
 import android.net.Uri
@@ -394,7 +395,7 @@ private fun HomeHeader(
 }
 
 // -------------------------------------------------------------------------
-// 2. FieldMapCard: 250dp, Satellite / Normal Map Toggle, Field Boundary, Date
+// 2. FieldMapCard: Real Interactive MapLibre Satellite Farm Map
 // -------------------------------------------------------------------------
 @Composable
 private fun FieldMapCard(
@@ -402,259 +403,12 @@ private fun FieldMapCard(
     onMapClick: () -> Unit,
     onFieldBoundaryClick: () -> Unit
 ) {
-    var isSatelliteView by remember { mutableStateOf(true) }
-    var recenterTrigger by remember { mutableIntStateOf(0) }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(250.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(if (isSatelliteView) Color(0xFF0C1F13) else Color(0xFF1B261E))
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(18.dp))
-            .clickable(onClick = onMapClick)
-    ) {
-        // High-fidelity GIS Map Canvas (Satellite Imagery vs Normal Topographic/Street View)
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val w = size.width
-            val h = size.height
-
-            if (isSatelliteView) {
-                // Base lush aerial landscape with natural agricultural contours
-                drawRect(
-                    brush = Brush.radialGradient(
-                        colors = listOf(Color(0xFF1B3D22), Color(0xFF0A180E)),
-                        center = Offset(w * 0.45f, h * 0.5f),
-                        radius = w * 0.85f
-                    )
-                )
-
-                // Natural crop row texture lines
-                var lineX = 0f
-                while (lineX < w + h) {
-                    drawLine(
-                        color = Color(0x0CFFFFFF),
-                        start = Offset(lineX, 0f),
-                        end = Offset(lineX - h * 0.6f, h),
-                        strokeWidth = 1.2f
-                    )
-                    lineX += 28f
-                }
-
-                // Neighbor parcel outline (subtle boundary)
-                val neighborField = Path().apply {
-                    moveTo(w * 0.70f, h * 0.05f)
-                    lineTo(w * 0.95f, h * 0.10f)
-                    lineTo(w * 0.92f, h * 0.75f)
-                    lineTo(w * 0.68f, h * 0.70f)
-                    close()
-                }
-                drawPath(neighborField, Color(0x331B4324))
-                drawPath(neighborField, Color(0x3381C784), style = Stroke(width = 1f))
-
-                // Farmer's Main Field Boundary Polygon
-                val field1 = Path().apply {
-                    moveTo(w * 0.08f, h * 0.12f)
-                    lineTo(w * 0.66f, h * 0.08f)
-                    lineTo(w * 0.60f, h * 0.86f)
-                    lineTo(w * 0.12f, h * 0.82f)
-                    close()
-                }
-                // Healthy crop vigor green zone fill
-                drawPath(field1, Color(0xAA2E7D32))
-                drawPath(field1, Color(0xFF81C784), style = Stroke(width = 2.4f))
-
-                // Natural vegetative vigor variation hotspot inside field
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(Color(0x99FBC02D), Color(0x00000000)),
-                        center = Offset(w * 0.46f, h * 0.42f),
-                        radius = w * 0.18f
-                    ),
-                    radius = w * 0.18f,
-                    center = Offset(w * 0.46f, h * 0.42f)
-                )
-            } else {
-                // Normal Street / Cadastral Topographic Basemap Styling
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF222D25), Color(0xFF161E18))
-                    )
-                )
-
-                // Road grid / access lane network lines
-                drawLine(
-                    color = Color(0x44E0E0E0),
-                    start = Offset(0f, h * 0.50f),
-                    end = Offset(w, h * 0.45f),
-                    strokeWidth = 3.5f
-                )
-                drawLine(
-                    color = Color(0x33BDBDBD),
-                    start = Offset(w * 0.68f, 0f),
-                    end = Offset(w * 0.64f, h),
-                    strokeWidth = 2.5f
-                )
-
-                // Cadastral cadastral parcel lines
-                val parcelGrid = Path().apply {
-                    moveTo(w * 0.08f, h * 0.12f)
-                    lineTo(w * 0.66f, h * 0.08f)
-                    lineTo(w * 0.60f, h * 0.86f)
-                    lineTo(w * 0.12f, h * 0.82f)
-                    close()
-                }
-                drawPath(parcelGrid, Color(0x554CAF50))
-                drawPath(parcelGrid, Color(0xFF66BB6A), style = Stroke(width = 2.2f))
-            }
-        }
-
-        // Top-Start: Satellite Observation Date & Provenance Badge
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(10.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(colors.cardBg.copy(alpha = 0.94f))
-                .border(1.dp, colors.cardBorder, RoundedCornerShape(10.dp))
-                .padding(horizontal = 9.dp, vertical = 5.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(
-                imageVector = if (isSatelliteView) Icons.Default.Sensors else Icons.Default.Map,
-                contentDescription = null,
-                tint = colors.lime,
-                modifier = Modifier.size(15.dp)
-            )
-            Column {
-                Text(
-                    text = if (isSatelliteView) "🛰️ Satellite: Oct 29, 2026" else "🗺️ Cadastral Map",
-                    color = colors.textPrimary,
-                    fontSize = 10.5.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = if (isSatelliteView) "Cloud: 1.2% (Clear view) · 10m Res" else "OpenStreetMap · Tamil Nadu Delta",
-                    color = colors.textSecondary,
-                    fontSize = 8.5.sp
-                )
-            }
-        }
-
-        // Top-End: Prominent Satellite / Normal Map Toggle Switcher
-        Surface(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(10.dp),
-            shape = RoundedCornerShape(20.dp),
-            color = colors.cardBg.copy(alpha = 0.95f),
-            border = BorderStroke(1.dp, colors.lime.copy(alpha = 0.4f))
-        ) {
-            Row(
-                modifier = Modifier.padding(3.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Satellite Option
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (isSatelliteView) colors.emerald else Color.Transparent,
-                    modifier = Modifier.clickable { isSatelliteView = true }
-                ) {
-                    Text(
-                        text = "🛰️ Satellite",
-                        fontSize = 10.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSatelliteView) Color.White else colors.textSecondary,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
-                    )
-                }
-
-                // Normal Map Option
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (!isSatelliteView) colors.emerald else Color.Transparent,
-                    modifier = Modifier.clickable { isSatelliteView = false }
-                ) {
-                    Text(
-                        text = "🗺️ Normal",
-                        fontSize = 10.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (!isSatelliteView) Color.White else colors.textSecondary,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
-                    )
-                }
-            }
-        }
-
-        // Bottom-Start: Direct CTA to Open Interactive GIS Map
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(10.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(colors.emerald)
-                .clickable { onMapClick() }
-                .padding(horizontal = 10.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Map,
-                contentDescription = "Open GIS Map",
-                tint = Color.White,
-                modifier = Modifier.size(15.dp)
-            )
-            Text(
-                text = "Open GIS Map >",
-                color = Color.White,
-                fontSize = 11.5.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        // Bottom-Center: Active Field Tag & Area Chip
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 10.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(colors.cardBg.copy(alpha = 0.94f))
-                .border(1.dp, colors.cardBorder, RoundedCornerShape(10.dp))
-                .clickable { onFieldBoundaryClick() }
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Icon(Icons.Default.Place, contentDescription = null, tint = colors.lime, modifier = Modifier.size(13.dp))
-            Text(
-                text = "Field 1 · 12.5 ha (30.9 ac)",
-                color = colors.textPrimary,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        // Bottom-End: GPS Recenter Target Button
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(12.dp)
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(colors.cardBg.copy(alpha = 0.92f))
-                .border(1.dp, colors.cardBorder, CircleShape)
-                .clickable { recenterTrigger++ },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.MyLocation,
-                contentDescription = "Recenter GPS",
-                tint = if (recenterTrigger % 2 == 1) colors.emerald else colors.lime,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-    }
+    InteractiveSatelliteFarmMap(
+        modifier = Modifier.fillMaxWidth(),
+        farmName = "Green Valley Farm",
+        onOpenFullGisMap = onMapClick,
+        onDetailedHealthClick = { onFieldBoundaryClick() }
+    )
 }
 
 // -------------------------------------------------------------------------
@@ -696,7 +450,7 @@ private fun FarmConditionSection(
                 modifier = Modifier.weight(1f),
                 title = "Crop Health",
                 value = "84% · Good",
-                subtitle = "Optimal green vigor",
+                subtitle = "Sentinel-2C NDVI: 0.33",
                 icon = Icons.Default.Eco,
                 tint = colors.lime,
                 colors = colors,
@@ -707,7 +461,7 @@ private fun FarmConditionSection(
                 modifier = Modifier.weight(1f),
                 title = "Soil Water",
                 value = "72% · Moist",
-                subtitle = "Adequate root moisture",
+                subtitle = "NDMI: 0.08 ? Water needed",
                 icon = Icons.Default.WaterDrop,
                 tint = colors.blue,
                 colors = colors,
@@ -735,7 +489,7 @@ private fun FarmConditionSection(
                 modifier = Modifier.weight(1f),
                 title = "Farm Alerts",
                 value = "1 Notice",
-                subtitle = "Rain expected Friday",
+                subtitle = "Irrigate root zone",
                 icon = Icons.Default.Notifications,
                 tint = colors.coral,
                 colors = colors,
@@ -894,10 +648,10 @@ private fun TodaysAdviceSection(
             HorizontalDivider(color = colors.cardBorder)
 
             // 4 Clear Farmer Guidance Rows
-            AdviceRow(label = "What is happening:", detail = "Soil moisture is good (72%) and light rain is forecasted for Friday afternoon.", colors = colors)
-            AdviceRow(label = "What to do:", detail = "Apply top-dress Nitrogen (Urea) fertilizer at 45 kg/acre in Field 1.", colors = colors)
-            AdviceRow(label = "When:", detail = "Today morning before 11:00 AM while winds remain calm below 10 km/h.", colors = colors)
-            AdviceRow(label = "Why:", detail = "Incoming rain will dissolve and carry nutrients directly to root zone without fertilizer burn or surface runoff.", colors = colors)
+            AdviceRow(label = "What is happening:", detail = "Soil moisture is low (34%) and Sentinel-2 NDVI confirms canopy water stress.", colors = colors)
+            AdviceRow(label = "What to do:", detail = "Apply 25-30 mm irrigation to Field 1 before applying top-dress Nitrogen fertilizer.", colors = colors)
+            AdviceRow(label = "When:", detail = "Early morning before 10:00 AM to prevent evaporative water loss.", colors = colors)
+            AdviceRow(label = "Why:", detail = "Adequate soil moisture is required for nitrogen uptake; dry application causes fertilizer burn.", colors = colors)
 
             Spacer(Modifier.height(4.dp))
 

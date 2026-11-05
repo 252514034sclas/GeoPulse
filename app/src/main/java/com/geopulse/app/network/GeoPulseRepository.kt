@@ -42,6 +42,26 @@ class GeoPulseRepository(
         )
     }
 
+    suspend fun getFields(): List<FieldDto> = withContext(Dispatchers.IO) {
+        try {
+            val response = api.getFields()
+            if (response.isSuccessful && response.body() != null) {
+                return@withContext response.body()!!
+            }
+        } catch (_: Exception) {}
+        return@withContext getDashboardSummary().fields
+    }
+
+    suspend fun getFieldsGeoJson(): GeoJsonFeatureCollectionDto? = withContext(Dispatchers.IO) {
+        try {
+            val response = api.getFieldsGeoJson()
+            if (response.isSuccessful && response.body() != null) {
+                return@withContext response.body()!!
+            }
+        } catch (_: Exception) {}
+        return@withContext null
+    }
+
     suspend fun getSatelliteHealth(fieldId: Int = 1): SatelliteRecordDto = withContext(Dispatchers.IO) {
         try {
             val response = api.getSatelliteHealth(fieldId)

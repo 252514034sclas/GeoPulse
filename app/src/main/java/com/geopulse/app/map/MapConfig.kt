@@ -5,10 +5,11 @@ import android.content.SharedPreferences
 import org.maplibre.android.maps.Style
 
 enum class BasemapType(val displayName: String, val badge: String) {
-    SATELLITE("Satellite Imagery", "🛰️"),
+    SATELLITE("Satellite", "🛰️"),
+    STREETS("Street", "🗺️"),
+    HYBRID("Hybrid", "🛰️+🗺️"),
     DARK_GIS("Dark GIS", "🌙"),
-    LIGHT_GIS("Light GIS", "☀️"),
-    STREETS("Streets (OSM)", "🗺️")
+    LIGHT_GIS("Light GIS", "☀️")
 }
 
 object MapConfig {
@@ -24,11 +25,11 @@ object MapConfig {
     const val URL_STREETS = "https://demotiles.maplibre.org/style.json"
 
     // Default Map Center (Chennai / Indian Agricultural Belt)
-    const val DEFAULT_LATITUDE = 13.0600
-    const val DEFAULT_LONGITUDE = 80.2100
-    const val DEFAULT_ZOOM = 13.5
+    const val DEFAULT_LATITUDE = 13.0645
+    const val DEFAULT_LONGITUDE = 80.2060
+    const val DEFAULT_ZOOM = 14.2
 
-    const val ATTRIBUTION_TEXT = "© MapLibre | © OpenStreetMap | © Esri World Imagery | © CARTO"
+    const val ATTRIBUTION_TEXT = "© MapLibre | © Esri World Imagery | © OpenStreetMap contributors"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -83,20 +84,23 @@ object MapConfig {
             BasemapType.SATELLITE -> {
                 Style.Builder().fromJson(getEsriSatelliteStyleJson())
             }
+            BasemapType.HYBRID -> {
+                Style.Builder().fromJson(getEsriHybridStyleJson())
+            }
+            BasemapType.STREETS -> {
+                Style.Builder().fromJson(getOsmStreetStyleJson())
+            }
             BasemapType.DARK_GIS -> {
                 Style.Builder().fromUri(URL_DARK_GIS)
             }
             BasemapType.LIGHT_GIS -> {
                 Style.Builder().fromUri(URL_LIGHT_GIS)
             }
-            BasemapType.STREETS -> {
-                Style.Builder().fromUri(URL_STREETS)
-            }
         }
     }
 
     /**
-     * Self-contained MapLibre GL style loading Esri World Imagery 0-20 zoom satellite photography.
+     * Self-contained MapLibre GL style loading Esri World Imagery 0-19 zoom satellite photography.
      */
     fun getEsriSatelliteStyleJson(): String {
         return """
@@ -119,6 +123,86 @@ object MapConfig {
               "id": "esri-satellite-layer",
               "type": "raster",
               "source": "esri-satellite",
+              "minzoom": 0,
+              "maxzoom": 20
+            }
+          ]
+        }
+        """.trimIndent()
+    }
+
+    /**
+     * Self-contained MapLibre GL style combining Esri satellite photography with official boundary & places overlay.
+     */
+    fun getEsriHybridStyleJson(): String {
+        return """
+        {
+          "version": 8,
+          "name": "Esri World Imagery Hybrid",
+          "sources": {
+            "esri-satellite": {
+              "type": "raster",
+              "tiles": [
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              ],
+              "tileSize": 256,
+              "maxzoom": 19,
+              "attribution": "© Esri, Maxar, Earthstar Geographics, USDA, USGS"
+            },
+            "esri-overlay": {
+              "type": "raster",
+              "tiles": [
+                "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+              ],
+              "tileSize": 256,
+              "maxzoom": 19,
+              "attribution": "© Esri, HERE, Garmin"
+            }
+          },
+          "layers": [
+            {
+              "id": "esri-satellite-layer",
+              "type": "raster",
+              "source": "esri-satellite",
+              "minzoom": 0,
+              "maxzoom": 20
+            },
+            {
+              "id": "esri-overlay-layer",
+              "type": "raster",
+              "source": "esri-overlay",
+              "minzoom": 0,
+              "maxzoom": 20
+            }
+          ]
+        }
+        """.trimIndent()
+    }
+
+    /**
+     * Self-contained OpenStreetMap standard street tile raster style.
+     */
+    fun getOsmStreetStyleJson(): String {
+        return """
+        {
+          "version": 8,
+          "name": "OpenStreetMap Standard",
+          "sources": {
+            "osm-tiles": {
+              "type": "raster",
+              "tiles": [
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+              ],
+              "tileSize": 256,
+              "maxzoom": 19,
+              "attribution": "© OpenStreetMap contributors"
+            }
+          },
+          "layers": [
+            {
+              "id": "osm-tiles-layer",
+              "type": "raster",
+              "source": "osm-tiles",
               "minzoom": 0,
               "maxzoom": 20
             }

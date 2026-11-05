@@ -180,3 +180,37 @@ data class DashboardSummaryDto(
     val weather: WeatherDto?,
     @SerializedName("mandi_highlights") val mandiHighlights: List<MandiPriceDto>
 )
+
+// -------------------------------------------------------------
+// GeoJSON Field Boundaries & Properties
+// -------------------------------------------------------------
+data class GeoJsonFeatureCollectionDto(
+    val type: String,
+    val features: List<GeoJsonFeatureDto>
+)
+
+data class GeoJsonFeatureDto(
+    val type: String,
+    val id: Int,
+    val properties: GeoJsonFieldPropertiesDto
+)
+
+data class GeoJsonFieldPropertiesDto(
+    val id: Int,
+    val name: String,
+    @SerializedName("crop_type") val cropType: String,
+    @SerializedName("area_acres") val areaAcres: Double,
+    @SerializedName("area_hectares") val areaHectares: Double,
+    val status: String,
+    @SerializedName("sowing_date") val sowingDate: String?,
+    val latitude: Double,
+    val longitude: Double,
+    @SerializedName("boundary_wkt") val boundaryWkt: String?,
+    @SerializedName("latest_satellite_date") val latestSatelliteDate: String?,
+    @SerializedName("ndvi_value") val ndviValue: Double?,
+    @SerializedName("health_status") val healthStatus: String?,
+    @SerializedName("moisture_pct") val moisturePct: Double?,
+    @SerializedName("moisture_status") val moistureStatus: String?,
+    val disclaimer: String?
+)
+
