@@ -14,7 +14,7 @@ class Screen29Activity : ComponentActivity() {
             GeoPulseTheme {
                 GeoDetailScreenContent(
                     title = "App Settings & Appearance",
-                    subtitle = "Select your theme (Dark, Light, or System default), language, and offline sync.",
+                    subtitle = "Select your theme (Dark, Light, or System default), language, and session preferences.",
                     icon = Icons.Default.Settings,
                     activity = this,
                     nextActivityClass = null,

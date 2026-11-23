@@ -280,11 +280,8 @@ class IsroBhoonidhiAdapter:
             return {
                 "sensor_type": "SYNTHETIC_APERTURE_RADAR_C_BAND",
                 "polarization": "VV_VH",
-                "dielectric_constant": 28.4,
-                "volumetric_soil_moisture_m3m3": 0.32,
-                "soil_moisture_percentage": 72.0,
-                "moisture_status": "Adequate (Moist Root-Zone)",
-                "cloud_interference": "None (SAR Radar Penetrates Atmosphere & Clouds)"
+                "status": "NOT_IMPLEMENTED",
+                "message": "Radar SAR backscatter radiometric calibration is not implemented in the raster pipeline. Optical Sentinel-2 MSI and FAO-56 models are utilized for agronomic recommendations."
             }
 
         b2_green = 0.082
@@ -312,11 +309,11 @@ class IsroBhoonidhiAdapter:
 
     def query_eos04_soil_moisture(self, lat: float, lon: float) -> Dict[str, Any]:
         """
-        Query EOS-04 C-band SAR soil moisture estimate for coordinates.
+        Query EOS-04 C-band SAR soil moisture status for coordinates.
         Complies strictly with scientific transparency: identifies retrieval model, calibration, and limitations.
         """
         return {
-            "source": "ISRO EOS-04 / RISAT-1A SAR Soil Moisture",
+            "source": "ISRO EOS-04 / RISAT-1A SAR Radar Catalog",
             "satellite": "EOS-04 (RISAT-1A)",
             "sensor": "C-band Synthetic Aperture Radar (SAR)",
             "frequency_ghz": 5.405,
@@ -324,23 +321,24 @@ class IsroBhoonidhiAdapter:
             "latitude": lat,
             "longitude": lon,
             "is_configured": self.is_configured,
-            "authenticated": bool(self.authenticate()),
-            "estimated_volumetric_soil_moisture_pct": 28.4,
-            "soil_moisture_percentage": 72.0,
-            "retrieval_method": "Water Cloud Model (WCM) inverted on C-band VV/VH backscatter coefficient (sigma-nought dB)",
-            "calibration": "Calibrated against Indian Meteorological Department (IMD) automated agro-met network",
-            "scientific_limitations": "C-band radar backscatter measures dielectric permittivity of top 0-5 cm soil layer. Deep root-zone moisture is inferred via hydrological soil water-balance model and is sensitive to heavy surface vegetation canopy attenuation.",
-            "cloud_interference": "0.0% (Radar microwave pulses penetrate monsoonal cloud layers and haze)",
-            "confidence": "High (Level-2B Radiometrically & Geometrically Calibrated)"
+            "is_authenticated": bool(self.authenticate()),
+            "status": "NOT_IMPLEMENTED",
+            "message": "Radar SAR backscatter radiometric processing is not implemented in GeoPulse. Soil moisture is hydrologically modelled via Open-Meteo land surface physics and FAO-56 root-zone water balance.",
+            "measured_value": None,
+            "data_type": "UNAVAILABLE"
         }
 
     def get_status(self) -> Dict[str, Any]:
         """Check full status of Bhoonidhi integration, authentication, and supported missions."""
         token = self.authenticate()
         return {
-            "provider": "ISRO / NRSC Bhoonidhi",
+            "provider": "ISRO / NRSC Bhoonidhi Open Search & Catalog",
             "portal_url": BHOONIDHI_PORTAL_URL,
             "api_base_url": BHOONIDHI_BASE_URL,
+            "authentication_status": "AUTHENTICATED" if token else ("NOT_CONFIGURED" if not self.is_configured else "AUTHENTICATION_FAILED"),
+            "catalog_access": "AVAILABLE (63 satellite collections indexed via NRSC APISIX gateway)",
+            "raster_acquisition_status": "RESTRICTED (NRSC raw products require asynchronous order dispatch; COG raster rendering delegated to STAC pipeline)",
+            "radar_processing_status": "NOT IMPLEMENTED (No direct SAR backscatter processing module in raster pipeline)",
             "is_configured": self.is_configured,
             "is_authenticated": bool(token),
             "user_id_configured": self.user_id if self.is_configured else "NOT_SET",

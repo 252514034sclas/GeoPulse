@@ -1183,9 +1183,9 @@ fun FullProfileSettingsTab(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column {
-                                    Text("Weather & Spray Alerts", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-                                    Text("Frost, rain and disease notifications", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                    Text("In-App Weather & Spray Alerts", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    Text("In-app alert banners for rain, wind drift, and disease risks", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Switch(checked = notificationsEnabled, onCheckedChange = { notificationsEnabled = it })
                             }
@@ -1197,11 +1197,11 @@ fun FullProfileSettingsTab(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column {
-                                    Text("Offline Satellite Map Caching", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-                                    Text("Save field satellite maps for offline use", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                    Text("Durable Offline Storage (Coming Soon)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                                    Text("Multi-parcel offline persistence requires local Room DB integration (in development)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
                                 }
-                                Switch(checked = offlineCaching, onCheckedChange = { offlineCaching = it })
+                                Switch(checked = false, enabled = false, onCheckedChange = { })
                             }
                         }
                     }

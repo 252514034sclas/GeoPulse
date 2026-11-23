@@ -120,14 +120,16 @@ class IrrigationEngine:
         depletion_fraction = 1.0 - (clamped_moisture / 100.0)
         depletion_mm = round(depletion_fraction * taw_mm, 1)
 
-        # 6. Probabilistic Effective Rainfall Model:
-        # Incorporates forecast uncertainty, initial abstraction (canopy interception/depression storage),
-        # and infiltration capped at available soil water deficit.
-        initial_abstraction_mm = 4.0
+        # 6. Probabilistic Expected Rainfall & USDA NRCS Infiltration Model:
+        # Expected forecast rainfall E[P] = P_forecast * (PoP / 100) represents a probabilistic expectation,
+        # NOT confirmed effective rainfall.
+        # Initial Abstraction (Ia = 3.2 mm) is calibrated per USDA NRCS National Engineering Handbook Part 630
+        # (Hydrology Curve Number method: CN=80 for cultivated row crops, S=63.5 mm, modern Ia = 0.05 * S = 3.2 mm).
+        initial_abstraction_mm = 3.2  # USDA NRCS Part 630 (CN=80, Ia=0.05*S)
         pop_weight = max(0.0, min(100.0, float(forecast_rain_probability_pct))) / 100.0
-        probabilistic_precip = forecast_rain_next_48h_mm * pop_weight
-        infiltrated_rain = max(0.0, probabilistic_precip - initial_abstraction_mm) * 0.80
-        effective_rain_mm = round(min(depletion_mm, infiltrated_rain), 1)
+        forecast_expected_rain_mm = round(forecast_rain_next_48h_mm * pop_weight, 2)
+        modelled_infiltrable_rain_mm = round(max(0.0, forecast_expected_rain_mm - initial_abstraction_mm) * 0.80, 2)
+        effective_rain_mm = round(min(depletion_mm, modelled_infiltrable_rain_mm), 1)
 
         # 7. Net Irrigation Depth (mm)
         net_irrigation_mm = round(max(0.0, depletion_mm - effective_rain_mm), 1)
@@ -219,7 +221,15 @@ class IrrigationEngine:
             },
             "forecast_rain_48h_mm": forecast_rain_next_48h_mm,
             "forecast_rain_probability_pct": forecast_rain_probability_pct,
+            "forecast_expected_rainfall_mm": forecast_expected_rain_mm,
+            "modelled_infiltrable_rain_mm": modelled_infiltrable_rain_mm,
             "effective_rain_mm": effective_rain_mm,
+            "data_provenance": {
+                "crop_water_demand": "MODELLED_FAO56",
+                "weather_forecast": "NWP_FORECAST_PROBABILISTIC",
+                "soil_moisture": "NWP_LAND_SURFACE_MODELLED",
+                "infiltration_model": "USDA_NRCS_CURVE_NUMBER_CN80"
+            },
             "net_irrigation_depth_mm": net_irrigation_mm,
             "gross_irrigation_depth_mm": gross_irrigation_mm,
             "recommended_depth_mm": gross_irrigation_mm,

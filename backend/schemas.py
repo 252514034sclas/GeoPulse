@@ -27,6 +27,9 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None

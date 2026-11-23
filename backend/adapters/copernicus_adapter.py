@@ -143,12 +143,15 @@ class CopernicusSentinelAdapter:
                         return {
                             "status": "LIVE_SATELLITE_FOUND",
                             "provider": "Copernicus Sentinel-2 Level-2A (ESA)",
-                            "satellite": "Sentinel-2A / Sentinel-2B",
+                            "processing_provider": "Microsoft Planetary Computer STAC (hosting ESA Copernicus Sentinel-2 Level-2A COGs)",
+                            "satellite": "Sentinel-2A / Sentinel-2B / Sentinel-2C",
                             "sensor": "MSI (MultiSpectral Instrument)",
                             "scene_id": feature.get("id"),
                             "acquisition_time": acq_time,
+                            "processing_timestamp": datetime.utcnow().isoformat() + "Z",
+                            "raster_extraction_mode": "STAC_SCENE_CATALOG_METADATA",
                             "spatial_resolution_meters": 10.0,
-                            "cloud_cover_pct": round(cloud_cover, 1),
+                            "cloud_cover_pct": round(cloud_cover, 2),
                             "cloud_mask_applied": True,
                             "crop_health_index": ndvi,
                             "crop_health_pct": int(ndvi * 100),
@@ -159,7 +162,7 @@ class CopernicusSentinelAdapter:
                             "b4_red_url": sign_url(b4_href),
                             "b8_nir_url": sign_url(b8_href),
                             "b11_swir_url": sign_url(b11_href),
-                            "provenance": "European Space Agency (ESA) Copernicus Sentinel data, processed as surface reflectance (Bottom of Atmosphere)."
+                            "provenance": "European Space Agency (ESA) Copernicus Sentinel data, indexed via Planetary Computer STAC."
                         }
         except Exception as e:
             logger.info(f"Planetary STAC query fallback: {str(e)}")

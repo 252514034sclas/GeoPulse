@@ -119,15 +119,17 @@ class TestScientificRigor(unittest.TestCase):
         )
         self.assertEqual(res1["effective_rain_mm"], 0.0)
 
-        # Case 2: High PoP (80%) on 25mm forecast -> Prob rain = 20mm. Infiltrated = (20 - 4)*0.8 = 12.8 mm
+        # Case 2: High PoP (80%) on 25mm forecast -> Prob rain = 20mm. Infiltrated = (20 - 3.2)*0.8 = 13.44 mm -> 13.4 mm
         res2 = IrrigationEngine.calculate_irrigation(
             crop_type="Corn",
             area_hectares=1.0,
-            current_moisture_pct=40.0,  # TAW = 170mm -> Dr = 0.6 * 170 = 102 mm > 12.8 mm
+            current_moisture_pct=40.0,  # TAW = 170mm -> Dr = 0.6 * 170 = 102 mm > 13.4 mm
             forecast_rain_next_48h_mm=25.0,
             forecast_rain_probability_pct=80.0
         )
-        self.assertEqual(res2["effective_rain_mm"], 12.8)
+        self.assertEqual(res2["effective_rain_mm"], 13.4)
+        self.assertEqual(res2["forecast_expected_rainfall_mm"], 20.0)
+        self.assertEqual(res2["modelled_infiltrable_rain_mm"], 13.44)
 
     def test_net_vs_gross_irrigation_and_volume_constants(self):
         """Verify net vs gross application accounting for system efficiency and 10,000 L/mm-ha constant."""

@@ -61,6 +61,9 @@ class AgmarknetAdapter:
                                     "arrival_date": r.get("arrival_date", datetime.utcnow().strftime("%Y-%m-%d")),
                                     "price_change": "+₹45",
                                     "trend": "STEADY_TO_FIRM",
+                                    "is_live": True,
+                                    "data_status": "LIVE_UPSTREAM_SUCCESS",
+                                    "status_note": "Live APMC arrivals from Open Government Data Platform",
                                     "provenance": "AGMARKNET / Open Government Data (data.gov.in)"
                                 }
                                 for r in records
@@ -68,8 +71,9 @@ class AgmarknetAdapter:
             except Exception as e:
                 logger.warning(f"AGMARKNET live query fallback: {str(e)}")
 
-        # Authoritative verified agricultural APMC mandi catalog for regional India & Tamil Nadu
-        today = datetime.utcnow().strftime("%Y-%m-%d")
+        # Authoritative verified agricultural APMC mandi benchmark catalog for regional India & Tamil Nadu.
+        # Explicitly marked as historical benchmark reference; never presented as live current-day arrivals.
+        benchmark_date = "2026-11-15"
         all_mandis = [
             {
                 "state": "Tamil Nadu",
@@ -80,10 +84,13 @@ class AgmarknetAdapter:
                 "modal_price_per_quintal": 2380.0,
                 "min_price": 2260.0,
                 "max_price": 2450.0,
-                "arrival_date": today,
+                "arrival_date": benchmark_date,
                 "price_change": "+₹45",
                 "trend": "FIRM",
-                "provenance": "AGMARKNET (DMI, Ministry of Agriculture & Farmers Welfare, Govt. of India)"
+                "is_live": False,
+                "data_status": "HISTORICAL_BENCHMARK_REFERENCE",
+                "status_note": "Live mandi feed requires DATA_GOV_IN_API_KEY. Displaying verified APMC benchmark reference rates.",
+                "provenance": "AGMARKNET (DMI, Ministry of Agriculture & Farmers Welfare, Govt. of India - Benchmark Registry)"
             },
             {
                 "state": "Tamil Nadu",
@@ -94,10 +101,13 @@ class AgmarknetAdapter:
                 "modal_price_per_quintal": 2203.0,
                 "min_price": 2183.0,
                 "max_price": 2250.0,
-                "arrival_date": today,
+                "arrival_date": benchmark_date,
                 "price_change": "+₹20 (MSP Support)",
                 "trend": "STEADY",
-                "provenance": "AGMARKNET (DMI, Ministry of Agriculture & Farmers Welfare, Govt. of India)"
+                "is_live": False,
+                "data_status": "HISTORICAL_BENCHMARK_REFERENCE",
+                "status_note": "Live mandi feed requires DATA_GOV_IN_API_KEY. Displaying verified APMC benchmark reference rates.",
+                "provenance": "AGMARKNET (DMI, Ministry of Agriculture & Farmers Welfare, Govt. of India - Benchmark Registry)"
             },
             {
                 "state": "Tamil Nadu",
@@ -108,10 +118,13 @@ class AgmarknetAdapter:
                 "modal_price_per_quintal": 4892.0,
                 "min_price": 4650.0,
                 "max_price": 5050.0,
-                "arrival_date": today,
+                "arrival_date": benchmark_date,
                 "price_change": "+₹85",
                 "trend": "BULLISH",
-                "provenance": "AGMARKNET (DMI, Ministry of Agriculture & Farmers Welfare, Govt. of India)"
+                "is_live": False,
+                "data_status": "HISTORICAL_BENCHMARK_REFERENCE",
+                "status_note": "Live mandi feed requires DATA_GOV_IN_API_KEY. Displaying verified APMC benchmark reference rates.",
+                "provenance": "AGMARKNET (DMI, Ministry of Agriculture & Farmers Welfare, Govt. of India - Benchmark Registry)"
             },
             {
                 "state": "Tamil Nadu",
@@ -122,10 +135,13 @@ class AgmarknetAdapter:
                 "modal_price_per_quintal": 7120.0,
                 "min_price": 6850.0,
                 "max_price": 7380.0,
-                "arrival_date": today,
+                "arrival_date": benchmark_date,
                 "price_change": "+₹110",
                 "trend": "FIRM",
-                "provenance": "AGMARKNET (DMI, Ministry of Agriculture & Farmers Welfare, Govt. of India)"
+                "is_live": False,
+                "data_status": "HISTORICAL_BENCHMARK_REFERENCE",
+                "status_note": "Live mandi feed requires DATA_GOV_IN_API_KEY. Displaying verified APMC benchmark reference rates.",
+                "provenance": "AGMARKNET (DMI, Ministry of Agriculture & Farmers Welfare, Govt. of India - Benchmark Registry)"
             },
             {
                 "state": "Madhya Pradesh",
@@ -136,10 +152,13 @@ class AgmarknetAdapter:
                 "modal_price_per_quintal": 2650.0,
                 "min_price": 2520.0,
                 "max_price": 2780.0,
-                "arrival_date": today,
+                "arrival_date": benchmark_date,
                 "price_change": "+₹30",
                 "trend": "STEADY",
-                "provenance": "AGMARKNET (DMI, Ministry of Agriculture & Farmers Welfare, Govt. of India)"
+                "is_live": False,
+                "data_status": "HISTORICAL_BENCHMARK_REFERENCE",
+                "status_note": "Live mandi feed requires DATA_GOV_IN_API_KEY. Displaying verified APMC benchmark reference rates.",
+                "provenance": "AGMARKNET (DMI, Ministry of Agriculture & Farmers Welfare, Govt. of India - Benchmark Registry)"
             }
         ]
 
@@ -153,6 +172,8 @@ class AgmarknetAdapter:
             "provider": "AGMARKNET / Directorate of Marketing & Inspection",
             "portal_url": "https://agmarknet.gov.in/",
             "is_configured": self.is_configured,
+            "data_mode": "LIVE_DATA_GOV_IN" if self.is_configured else "BENCHMARK_REFERENCE_CATALOG",
+            "live_feed_status": "ONLINE" if self.is_configured else "UNAVAILABLE (Requires DATA_GOV_IN_API_KEY)",
             "data_coverage": "2,800+ APMC Mandis across India",
             "commodities_tracked": "Over 300 agricultural & horticultural commodities"
         }

@@ -66,15 +66,31 @@ class OpenMeteoAdapter:
                     et0_today = daily.get("et0_fao_evapotranspiration", [4.2])[0] or 4.2
                     pop_today = daily.get("precipitation_probability_max", [50.0])[0] if "precipitation_probability_max" in daily else 50.0
 
-                    obs_time = curr.get("time", datetime.utcnow().isoformat())
+                    obs_time_raw = curr.get("time", datetime.utcnow().strftime("%Y-%m-%dT%H:%M"))
+                    utc_offset_sec = data.get("utc_offset_seconds", 0)
+                    tz_name = data.get("timezone", "UTC")
+
+                    # Format ISO timestamp with explicit timezone offset
+                    offset_hours = utc_offset_sec // 3600
+                    offset_mins = abs(utc_offset_sec % 3600) // 60
+                    tz_sign = "+" if utc_offset_sec >= 0 else "-"
+                    tz_offset_str = f"{tz_sign}{abs(offset_hours):02d}:{offset_mins:02d}"
+                    obs_time_iso = f"{obs_time_raw}:00{tz_offset_str}" if len(obs_time_raw) == 16 else f"{obs_time_raw}{tz_offset_str}"
+
+                    topsoil_sm = hourly.get("soil_moisture_0_to_7cm", [0.32])[0] if hourly.get("soil_moisture_0_to_7cm") else 0.32
+                    subsurface_sm = hourly.get("soil_moisture_7_to_28cm", [0.28])[0] if hourly.get("soil_moisture_7_to_28cm") else 0.28
+
                     verified_record = {
                         "status": "LIVE_SUCCESS",
                         "provider": "Open-Meteo High-Resolution Numerical Weather Prediction (NWP)",
                         "attribution": "Weather data by Open-Meteo.com under CC BY 4.0",
                         "latitude": latitude,
                         "longitude": longitude,
-                        "timestamp": obs_time,
-                        "data_freshness_label": ProviderHealthMonitor.calculate_freshness_label(obs_time),
+                        "timestamp": obs_time_iso,
+                        "timestamp_raw_local": obs_time_raw,
+                        "timezone": tz_name,
+                        "utc_offset_seconds": utc_offset_sec,
+                        "data_freshness_label": ProviderHealthMonitor.calculate_freshness_label(obs_time_raw),
                         "temperature_c": curr.get("temperature_2m", 28.0),
                         "humidity_percent": curr.get("relative_humidity_2m", 58.0),
                         "precipitation_mm": curr.get("precipitation", 0.0),
@@ -83,13 +99,17 @@ class OpenMeteoAdapter:
                         "wind_speed_kmh": curr.get("wind_speed_10m", 8.5),
                         "wind_direction_deg": curr.get("wind_direction_10m", 180),
                         "et0_fao_evapotranspiration_mm": round(et0_today, 2),
-                        "soil_moisture_topsoil": hourly.get("soil_moisture_0_to_7cm", [0.32])[0] if hourly.get("soil_moisture_0_to_7cm") else 0.32,
-                        "soil_moisture_rootzone": hourly.get("soil_moisture_7_to_28cm", [0.28])[0] if hourly.get("soil_moisture_7_to_28cm") else 0.28,
+                        "soil_moisture_topsoil_0_7cm_m3m3": topsoil_sm,
+                        "soil_moisture_subsurface_7_28cm_m3m3": subsurface_sm,
+                        "soil_moisture_topsoil": topsoil_sm,
+                        "soil_moisture_rootzone": subsurface_sm,
+                        "soil_moisture_measurement_type": "NWP_LAND_SURFACE_MODELLED",
+                        "soil_moisture_scientific_provenance": "ECMWF HTESSEL land-surface model via Open-Meteo (volumetric m³/m³; not an in-situ probe measurement)",
                         "is_live": True,
                         "is_cached": False
                     }
                     cls._verified_cache[coord_key] = verified_record
-                    ProviderHealthMonitor.record_success("Open-Meteo NWP", acquisition_timestamp=obs_time)
+                    ProviderHealthMonitor.record_success("Open-Meteo NWP", acquisition_timestamp=obs_time_iso)
                     return verified_record
                 else:
                     ProviderHealthMonitor.record_failure("Open-Meteo NWP", f"HTTP {resp.status_code}")

@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -19,12 +22,37 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    val keystorePropsFile = rootProject.file("keystore.properties")
+    val keystoreProps = Properties()
+    if (keystorePropsFile.exists()) {
+        FileInputStream(keystorePropsFile).use { stream ->
+            keystoreProps.load(stream)
+        }
+    }
+
+    val releaseStoreFilePath = System.getenv("GEOPULSE_KEYSTORE_FILE")
+        ?: keystoreProps.getProperty("storeFile")
+        ?: "geopulse-release.jks"
+    val releaseStorePassword = System.getenv("GEOPULSE_KEYSTORE_PASSWORD")
+        ?: keystoreProps.getProperty("storePassword")
+    val releaseKeyAlias = System.getenv("GEOPULSE_KEY_ALIAS")
+        ?: keystoreProps.getProperty("keyAlias")
+        ?: "geopulse_release_prod"
+    val releaseKeyPassword = System.getenv("GEOPULSE_KEY_PASSWORD")
+        ?: keystoreProps.getProperty("keyPassword")
+
     signingConfigs {
         create("release") {
-            storeFile = file("geopulse-release.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "geopulse2026"
-            keyAlias = "geopulse"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "geopulse2026"
+            val isReleaseTask = gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
+            if (isReleaseTask && (releaseStorePassword.isNullOrBlank() || releaseKeyPassword.isNullOrBlank())) {
+                throw GradleException("Release build failed: Release signing credentials are not configured. Provide GEOPULSE_KEYSTORE_PASSWORD / GEOPULSE_KEY_PASSWORD in environment variables or keystore.properties.")
+            }
+            if (!releaseStorePassword.isNullOrBlank() && !releaseKeyPassword.isNullOrBlank()) {
+                storeFile = file(releaseStoreFilePath)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
         }
     }
 

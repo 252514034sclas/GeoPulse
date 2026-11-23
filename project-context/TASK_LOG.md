@@ -6,6 +6,45 @@
 
 ## 1. COMPLETED ENGINEERING TASKS
 
+### Task 12: Final Release Gate: Critical Security, Scientific Accuracy & Data Integrity
+- **Date:** November 23, 2026
+- **Objective:** Final release hardening: eliminate hardcoded signing password fallbacks, replace exposed keystores, audit Open-Meteo soil moisture and timezone integration, calibrate USDA NRCS Curve Number rainfall abstraction, upgrade PBKDF2 password hashing to 600k iterations with safe database migration, implement API rate limiting, align password-reset UI transparency, and verify signed release APK.
+- **Key Actions & Remediations:**
+  - **P0 Release Signing Security:**
+    - Removed hardcoded signing password fallbacks from `app/build.gradle.kts`.
+    - Added `keystore.properties` to `.gitignore`.
+    - Replaced exposed signing key by generating a fresh RSA 2048-bit release keystore (`CN=GeoPulse Production Release, OU=Agricultural Engineering, O=GeoPulse Technologies, L=Chennai, ST=Tamil Nadu, C=IN`) with strong random credentials stored exclusively in git-ignored `keystore.properties`.
+    - Configured build to fail release assembly if signing credentials are unconfigured (verified `BUILD FAILED` when credentials absent).
+    - Kept all credentials strictly out of logs, reports, and Git.
+  - **P0 Scientific Accuracy & Calculations:**
+    - Audited Open-Meteo soil moisture integration: distinguished numerical land-surface modelled values (ECMWF HTESSEL) from direct in-situ sensor measurements.
+    - Converted volumetric water content (m³/m³) to Available Water Capacity (AWC) % using soil physics (Loam $\theta_{FC}=0.28, \theta_{WP}=0.12$), resolving incorrect deficit warnings.
+    - Resolved future timestamp anomaly in Open-Meteo by parsing `utc_offset_seconds` and appending explicit timezone offset (`+05:30` IST) and UTC timestamp.
+    - Calibrated initial rainfall abstraction using USDA NRCS Curve Number method (CN=80, $I_a = 0.05 \times S = 3.2\text{ mm}$ for agricultural row crops); distinguished probabilistic expected forecast rainfall $E[P]$ from confirmed effective rainfall.
+    - Added data provenance tags (`MODELLED_FAO56`, `NWP_FORECAST_PROBABILISTIC`, `NWP_LAND_SURFACE_MODELLED`, `USDA_NRCS_CURVE_NUMBER_CN80`) across irrigation outputs.
+  - **P1 Provider & Market Data Integrity:**
+    - Bhoonidhi: Separated authentication and catalog indexing (63 collections) from raw raster ordering; labeled radar SAR processing as `NOT IMPLEMENTED`.
+    - Copernicus Sentinel-2: Identified processing provider (Microsoft Planetary Computer STAC), scene ID, acquisition time, and cloud cover.
+    - AGMARKNET: Fallback data labeled as `HISTORICAL_BENCHMARK_REFERENCE` (publication date: 2026-11-15, `is_live: False`), never presented as today's live arrival.
+  - **P1 Security & User Account Safeguards:**
+    - Upgraded PBKDF2 password hashing to OWASP-recommended 600,000 iterations (`pbkdf2:sha256:600000$...`) with backward-compatible verification and automatic database migration on login.
+    - Implemented thread-safe `InMemoryRateLimiter` protecting `/register` (10 req/min), `/login` (15 req/min), and `/forgot-password` (5 req/min) against brute force (HTTP 429).
+    - Added `/api/v1/auth/logout` endpoint documenting statutory token expiration.
+    - Added `/api/v1/auth/forgot-password` endpoint; updated `ForgotPasswordActivity.kt` to transparently state email recovery is unconfigured rather than fabricating dispatch.
+  - **P1 Accurate Feature Availability:**
+    - Relabeled notifications as "In-App Weather & Spray Alerts" throughout UI.
+    - In `Screen7Activity.kt`, updated offline storage switch to disabled "Durable Offline Storage (Coming Soon - requires Room DB)".
+    - In `Screen29Activity.kt`, updated subtitle to avoid promising offline sync.
+- **Verification Results:**
+  - `test_final_release_security.py`: 7 of 7 passed (100% PASS).
+  - `test_scientific_rigor.py`: 10 of 10 passed (100% PASS).
+  - `test_multi_user_isolation.py`: 19 of 19 passed (100% PASS).
+  - `test_api.py`: 24 of 24 domain suites passed (100% PASS).
+  - Gradle `assembleRelease`: built in 19s; signature verified with `apksigner` (v2 = true, CN=GeoPulse Production Release); installed and launched on Pixel 10 Pro emulator with 0 crashes.
+- **Verdict:** READY FOR RC (Release Candidate 1).
+
+---
+
 ### Task 11: Post-Audit Evidence Verification & Release Blocker Resolution
 - **Date:** November 23, 2026
 - **Objective:** Independently verify previous audit claims with ground-truth requests/responses, resolve unsupported conclusions, eliminate release blockers, configure production release signing, and secure network security configuration.

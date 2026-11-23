@@ -18,24 +18,54 @@ ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 7  # 7 days
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
-def hash_password(password: str) -> str:
-    """Hash password securely using PBKDF2 with SHA-256 and a 16-byte random salt."""
+DEFAULT_PBKDF2_ITERATIONS = 600000  # OWASP Recommended standard for PBKDF2-HMAC-SHA256
+
+def hash_password(password: str, iterations: int = DEFAULT_PBKDF2_ITERATIONS) -> str:
+    """
+    Hash password securely using PBKDF2 with SHA-256, 16-byte cryptographically secure random salt,
+    and OWASP-recommended 600,000 iterations.
+    Format: pbkdf2:sha256:<iterations>$<salt_hex>$<key_hex>
+    """
     salt = os.urandom(16)
-    key = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
-    return salt.hex() + "$" + key.hex()
+    key = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+    return f"pbkdf2:sha256:{iterations}${salt.hex()}${key.hex()}"
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify plain text password against stored salt$hash."""
+    """
+    Verify plain text password against stored hash with backward compatibility
+    for legacy 100,000-iteration hashes and modern 600,000-iteration hashes.
+    """
     try:
-        parts = hashed_password.split("$")
-        if len(parts) != 2:
-            return False
-        salt = bytes.fromhex(parts[0])
-        expected_key = bytes.fromhex(parts[1])
-        computed_key = hashlib.pbkdf2_hmac("sha256", plain_password.encode("utf-8"), salt, 100000)
-        return hmac.compare_digest(expected_key, computed_key)
+        if hashed_password.startswith("pbkdf2:sha256:"):
+            # Format: pbkdf2:sha256:<iterations>$<salt_hex>$<key_hex>
+            prefix, salt_hex, key_hex = hashed_password.split("$")
+            iterations = int(prefix.split(":")[-1])
+            salt = bytes.fromhex(salt_hex)
+            expected_key = bytes.fromhex(key_hex)
+            computed_key = hashlib.pbkdf2_hmac("sha256", plain_password.encode("utf-8"), salt, iterations)
+            return hmac.compare_digest(expected_key, computed_key)
+        else:
+            # Legacy format: <salt_hex>$<key_hex> (100,000 iterations)
+            parts = hashed_password.split("$")
+            if len(parts) != 2:
+                return False
+            salt = bytes.fromhex(parts[0])
+            expected_key = bytes.fromhex(parts[1])
+            computed_key = hashlib.pbkdf2_hmac("sha256", plain_password.encode("utf-8"), salt, 100000)
+            return hmac.compare_digest(expected_key, computed_key)
     except Exception:
         return False
+
+def password_needs_rehash(hashed_password: str) -> bool:
+    """Check if stored hash is using legacy iterations or format and should be upgraded."""
+    if not hashed_password.startswith("pbkdf2:sha256:"):
+        return True
+    try:
+        prefix = hashed_password.split("$")[0]
+        iterations = int(prefix.split(":")[-1])
+        return iterations < DEFAULT_PBKDF2_ITERATIONS
+    except Exception:
+        return True
 
 def base64url_encode(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b'=').decode('utf-8')

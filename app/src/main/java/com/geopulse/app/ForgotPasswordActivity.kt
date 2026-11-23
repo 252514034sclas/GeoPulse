@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -138,18 +139,19 @@ class ForgotPasswordActivity : ComponentActivity() {
                                             .fillMaxWidth()
                                             .padding(top = 16.dp)
                                             .clip(RoundedCornerShape(12.dp))
-                                            .background(EmeraldPrimary.copy(alpha = 0.15f))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                                             .padding(14.dp),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(24.dp))
+                                        Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Text(
-                                            text = "Recovery instructions sent! Please check your inbox.",
-                                            color = EmeraldPrimary,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 13.sp,
-                                            textAlign = TextAlign.Center
+                                            text = "Automated email recovery is currently not configured on this server. Please contact your system administrator or farm manager to reset your credentials.",
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 12.5.sp,
+                                            textAlign = TextAlign.Center,
+                                            lineHeight = 17.sp
                                         )
                                     }
                                 }
