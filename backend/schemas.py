@@ -232,6 +232,7 @@ class FertilizerCalculateRequest(BaseModel):
     area_acres: float
     vigor_status: Optional[str] = "Moderate"
     soil_dryness: Optional[str] = "Normal"
+    soil_texture: Optional[str] = "loam"
 
 class FertilizerCalculateResponse(BaseModel):
     crop_type: str
@@ -244,6 +245,8 @@ class FertilizerCalculateResponse(BaseModel):
     mop_per_acre_kg: float
     schedule: List[Dict[str, str]]
     safety_tips: List[str]
+    soil_texture: Optional[str] = "Loam"
+    elemental_nutrients_kg: Optional[Dict[str, float]] = None
 
 # -------------------------------------------------------------
 # Farm Budget & Expense Schemas

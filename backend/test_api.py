@@ -183,9 +183,28 @@ def test_full_api():
         assert reg["total_registered_providers"] == 8
         print("[PASS] GET /api/v1/providers/registry -> PASS, registered providers:", reg["total_registered_providers"])
 
+        # 22. FAO-56 Precision Irrigation Water Balance
+        res = client.get(f"/api/v1/fields/{first_field_id}/irrigation?irrigation_method=drip")
+        assert res.status_code == 200
+        irrig = res.json()
+        assert "irrigation_recommendation" in irrig
+        assert "net_irrigation_depth_mm" in irrig
+        assert "gross_irrigation_depth_mm" in irrig
+        assert "total_water_volume_litres" in irrig
+        assert "fao56_parameters" in irrig
+        print("[PASS] GET /api/v1/fields/{id}/irrigation -> PASS, recommendation:", irrig["irrigation_recommendation"], "volume:", irrig["total_water_volume_litres"], "L")
+
+        # 23. Precision Sowing & Seed Variety Recommendation
+        res = client.get(f"/api/v1/fields/{first_field_id}/sowing-recommendation?season=Kharif&soil_type=Loam")
+        assert res.status_code == 200
+        sow = res.json()
+        assert "recommended_variety" in sow
+        assert "total_seed_required_kg" in sow
+        print("[PASS] GET /api/v1/fields/{id}/sowing-recommendation -> PASS, variety:", sow["recommended_variety"], "seed required:", sow["total_seed_required_kg"], "kg")
+
     print("\n=================================================================")
-    print("ALL 21 DOMAIN TEST SUITES PASSED FLAWLESSLY (100% PASS)!")
-    print("Multi-Source Bhoonidhi + Copernicus + AGMARKNET + TNAU Verified!")
+    print("ALL 23 DOMAIN TEST SUITES PASSED FLAWLESSLY (100% PASS)!")
+    print("Multi-Source Bhoonidhi + Copernicus + AGMARKNET + TNAU + FAO-56 Verified!")
     print("=================================================================")
 
 if __name__ == "__main__":

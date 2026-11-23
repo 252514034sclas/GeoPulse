@@ -737,7 +737,8 @@ def calculate_fertilizer(req: schemas.FertilizerCalculateRequest):
         crop_type=req.crop_type,
         area_acres=req.area_acres,
         vigor_status=req.vigor_status or "Moderate",
-        soil_dryness=req.soil_dryness or "Normal"
+        soil_dryness=req.soil_dryness or "Normal",
+        soil_texture=req.soil_texture or "loam"
     )
 
 
@@ -857,6 +858,7 @@ def get_field_irrigation_recommendation(
     weather = OpenMeteoAdapter.get_forecast(field.latitude, field.longitude)
     et0 = weather.get("et0_fao_evapotranspiration_mm", 4.5)
     rain_next_48h = weather.get("rain_next_24h_mm", 0.0)
+    rain_pop = weather.get("precipitation_probability_pct", 60.0)
 
     # Get current soil moisture percentage from latest observation
     moisture_record = db.query(models.SoilMoistureModel).filter(models.SoilMoistureModel.field_id == field_id).first()
@@ -873,7 +875,8 @@ def get_field_irrigation_recommendation(
         forecast_rain_next_48h_mm=rain_next_48h,
         growth_stage="mid_flowering",
         soil_type="loam",
-        irrigation_method=actual_method
+        irrigation_method=actual_method,
+        forecast_rain_probability_pct=rain_pop
     )
 
 

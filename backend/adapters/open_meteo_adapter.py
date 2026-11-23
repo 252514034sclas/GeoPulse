@@ -58,6 +58,7 @@ class OpenMeteoAdapter:
                     # Compute 24h expected rainfall and reference ET0
                     rain_next_24h = sum(hourly.get("precipitation", [])[:24]) if "precipitation" in hourly else 0.0
                     et0_today = daily.get("et0_fao_evapotranspiration", [4.2])[0] or 4.2
+                    pop_today = daily.get("precipitation_probability_max", [50.0])[0] if "precipitation_probability_max" in daily else 50.0
 
                     return {
                         "status": "LIVE_SUCCESS",
@@ -70,6 +71,7 @@ class OpenMeteoAdapter:
                         "humidity_percent": curr.get("relative_humidity_2m", 58.0),
                         "precipitation_mm": curr.get("precipitation", 0.0),
                         "rain_next_24h_mm": round(rain_next_24h, 1),
+                        "precipitation_probability_pct": float(pop_today if pop_today is not None else 50.0),
                         "wind_speed_kmh": curr.get("wind_speed_10m", 8.5),
                         "wind_direction_deg": curr.get("wind_direction_10m", 180),
                         "et0_fao_evapotranspiration_mm": round(et0_today, 2),
@@ -90,6 +92,7 @@ class OpenMeteoAdapter:
                 "humidity_percent": 58.0,
                 "precipitation_mm": 0.0,
                 "rain_next_24h_mm": 0.0,
+                "precipitation_probability_pct": 50.0,
                 "wind_speed_kmh": 8.5,
                 "wind_direction_deg": 180,
                 "et0_fao_evapotranspiration_mm": 4.2,
