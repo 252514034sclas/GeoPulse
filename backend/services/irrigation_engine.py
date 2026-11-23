@@ -51,6 +51,35 @@ class IrrigationEngine:
         "default": 160.0
     }
 
+    # Volumetric water content at Field Capacity (theta_fc) and Permanent Wilting Point (theta_wp)
+    # Calibrated to USDA NRCS Soil Survey Laboratory & FAO-56 Table 19
+    SOIL_HYDRAULIC_PROPERTIES = {
+        "sand": {"theta_fc": 0.12, "theta_wp": 0.04, "awc_mm_m": 80.0},
+        "sandy": {"theta_fc": 0.12, "theta_wp": 0.04, "awc_mm_m": 80.0},
+        "loamy sand": {"theta_fc": 0.18, "theta_wp": 0.07, "awc_mm_m": 105.0},
+        "sandy loam": {"theta_fc": 0.22, "theta_wp": 0.09, "awc_mm_m": 130.0},
+        "loam": {"theta_fc": 0.28, "theta_wp": 0.12, "awc_mm_m": 170.0},
+        "silt loam": {"theta_fc": 0.32, "theta_wp": 0.12, "awc_mm_m": 200.0},
+        "clay loam": {"theta_fc": 0.34, "theta_wp": 0.15, "awc_mm_m": 190.0},
+        "silty clay loam": {"theta_fc": 0.34, "theta_wp": 0.15, "awc_mm_m": 190.0},
+        "sandy clay": {"theta_fc": 0.30, "theta_wp": 0.15, "awc_mm_m": 150.0},
+        "clay": {"theta_fc": 0.38, "theta_wp": 0.20, "awc_mm_m": 180.0},
+        "black cotton": {"theta_fc": 0.40, "theta_wp": 0.19, "awc_mm_m": 205.0},
+        "red loamy": {"theta_fc": 0.26, "theta_wp": 0.11, "awc_mm_m": 145.0},
+        "alluvial": {"theta_fc": 0.30, "theta_wp": 0.12, "awc_mm_m": 175.0},
+        "default": {"theta_fc": 0.28, "theta_wp": 0.12, "awc_mm_m": 160.0}
+    }
+
+    @classmethod
+    def get_soil_properties(cls, soil_type: str) -> Dict[str, float]:
+        st = soil_type.lower().strip() if soil_type else "default"
+        if st in cls.SOIL_HYDRAULIC_PROPERTIES:
+            return cls.SOIL_HYDRAULIC_PROPERTIES[st]
+        for key in sorted(cls.SOIL_HYDRAULIC_PROPERTIES.keys(), key=len, reverse=True):
+            if key in st:
+                return cls.SOIL_HYDRAULIC_PROPERTIES[key]
+        return cls.SOIL_HYDRAULIC_PROPERTIES["default"]
+
     # Application Efficiency and Single-Cycle Hydraulic Absorption Limits
     APPLICATION_SPECS = {
         "drip": {"efficiency": 0.90, "max_single_cycle_mm": 30.0},
@@ -107,8 +136,17 @@ class IrrigationEngine:
         p_adj = max(0.10, min(0.80, p_adj))
 
         # 3. Total Available Water (TAW) in root zone: TAW = AWC * RootDepth (mm)
-        soil_key = soil_type.lower().strip()
+        st_clean = soil_type.lower().strip()
+        soil_key = "default"
+        if st_clean in cls.SOIL_AWC:
+            soil_key = st_clean
+        else:
+            for k in sorted(cls.SOIL_AWC.keys(), key=len, reverse=True):
+                if k in st_clean:
+                    soil_key = k
+                    break
         awc = cls.SOIL_AWC.get(soil_key, cls.SOIL_AWC["default"])
+        soil_props = cls.get_soil_properties(soil_type)
         taw_mm = round(awc * root_depth, 1)
 
         # 4. Readily Available Water (RAW) before water stress occurs: RAW = p * TAW (mm)
@@ -207,6 +245,14 @@ class IrrigationEngine:
             "kc_coefficient": kc,
             "daily_crop_water_demand_mm": daily_etc_mm,
             "soil_type": soil_type.title(),
+            "soil_parameters_used": {
+                "soil_texture": soil_type.title(),
+                "field_capacity_theta_fc": soil_props["theta_fc"],
+                "wilting_point_theta_wp": soil_props["theta_wp"],
+                "awc_mm_per_m": awc,
+                "effective_root_depth_m": root_depth
+            },
+            "soil_model_assumptions": "Soil Available Water Capacity and depletion limits are derived from USDA NRCS and FAO-56 Table 19 for the specified soil texture. In-field soil variability may occur.",
             "current_moisture_pct": clamped_moisture,
             "data_source_type": "Modelled Root-Zone Soil Water Balance (FAO-56 Irrigation & Drainage Paper 56)",
             "fao56_parameters": {

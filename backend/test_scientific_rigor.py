@@ -240,5 +240,71 @@ class TestScientificRigor(unittest.TestCase):
         safe = evaluate_spray_safety(wind_kmh=8.0, rain_prob_pct=5.0, temp_c=24.0, humidity_pct=60.0)
         self.assertTrue(safe["is_safe_now"])
 
+    def test_field_specific_soil_hydraulic_parameters(self):
+        """Verify soil hydraulic properties (theta_FC, theta_WP, AWC) prevent universal loam assumptions."""
+        props_sand = IrrigationEngine.get_soil_properties("sand")
+        props_loam = IrrigationEngine.get_soil_properties("loam")
+        props_clayloam = IrrigationEngine.get_soil_properties("clay loam")
+        props_blackcotton = IrrigationEngine.get_soil_properties("black cotton")
+
+        # Verify textures have distinct, physically valid properties
+        self.assertLess(props_sand["theta_fc"], props_loam["theta_fc"])
+        self.assertLess(props_loam["theta_fc"], props_clayloam["theta_fc"])
+        self.assertLess(props_clayloam["theta_fc"], props_blackcotton["theta_fc"])
+
+        # Check returned transparent parameters in irrigation calculation
+        res = IrrigationEngine.calculate_irrigation(
+            crop_type="Paddy",
+            area_hectares=2.0,
+            current_moisture_pct=60.0,
+            soil_type="black cotton"
+        )
+        self.assertIn("soil_parameters_used", res)
+        self.assertEqual(res["soil_parameters_used"]["soil_texture"], "Black Cotton")
+        self.assertEqual(res["soil_parameters_used"]["field_capacity_theta_fc"], 0.40)
+        self.assertEqual(res["soil_parameters_used"]["wilting_point_theta_wp"], 0.19)
+        self.assertIn("soil_model_assumptions", res)
+
+    def test_growth_stages_and_root_depth_variations(self):
+        """Verify irrigation recommendations scale with crop growth stages and root depths."""
+        # Initial stage (Kc = 0.35, Root depth = 1.0m)
+        res_initial = IrrigationEngine.calculate_irrigation(
+            crop_type="Corn",
+            area_hectares=1.0,
+            current_moisture_pct=40.0,
+            growth_stage="initial",
+            et0_evapotranspiration_mm=5.0
+        )
+        self.assertEqual(res_initial["kc_coefficient"], 0.35)
+        self.assertEqual(res_initial["daily_crop_water_demand_mm"], 1.75)
+
+        # Mid-flowering stage (Kc = 1.20, Root depth = 1.0m)
+        res_flowering = IrrigationEngine.calculate_irrigation(
+            crop_type="Corn",
+            area_hectares=1.0,
+            current_moisture_pct=40.0,
+            growth_stage="mid_flowering",
+            et0_evapotranspiration_mm=5.0
+        )
+        self.assertEqual(res_flowering["kc_coefficient"], 1.20)
+        self.assertEqual(res_flowering["daily_crop_water_demand_mm"], 6.0)
+
+        # Shallow root crop: Onion (root depth = 0.4m) vs Deep root: Cotton (1.2m)
+        res_onion = IrrigationEngine.calculate_irrigation(
+            crop_type="Onion",
+            area_hectares=1.0,
+            current_moisture_pct=50.0,
+            soil_type="loam"
+        )
+        res_cotton = IrrigationEngine.calculate_irrigation(
+            crop_type="Cotton",
+            area_hectares=1.0,
+            current_moisture_pct=50.0,
+            soil_type="loam"
+        )
+        # TAW for Onion = 170 * 0.4 = 68.0 mm; TAW for Cotton = 170 * 1.2 = 204.0 mm
+        self.assertEqual(res_onion["fao56_parameters"]["total_available_water_taw_mm"], 68.0)
+        self.assertEqual(res_cotton["fao56_parameters"]["total_available_water_taw_mm"], 204.0)
+
 if __name__ == "__main__":
     unittest.main()

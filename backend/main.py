@@ -38,6 +38,15 @@ from services.provider_health_monitor import ProviderHealthMonitor
 # Create all database tables
 models.Base.metadata.create_all(bind=engine)
 
+# Safe SQLite Schema Migration: Ensure soil_type exists in fields table
+try:
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE fields ADD COLUMN soil_type VARCHAR DEFAULT 'Loam'"))
+        conn.commit()
+except Exception:
+    pass
+
 app = FastAPI(
     title="GeoPulse API",
     description="Full Python Backend for GeoPulse Agricultural & Geospatial Intelligence App.",
@@ -166,10 +175,11 @@ def forgot_password(payload: schemas.ForgotPasswordRequest, request: Request, db
             "email_sent": False,
             "message": "Automated email recovery is currently not configured on this server. Please contact your system administrator or farm manager to reset your password."
         }
+    # Account non-disclosure protection: Always return uniform response even if email is unregistered
     return {
         "status": "SUCCESS",
         "email_sent": True,
-        "message": "Password reset instructions dispatched to your email address."
+        "message": "If your account is registered, recovery instructions have been dispatched to your email address."
     }
 
 
@@ -309,6 +319,7 @@ def create_field(
         user_id=user.id,
         name=field_in.name,
         crop_type=field_in.crop_type,
+        soil_type=field_in.soil_type or "Loam",
         area_acres=field_in.area_acres,
         sowing_date=field_in.sowing_date or datetime.utcnow().strftime("%Y-%m-%d"),
         status="Healthy",
@@ -398,6 +409,8 @@ def update_field(
         field.name = updates.name
     if updates.crop_type is not None:
         field.crop_type = updates.crop_type
+    if updates.soil_type is not None:
+        field.soil_type = updates.soil_type
     if updates.area_acres is not None:
         field.area_acres = updates.area_acres
     if updates.status is not None:
@@ -518,9 +531,11 @@ def get_field_satellite_moisture(
     rootzone_sm = weather.get("soil_moisture_rootzone", 0.28)
     # Accurate Soil Physics Conversion (FAO-56 & USDA NRCS):
     # Convert volumetric water content (m³/m³) to Available Water Capacity (AWC) Percentage
-    # Standard Loam soil parameters: Field Capacity (theta_FC) = 0.28, Permanent Wilting Point (theta_WP) = 0.12
-    theta_fc = 0.28
-    theta_wp = 0.12
+    # Uses parcel-specific soil hydraulic parameters (avoids universal loam assumption)
+    field_soil = getattr(field, "soil_type", "Loam") or "Loam"
+    soil_props = IrrigationEngine.get_soil_properties(field_soil)
+    theta_fc = soil_props["theta_fc"]
+    theta_wp = soil_props["theta_wp"]
     if rootzone_sm >= theta_fc:
         moisture_pct = 100.0
     elif rootzone_sm <= theta_wp:
@@ -852,6 +867,7 @@ def create_drawn_field(
     crop_type: str = Query("Corn (Dent)", description="Planted crop type"),
     boundary_wkt: str = Query(..., description="Drawn polygon boundary in WKT format"),
     sowing_date: Optional[str] = Query("2026-04-15", description="Sowing date YYYY-MM-DD"),
+    soil_type: Optional[str] = Query("Loam", description="Soil texture class (sand, loam, clay loam, etc.)"),
     user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
@@ -869,11 +885,13 @@ def create_drawn_field(
 
     actual_sowing = sowing_date if isinstance(sowing_date, str) else datetime.utcnow().strftime("%Y-%m-%d")
     actual_crop = crop_type if isinstance(crop_type, str) else "Paddy (Rice)"
+    actual_soil = soil_type if isinstance(soil_type, str) else "Loam"
 
     field = models.FieldModel(
         user_id=user.id,
         name=name.strip(),
         crop_type=actual_crop,
+        soil_type=actual_soil,
         area_acres=area_info["area_acres"],
         sowing_date=actual_sowing,
         status="Healthy",
@@ -891,16 +909,41 @@ def create_drawn_field(
 def get_field_irrigation_recommendation(
     field_id: int,
     irrigation_method: str = Query("drip", description="drip, sprinkler, pivot, or flood"),
+    soil_type: Optional[str] = Query(None, description="Optional soil texture override (sand, loam, clay loam, black cotton, etc.)"),
+    growth_stage: Optional[str] = Query(None, description="Optional growth stage override (initial, mid_development, mid_flowering, late_maturity)"),
     user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
     """
     Field-specific soil-water assessment using FAO-56 Crop Water Balance.
-    Answers: 'Should I irrigate today or wait for rain?' and 'How much water in mm and LITRES?'
+    Uses parcel-specific soil texture and dynamically calculates crop growth stage.
     """
     field = get_field_with_ownership(field_id, user, db)
 
     actual_method = irrigation_method if isinstance(irrigation_method, str) else "drip"
+
+    # Use parcel's configured soil type, preventing universal loam assumption
+    field_soil = getattr(field, "soil_type", "Loam") or "Loam"
+    actual_soil = soil_type if soil_type else field_soil
+
+    # Determine growth stage dynamically from sowing_date if not overridden
+    actual_stage = growth_stage
+    if not actual_stage and field.sowing_date:
+        try:
+            sown = datetime.strptime(field.sowing_date[:10], "%Y-%m-%d")
+            das = (datetime.utcnow() - sown).days
+            if das < 20:
+                actual_stage = "initial"
+            elif das < 50:
+                actual_stage = "mid_development"
+            elif das < 85:
+                actual_stage = "mid_flowering"
+            else:
+                actual_stage = "late_maturity"
+        except Exception:
+            actual_stage = "mid_flowering"
+    if not actual_stage:
+        actual_stage = "mid_flowering"
 
     # Get live weather for field coordinates
     weather = OpenMeteoAdapter.get_forecast(field.latitude, field.longitude)
@@ -921,8 +964,8 @@ def get_field_irrigation_recommendation(
         current_moisture_pct=moisture_pct,
         et0_evapotranspiration_mm=et0,
         forecast_rain_next_48h_mm=rain_next_48h,
-        growth_stage="mid_flowering",
-        soil_type="loam",
+        growth_stage=actual_stage,
+        soil_type=actual_soil,
         irrigation_method=actual_method,
         forecast_rain_probability_pct=rain_pop
     )

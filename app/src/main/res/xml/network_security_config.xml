@@ -6,4 +6,12 @@
             <certificates src="system" />
         </trust-anchors>
     </base-config>
+
+    <!-- Permit cleartext traffic only for local emulator/LAN development and testing -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">172.23.176.200</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">localhost</domain>
+    </domain-config>
 </network-security-config>

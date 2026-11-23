@@ -33,6 +33,7 @@ class FieldModel(Base):
     area_acres = Column(Float, default=0.0)
     sowing_date = Column(String, default=lambda: datetime.utcnow().strftime("%Y-%m-%d"))
     status = Column(String, default="Monitored")  # "Healthy", "Needs Water", "Monitored"
+    soil_type = Column(String, default="Loam")  # Loam, Clay Loam, Black Cotton, Sandy Loam, etc.
     latitude = Column(Float, default=0.0)
     longitude = Column(Float, default=0.0)
     updated_at = Column(DateTime, default=datetime.utcnow)

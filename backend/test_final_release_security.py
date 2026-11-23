@@ -84,13 +84,22 @@ class TestFinalReleaseSecurity(unittest.TestCase):
         self.assertEqual(data["server_jwt_revocation"], "STATUTORY_EXPIRATION_ONLY")
 
     def test_forgot_password_transparent_status(self):
-        """Verify forgot-password endpoint never claims email was sent when SMTP is unconfigured."""
-        res = self.client.post("/api/v1/auth/forgot-password", json={"email": "farmer@example.com"})
-        self.assertEqual(res.status_code, 200)
-        data = res.json()
-        self.assertEqual(data["status"], "DELIVERY_UNAVAILABLE")
-        self.assertFalse(data["email_sent"])
-        self.assertIn("not configured", data["message"].lower())
+        """Verify forgot-password endpoint never claims email was sent and does not disclose account existence."""
+        # Non-existing user
+        res_non = self.client.post("/api/v1/auth/forgot-password", json={"email": "nonexistent_9999@example.com"})
+        self.assertEqual(res_non.status_code, 200)
+        data_non = res_non.json()
+        self.assertEqual(data_non["status"], "DELIVERY_UNAVAILABLE")
+        self.assertFalse(data_non["email_sent"])
+        self.assertIn("not configured", data_non["message"].lower())
+
+        # Existing user
+        res_exist = self.client.post("/api/v1/auth/forgot-password", json={"email": "migration_test_farmer@geopulse.com"})
+        self.assertEqual(res_exist.status_code, 200)
+        data_exist = res_exist.json()
+        # Responses must be identical (no account disclosure)
+        self.assertEqual(data_non["status"], data_exist["status"])
+        self.assertEqual(data_non["message"], data_exist["message"])
 
     def test_agmarknet_historical_benchmark_transparency(self):
         """Verify AGMARKNET adapter labels fallback data as HISTORICAL_BENCHMARK_REFERENCE, not live."""

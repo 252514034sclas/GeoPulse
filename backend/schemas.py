@@ -66,6 +66,7 @@ class TokenData(BaseModel):
 class FieldCreate(BaseModel):
     name: str
     crop_type: str = "Corn (Dent)"
+    soil_type: Optional[str] = "Loam"
     area_acres: float = 120.4
     sowing_date: Optional[str] = "2026-04-15"
     latitude: float = 37.7749
@@ -75,6 +76,7 @@ class FieldCreate(BaseModel):
 class FieldUpdate(BaseModel):
     name: Optional[str] = None
     crop_type: Optional[str] = None
+    soil_type: Optional[str] = None
     area_acres: Optional[float] = None
     status: Optional[str] = None
     latitude: Optional[float] = None
@@ -86,6 +88,7 @@ class FieldSchema(BaseModel):
     user_id: Optional[int] = None
     name: str
     crop_type: str
+    soil_type: Optional[str] = "Loam"
     area_acres: float
     sowing_date: Optional[str] = None
     status: str
