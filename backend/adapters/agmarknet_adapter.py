@@ -23,7 +23,7 @@ class AgmarknetAdapter:
 
     @property
     def is_configured(self) -> bool:
-        return bool(self.api_key.strip())
+        return bool(self.api_key.strip() and not self.api_key.startswith("your_"))
 
     def get_mandi_prices(self, commodity: Optional[str] = None, district: Optional[str] = None) -> List[Dict[str, Any]]:
         """
@@ -43,7 +43,7 @@ class AgmarknetAdapter:
                 if district:
                     params["filters[district]"] = district
 
-                with httpx.Client(timeout=8.0) as client:
+                with httpx.Client(timeout=3.0) as client:
                     resp = client.get(DATA_GOV_IN_BASE_URL, params=params)
                     if resp.status_code == 200:
                         records = resp.json().get("records", [])

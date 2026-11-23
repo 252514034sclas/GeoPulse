@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">ஜியோபல்ஸ்</string>
+    <string name="welcome_title">ஜியோபல்ஸ்-க்கு வரவேற்கிறோம்</string>
+    <string name="welcome_desc">செயற்கைக்கோள் தரவு மூலம் பயிர் ஆரோக்கியம், மண் ஈரப்பதம் மற்றும் பாசன ஆலோசனைகளை நிகழ்நேரத்தில் பெறுங்கள்.</string>
+    <string name="get_started">தொடங்குங்கள்</string>
+    <string name="sign_in">உள்நுழைக</string>
+    <string name="farm_overview">பண்ணை மேலோட்டம்</string>
+    <string name="crop_health">பயிர் நலம்</string>
+    <string name="soil_water">மண் ஈரப்பதம்</string>
+    <string name="weather_safe">தெளிக்க ஏற்றது</string>
+    <string name="watering_advice">பாசன ஆலோசனை</string>
+    <string name="mandi_prices">மண்டி விலைகள்</string>
+    <string name="fertilizer_guide">உர வழிகாட்டி</string>
+    <string name="pest_advisory">பூச்சி மேலாண்மை</string>
+    <string name="kisan_helpline">விவசாயிகள் உதவி எண்</string>
+</resources>

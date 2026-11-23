@@ -11,6 +11,7 @@ object UserSession {
     private const val KEY_EMAIL = "email"
     private const val KEY_FARM_NAME = "farm_name"
     private const val KEY_TOTAL_AREA_HA = "total_area_ha"
+    private const val KEY_LANGUAGE = "preferred_language"
 
     private fun getPrefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -24,6 +25,7 @@ object UserSession {
             .putString(KEY_EMAIL, user.email)
             .putString(KEY_FARM_NAME, user.farmName ?: "My Farm")
             .putFloat(KEY_TOTAL_AREA_HA, (user.totalAreaHa ?: 10.0).toFloat())
+            .putString(KEY_LANGUAGE, user.preferredLanguage ?: "en")
             .apply()
     }
 
@@ -47,6 +49,13 @@ object UserSession {
 
     fun getUserId(context: Context): Int =
         getPrefs(context).getInt(KEY_USER_ID, -1)
+
+    fun getLanguage(context: Context): String =
+        getPrefs(context).getString(KEY_LANGUAGE, "en") ?: "en"
+
+    fun setLanguage(context: Context, lang: String) {
+        getPrefs(context).edit().putString(KEY_LANGUAGE, lang).apply()
+    }
 
     fun isLoggedIn(context: Context): Boolean =
         !getToken(context).isNullOrEmpty()

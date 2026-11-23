@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">GeoPulse</string>
+    <string name="welcome_title">Welcome to GeoPulse</string>
+    <string name="welcome_desc">Monitor crop health, analyze soil moisture, track field activity, and optimize farm yields with real-time geospatial intelligence.</string>
+    <string name="get_started">Get Started</string>
+    <string name="sign_in">Sign In</string>
+    <string name="farm_overview">Farm Overview</string>
+    <string name="crop_health">Crop Health</string>
+    <string name="soil_water">Soil Water</string>
+    <string name="weather_safe">Spray Safe</string>
+    <string name="watering_advice">Watering Advice</string>
+    <string name="mandi_prices">Mandi Prices</string>
+    <string name="fertilizer_guide">Fertilizer Guide</string>
+    <string name="pest_advisory">Pest Advisory</string>
+    <string name="kisan_helpline">Kisan Helpline</string>
 </resources>

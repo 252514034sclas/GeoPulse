@@ -2756,13 +2756,41 @@ fun AppSettingsSyncModule() {
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            val context = androidx.compose.ui.platform.LocalContext.current
+            var currentLang by remember { mutableStateOf(com.geopulse.app.network.UserSession.getLanguage(context)) }
+
+            Text("Farmer Preferred Language", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = currentLang == "en",
+                    onClick = {
+                        currentLang = "en"
+                        com.geopulse.app.network.UserSession.setLanguage(context, "en")
+                    },
+                    modifier = Modifier.weight(1f),
+                    label = { Text("English", fontSize = 12.sp, fontWeight = if (currentLang == "en") FontWeight.Bold else FontWeight.Medium) }
+                )
+                FilterChip(
+                    selected = currentLang == "ta",
+                    onClick = {
+                        currentLang = "ta"
+                        com.geopulse.app.network.UserSession.setLanguage(context, "ta")
+                    },
+                    modifier = Modifier.weight(1f),
+                    label = { Text("தமிழ் (Tamil)", fontSize = 12.sp, fontWeight = if (currentLang == "ta") FontWeight.Bold else FontWeight.Medium) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
 
                 MetricChip("Current Theme", currentMode.name.lowercase().replaceFirstChar { it.uppercase() }, Modifier.weight(1f))
 
                 MetricChip("Offline Maps", "Ready", Modifier.weight(1f))
 
-                MetricChip("Language", "English", Modifier.weight(1f))
+                MetricChip("Language", if (currentLang == "ta") "தமிழ்" else "English", Modifier.weight(1f))
 
             }
 
