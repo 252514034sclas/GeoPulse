@@ -223,13 +223,31 @@
 
 ---
 
+### Task 5: RC-1 Independent Final Verification & Security/Scientific Rigor Gate
+- **Date:** November 23, 2026
+- **Objective:** Independent end-to-end verification of release signing, parcel-specific soil physics, anti-enumeration security, and Android release APK stability.
+- **Key Changes:**
+  - `backend/models.py`, `backend/schemas.py`, `backend/main.py`: Added parcel-specific `soil_type` column with safe SQLite migration; dynamically wire `soil_type` into moisture and irrigation calculations.
+  - `backend/services/irrigation_engine.py`: Integrated FAO-56 Table 19 and USDA NRCS soil hydraulic parameters across 7 soil texture classes; dynamic growth stage calculation from sowing date (DAS).
+  - `backend/services/auth_service.py` & `backend/main.py`: Anti-enumeration protection for `/forgot-password`; uniform delivery responses for existing and non-existing accounts; PBKDF2-600k hashing upgrade.
+  - `app/src/main/res/xml/network_security_config.xml`: Strict HTTPS base-config with local dev/emulator domain whitelisting.
+  - `app/src/main/java/com/geopulse/app/network/ApiClient.kt`: Configured `127.0.0.1:8000` adb reverse loopback endpoint.
+- **Tests Executed:**
+  - `backend/test_final_release_security.py` (7/7 PASS, 100%)
+  - `backend/test_scientific_rigor.py` (12/12 PASS, 100%)
+  - `backend/test_api.py` (24/24 PASS, 100%)
+  - `backend/test_multi_user_isolation.py` (19/19 PASS, 100%)
+  - Release APK installation and live interactive testing on Pixel 10 Pro emulator (0 crashes, full authentication lifecycle verified).
+- **Latest Commit:** `a762929dcb690c0138fa42ea0e6a66a64de024fb`
+- **Release Verdict:** **READY FOR RC-1**
+
+---
+
 ## 2. UPCOMING PRIORITIES & ROADMAP
 
-1. **Production Keystore Signing & Release APK:**
-   - Configure release signing configuration (`keystore.jks`) in `app/build.gradle.kts`.
-   - Build signed release APK bundle (`assembleRelease`).
-2. **Production Network Security Hardening:**
-   - Create `res/xml/network_security_config.xml` to enforce HTTPS for production domains while whitelisting development IPs.
-   - Set `android:allowBackup="false"` in `AndroidManifest.xml`.
-3. **Automated Continuous Integration (CI):**
-   - Package `test_scientific_rigor.py` and `test_api.py` into automated pre-commit and GitHub Actions pipeline.
+1. **Distributed Rate Limiting (Post-RC-1 Cloud Deployment):**
+   - Connect Redis to replace process-local `InMemoryRateLimiter` when scaling across multi-worker cloud servers.
+2. **Production SMTP Credentials:**
+   - Provision production email server credentials (`SMTP_SERVER`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`) for automated password recovery.
+3. **Room Database Full Offline Parcel Storage:**
+   - Implement Room DB SQLite persistence for offline field geometry caching.
