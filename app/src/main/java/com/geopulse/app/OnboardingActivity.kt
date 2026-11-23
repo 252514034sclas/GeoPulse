@@ -47,20 +47,20 @@ class OnboardingActivity : ComponentActivity() {
                 val slides = remember {
                     listOf(
                         OnboardingSlide(
-                            title = "Precision Satellite Mapping",
-                            description = "Delineate high-precision field boundaries, visualize multispectral NDVI layers, and monitor crop health directly from orbit.",
+                            title = "Precision Satellite Farm Mapping",
+                            description = "Trace your field boundaries and monitor crop health directly from European Space Agency (Sentinel-2) and ISRO satellites.",
                             icon = Icons.Default.Map,
                             tag = "STEP 1 OF 3"
                         ),
                         OnboardingSlide(
-                            title = "Real-Time Soil & Root Telemetry",
-                            description = "Keep root-zone moisture, soil temperature, and LoRaWAN mesh sensor clusters within optimal thresholds 24/7.",
+                            title = "Smart Soil Moisture & Irrigation",
+                            description = "Track root-zone soil moisture from orbit. Receive daily watering alerts so you only irrigate when your crops truly need it.",
                             icon = Icons.Default.Water,
                             tag = "STEP 2 OF 3"
                         ),
                         OnboardingSlide(
-                            title = "AI Yield & Harvest Intelligence",
-                            description = "Maximize harvest yields with machine-learning pest detection, variable-rate fertilizer planning, and automated pivot controls.",
+                            title = "Practical Crop & Yield Advisory",
+                            description = "Receive simple, practical guidance on fertilizer dosage, safe weather spraying windows, and local mandi prices to protect your harvest.",
                             icon = Icons.Default.AutoAwesome,
                             tag = "STEP 3 OF 3"
                         )

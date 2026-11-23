@@ -61,12 +61,19 @@ class Screen7Activity : ComponentActivity() {
                 val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 4 })
                 val coroutineScope = rememberCoroutineScope()
                 var showLogoutDialog by remember { mutableStateOf(false) }
+                var showNotificationDialog by remember { mutableStateOf(false) }
                 val isDark = ThemePreferences.isDarkTheme
 
                 LaunchedEffect(selectedTargetTab.intValue) {
                     if (selectedTargetTab.intValue in 0..3 && pagerState.currentPage != selectedTargetTab.intValue) {
                         pagerState.scrollToPage(selectedTargetTab.intValue)
                     }
+                }
+
+                if (showNotificationDialog) {
+                    com.geopulse.app.notifications.GeoNotificationDialog(
+                        onDismiss = { showNotificationDialog = false }
+                    )
                 }
 
                 if (showLogoutDialog) {
@@ -130,7 +137,7 @@ class Screen7Activity : ComponentActivity() {
                                         coroutineScope.launch { pagerState.animateScrollToPage(3) }
                                     },
                                     onNotificationClick = {
-                                        startActivity(Intent(this@Screen7Activity, Screen28Activity::class.java))
+                                        showNotificationDialog = true
                                     },
                                     onCropHealthClick = {
                                         startActivity(Intent(this@Screen7Activity, Screen11Activity::class.java))
@@ -336,7 +343,8 @@ private fun calculateShoelaceArea(points: List<Offset>): Double {
 fun FullGisMapTab(
     onVegetationClick: () -> Unit,
     onBoundaryClick: () -> Unit,
-    onNavigate: ((Class<*>) -> Unit)? = null
+    onNavigate: ((Class<*>) -> Unit)? = null,
+    showHeader: Boolean = true
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val zones = remember { mutableStateListOf(*initialGisZones.toTypedArray()) }
@@ -437,12 +445,14 @@ fun FullGisMapTab(
                 contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 16.dp, bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                item {
-                    GeoTopBar(
-                        title = "Geospatial Field Map",
-                        subtitle = "Satellite Pass: Oct 29, 2026 · GPS: 13.06° N, 80.21° E · ${zones.size} Parcels",
-                        actionIcon = Icons.Default.MyLocation
-                    )
+                if (showHeader) {
+                    item {
+                        GeoTopBar(
+                            title = "Geospatial Field Map",
+                            subtitle = "Satellite Pass: Oct 29, 2026 · GPS: 13.06° N, 80.21° E · ${zones.size} Parcels",
+                            actionIcon = Icons.Default.MyLocation
+                        )
+                    }
                 }
 
                 // Layer Selector & Drawing Mode Toggle Chips
@@ -880,7 +890,10 @@ data class FarmerAdvisoryItem(
 )
 
 @Composable
-fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
+fun FullAdvisoryTab(
+    onTaskClick: (Class<*>) -> Unit,
+    showHeader: Boolean = true
+) {
     val tasks = remember {
         listOf(
             FarmerAdvisoryItem(
@@ -959,11 +972,13 @@ fun FullAdvisoryTab(onTaskClick: (Class<*>) -> Unit) {
                 contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 104.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                item {
-                    GeoTopBar(
-                        title = "Farm Advisory & Action Plan",
-                        subtitle = "Satellite-derived daily farming recommendations"
-                    )
+                if (showHeader) {
+                    item {
+                        GeoTopBar(
+                            title = "Farm Advisory & Action Plan",
+                            subtitle = "Satellite-derived daily farming recommendations"
+                        )
+                    }
                 }
 
                 // Summary Banner Card
@@ -1087,7 +1102,8 @@ fun FullProfileSettingsTab(
     currentThemeMode: ThemeMode,
     onThemeModeSelected: (ThemeMode) -> Unit,
     onNavigate: (Class<*>) -> Unit,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    showHeader: Boolean = true
 ) {
     var notificationsEnabled by remember { mutableStateOf(true) }
     var offlineCaching by remember { mutableStateOf(true) }
@@ -1126,8 +1142,10 @@ fun FullProfileSettingsTab(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                item {
-                    GeoTopBar(title = "Profile & Settings")
+                if (showHeader) {
+                    item {
+                        GeoTopBar(title = "Profile & Settings")
+                    }
                 }
 
                 // Farmer Profile Header Card

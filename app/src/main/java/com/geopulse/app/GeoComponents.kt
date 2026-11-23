@@ -20,7 +20,15 @@ import androidx.compose.animation.core.tween
 
 import androidx.compose.animation.fadeIn
 
+import androidx.compose.animation.fadeOut
+
+import androidx.compose.animation.expandVertically
+
+import androidx.compose.animation.shrinkVertically
+
 import androidx.compose.animation.slideInVertically
+
+import com.geopulse.app.notifications.NotificationRepository
 
 import androidx.compose.foundation.BorderStroke
 
@@ -836,6 +844,71 @@ fun DraggableBottomDock(
 
 // -------------------------------------------------------------------------
 
+@Composable
+fun ExpandableScientificDetails(
+    title: String = "Why this recommendation? / Scientific Details",
+    content: @Composable () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Science,
+                        contentDescription = null,
+                        tint = LimeAccent,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = title,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = LimeAccent
+                    )
+                }
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            AnimatedVisibility(
+                visible = expanded,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    content()
+                }
+            }
+        }
+    }
+}
+
 
 
 @Composable
@@ -1021,64 +1094,39 @@ fun SoilMoistureModule() {
             }
 
             Spacer(modifier = Modifier.height(14.dp))
-            // Separate Crop Water Status (NDMI) from Soil Moisture Estimate
+            // Consolidated Farmer Action Guide
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text("Canopy Water Status (NDMI = 0.076)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = CyanAccent)
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Mild leaf moisture deficit detected from Sentinel-2 NIR/SWIR absorption. Leaves are losing hydration faster than normal transpiration.",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        lineHeight = 17.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-            // Irrigation Advisory Caution
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text("Field Soil Moisture Advisory", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = GoldAccent)
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Estimated Topsoil Moisture: 34% (Mild Deficit). Do not irrigate based on satellite canopy NDMI alone. Inspect physical soil moisture 10-15 cm below surface before starting pumps.",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        lineHeight = 17.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-            // Experimental Limitation Transparency Box
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-            ) {
-                Column(modifier = Modifier.padding(10.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Science, contentDescription = "Science", tint = CyanAccent, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Model & Physical Limitation Note", fontWeight = FontWeight.Bold, fontSize = 11.5.sp, color = CyanAccent)
-                    }
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text("Farmer Recommendation", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Soil moisture is an experimental estimate derived from optical water absorption proxy. Direct EOS-04 C-band SAR radar inversion is pending raw data clearance on Bhoonidhi web portal. Radar penetration is limited to 0-5 cm dielectric skin layer.",
+                        text = "Estimated Topsoil Moisture is 34% (Mild Deficit) and leaf hydration is slightly low. Check the soil 10–15 cm deep with a trowel before starting pumps. If dry, plan an early morning watering tomorrow before 8:30 AM.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 17.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            // Expandable Scientific & Physical Details
+            ExpandableScientificDetails {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "• Canopy NDMI (Normalized Difference Moisture Index) = (B8A - B11) / (B8A + B11) = 0.076. Measures leaf water absorption via Sentinel-2 SWIR bands.",
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        lineHeight = 15.sp
+                    )
+                    Text(
+                        text = "• Soil moisture proxy is derived from multispectral water absorption reflection. C-band SAR radar penetration (EOS-04/Sentinel-1) is limited to 0–5 cm dielectric skin layer.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                         lineHeight = 15.sp
                     )
                 }
@@ -1189,7 +1237,7 @@ fun IrrigationTimingModule() {
 
                     Text(
 
-                        text = if (data != null) "Best Window: ${data.recommendedTiming}" else "Best Window: Tomorrow 6:00 AM - 8:30 AM",
+                        text = if (!data?.recommendedTiming.isNullOrBlank()) "Best Window: ${data?.recommendedTiming}" else "Best Window: Tomorrow 6:00 AM - 8:30 AM",
 
                         fontWeight = FontWeight.Bold,
 
@@ -1270,29 +1318,35 @@ fun IrrigationTimingModule() {
                     }
 
                     Text(
-
-                        text = "Physical Formula: 1 mm depth over 1 ha = 10,000 Litres = 10 m³. For ${data?.fieldAreaHa ?: 48.7} ha field.",
-
+                        text = "Calculated using FAO-56 Crop Evapotranspiration balance for ${data?.fieldAreaHa ?: 48.7} ha field.",
                         fontSize = 10.5.sp,
-
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-
                     )
-
                 }
-
             }
 
-
-
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-
                 MetricChip("Crop Demand", "${data?.dailyCropWaterDemandMm ?: 5.4} mm/d", Modifier.weight(1f))
-
                 MetricChip("Soil Moisture", "${data?.currentMoisturePct?.toInt() ?: 72}%", Modifier.weight(1f))
-
                 MetricChip("Calculation", "Water Balance", Modifier.weight(1f))
+            }
 
+            // Expandable Scientific Calculation Details
+            ExpandableScientificDetails {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "• Physical Conversion: 1 mm water depth over 1 hectare = 10,000 Litres = 10 m³.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        lineHeight = 15.sp
+                    )
+                    Text(
+                        text = "• Crop water balance calculated via FAO-56 Penman-Monteith reference evapotranspiration (ET₀) and crop coefficient Kc (1.15) for ${data?.fieldAreaHa ?: 48.7} ha field.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        lineHeight = 15.sp
+                    )
+                }
             }
 
         }
@@ -2614,99 +2668,59 @@ fun MarketCommodityModule() {
 @Composable
 
 fun NotificationCenterModule() {
+    val context = LocalContext.current
+    var notificationList by remember { mutableStateOf(NotificationRepository.getNotifications(context)) }
+    val unreadCount = notificationList.count { !it.isRead }
+
+    fun refreshList() {
+        notificationList = NotificationRepository.getNotifications(context)
+    }
 
     Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-
         Column(modifier = Modifier.padding(18.dp)) {
-
-            Text("Weather & Crop Warning Center", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text("Critical agricultural alerts and weather warnings for your area.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Weather & Crop Warning Center", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text("Critical agricultural alerts and weather warnings.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (unreadCount > 0) {
+                    TextButton(onClick = {
+                        NotificationRepository.markAllAsRead(context)
+                        refreshList()
+                    }) {
+                        Text("Mark all read", fontSize = 11.5.sp, color = LimeAccent, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-
-                Surface(
-
-                    modifier = Modifier.fillMaxWidth(),
-
-                    shape = RoundedCornerShape(10.dp),
-
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
-                ) {
-
-                    Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-
-                        Icon(Icons.Default.Cloud, contentDescription = null, tint = CyanAccent, modifier = Modifier.size(20.dp))
-
-                        Column {
-
-                            Text("Rain Advisory: 12mm Showers on Friday", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
-
-                            Text("Cover harvested produce and complete foliar sprays before Friday.", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                notificationList.forEach { notif ->
+                    com.geopulse.app.notifications.NotificationCardItem(
+                        notification = notif,
+                        onMarkRead = {
+                            NotificationRepository.markAsRead(context, notif.id)
+                            refreshList()
                         }
-
-                    }
-
+                    )
                 }
-
-                Surface(
-
-                    modifier = Modifier.fillMaxWidth(),
-
-                    shape = RoundedCornerShape(10.dp),
-
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
-                ) {
-
-                    Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-
-                        Icon(Icons.Default.Spa, contentDescription = null, tint = LimeAccent, modifier = Modifier.size(20.dp))
-
-                        Column {
-
-                            Text("Nitrogen Top-Dress Window: Field 1", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
-
-                            Text("Optimal soil moisture for applying Urea split dose.", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                        }
-
-                    }
-
-                }
-
             }
-
-
 
             Spacer(modifier = Modifier.height(14.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-
-                MetricChip("Alerts", "2 Active", Modifier.weight(1f))
-
-                MetricChip("Weather Alert", "Rain Fri", Modifier.weight(1f))
-
-                MetricChip("Crop Alert", "Fertilizer", Modifier.weight(1f))
-
+                MetricChip("Alerts", "${notificationList.size} Total", Modifier.weight(1f))
+                MetricChip("Unread", "$unreadCount New", Modifier.weight(1f))
+                MetricChip("Sync Status", "Live", Modifier.weight(1f))
             }
-
         }
-
     }
-
 }
 
 
@@ -3303,109 +3317,13 @@ fun GeoDetailScreenContent(
 
                     ) {
 
-                        item {
-
-                            // Hero Summary Card
-
-                            Box(
-
-                                modifier = Modifier
-
-                                    .fillMaxWidth()
-
-                                    .clip(RoundedCornerShape(16.dp))
-
-                                    .background(heroGradient)
-
-                                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-
-                                    .padding(if (isTablet) 24.dp else 18.dp)
-
-                            ) {
-
-                                Column(
-
-                                    modifier = Modifier.fillMaxWidth(),
-
-                                    horizontalAlignment = Alignment.CenterHorizontally
-
-                                ) {
-
-                                    Surface(
-
-                                        shape = RoundedCornerShape(16.dp),
-
-                                        color = Color.White.copy(alpha = 0.15f),
-
-                                        modifier = Modifier.size(56.dp),
-
-                                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
-
-                                    ) {
-
-                                        Box(contentAlignment = Alignment.Center) {
-
-                                            Icon(
-
-                                                imageVector = icon,
-
-                                                contentDescription = title,
-
-                                                tint = Color.White,
-
-                                                modifier = Modifier.size(28.dp)
-
-                                            )
-
-                                        }
-
-                                    }
-
-                                    Spacer(modifier = Modifier.height(10.dp))
-
-                                    Text(
-
-                                        text = title,
-
-                                        fontSize = if (isTablet) 22.sp else 19.sp,
-
-                                        fontWeight = FontWeight.Bold,
-
-                                        color = Color.White,
-
-                                        textAlign = TextAlign.Center
-
-                                    )
-
-                                    Spacer(modifier = Modifier.height(4.dp))
-
-                                    Text(
-
-                                        text = subtitle,
-
-                                        fontSize = if (isTablet) 14.sp else 12.5.sp,
-
-                                        color = Color.White.copy(alpha = 0.85f),
-
-                                        textAlign = TextAlign.Center,
-
-                                        lineHeight = 18.sp
-
-                                    )
-
-                                }
-
-                            }
-
-                        }
-
-
-
                         // Specific Interactive Layperson Satellite Module matching this screen
 
                         item {
 
                             when {
+
+                                title.contains("Notification", ignoreCase = true) || title.contains("Alert", ignoreCase = true) || title.contains("Warning", ignoreCase = true) -> NotificationCenterModule()
 
                                 title.contains("Vegetation", ignoreCase = true) || title.contains("Crop Health", ignoreCase = true) -> VegetationHealthModule()
 
@@ -3539,48 +3457,10 @@ fun GeoDetailScreenContent(
 
 
 
-                        // Secondary Return Action Button (Always returns to Dashboard cleanly)
-
+                        // Bottom Spacing for floating dock or navigation bars
                         item {
-
-                            OutlinedButton(
-
-                                onClick = {
-
-                                    activity.startActivity(
-
-                                        Intent(activity, Screen7Activity::class.java).apply {
-
-                                            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-
-                                        }
-
-                                    )
-
-                                    activity.finish()
-
-                                },
-
-                                modifier = Modifier
-
-                                    .fillMaxWidth()
-
-                                    .height(50.dp),
-
-                                shape = RoundedCornerShape(14.dp),
-
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
-
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
-
-                            ) {
-
-                                Text("Return to Dashboard", fontSize = 15.sp, fontWeight = FontWeight.Bold)
-
-                            }
-
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
-
                     }
 
                 }

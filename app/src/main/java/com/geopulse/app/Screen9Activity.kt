@@ -33,7 +33,8 @@ class Screen9Activity : ComponentActivity() {
                             FullAdvisoryTab(
                                 onTaskClick = { targetClass ->
                                     startActivity(Intent(this@Screen9Activity, targetClass))
-                                }
+                                },
+                                showHeader = false
                             )
                         }
                     }

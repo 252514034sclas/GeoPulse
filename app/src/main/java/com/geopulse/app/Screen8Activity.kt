@@ -39,7 +39,8 @@ class Screen8Activity : ComponentActivity() {
                                 },
                                 onNavigate = { targetClass ->
                                     startActivity(Intent(this@Screen8Activity, targetClass))
-                                }
+                                },
+                                showHeader = false
                             )
                         }
                     }

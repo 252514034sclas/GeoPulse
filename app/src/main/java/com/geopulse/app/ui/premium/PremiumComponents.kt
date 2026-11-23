@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geopulse.app.*
+import com.geopulse.app.notifications.NotificationRepository
 
 // -------------------------------------------------------------------------
 // Design System Tokens (Farmer-First Palette with High-Contrast Readability)
@@ -214,6 +215,8 @@ private fun HomeHeader(
     onProfileClick: () -> Unit,
     onNotificationClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val unreadCount = remember { NotificationRepository.getUnreadCount(context) }
     var showFarmDialog by remember { mutableStateOf(false) }
     var selectedFarmName by remember { mutableStateOf("Green Valley Farm") }
     var selectedFieldSubtitle by remember { mutableStateOf("Field 1 · 12.5 ha (30.9 ac)") }
@@ -361,15 +364,17 @@ private fun HomeHeader(
                 tint = colors.textPrimary,
                 modifier = Modifier.size(19.dp)
             )
-            // Red alert badge dot
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 8.dp, end = 8.dp)
-                    .size(7.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFFF5252))
-            )
+            if (unreadCount > 0) {
+                // Red alert badge dot
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 8.dp, end = 8.dp)
+                        .size(7.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFFF5252))
+                )
+            }
         }
 
         Spacer(Modifier.width(8.dp))

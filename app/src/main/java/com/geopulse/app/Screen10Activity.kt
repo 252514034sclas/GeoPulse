@@ -51,7 +51,8 @@ class Screen10Activity : ComponentActivity() {
                                 },
                                 onSignOut = {
                                     showLogoutDialog = true
-                                }
+                                },
+                                showHeader = false
                             )
                         }
                     }
