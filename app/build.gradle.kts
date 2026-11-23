@@ -19,8 +19,18 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("geopulse-release.jks")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "geopulse2026"
+            keyAlias = "geopulse"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "geopulse2026"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             optimization {
                 enable = false
             }

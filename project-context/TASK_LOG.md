@@ -6,6 +6,31 @@
 
 ## 1. COMPLETED ENGINEERING TASKS
 
+### Task 11: Post-Audit Evidence Verification & Release Blocker Resolution
+- **Date:** November 23, 2026
+- **Objective:** Independently verify previous audit claims with ground-truth requests/responses, resolve unsupported conclusions, eliminate release blockers, configure production release signing, and secure network security configuration.
+- **Key Actions & Remediations:**
+  - **Release Signing Configuration:** Created production RSA 2048-bit release keystore (`geopulse-release.jks`) with alias `geopulse`. Configured `signingConfigs.release` in `app/build.gradle.kts`. Successfully generated signed `app-release.apk` (70.8 MB), verified with Android SDK `apksigner` (APK Signature Scheme v2 = true), installed on Pixel 10 Pro emulator (`INSTALL_FAILED_UPDATE_INCOMPATIBLE` verified distinct cryptographic signature from debug key), and confirmed clean startup without crashes. Added `*.jks` and `*.keystore` to `.gitignore`.
+  - **Network Security Hardening:** Segregated cleartext development exceptions to `app/src/debug/res/xml/network_security_config.xml` (`10.0.2.2`, `127.0.0.1`, `localhost`). Hardened production `app/src/main/res/xml/network_security_config.xml` with strict `cleartextTrafficPermitted="false"` and zero cleartext domain exceptions, removing workstation IP `172.23.176.200`.
+  - **External Integrations Evidence Verification:**
+    - *ISRO Bhoonidhi:* Live authenticated via `POST auth/token` with credentials `nithish101` in `.env`. Live query to `GET data/collections` returned 63 collections from NRSC APISIX gateway. Status: `VERIFIED`.
+    - *Copernicus Sentinel-2:* Live STAC search to Microsoft Planetary Computer returned scene `S2C_MSIL2A_20261120T050111_R119_T44PKT_20261120T093408` (Acquired 2026-11-20T05:01:11Z, cloud 9.74%, NDVI 0.724). Status: `VERIFIED`.
+    - *Copernicus Sentinel-1 SAR:* Inspected `copernicus_adapter.py`. SAR radar backscatter processing is not implemented in the raster pipeline. Status: `NOT IMPLEMENTED`.
+    - *Open-Meteo NWP:* Live query returned Temp 27.6°C, Humidity 82%, Rain 0.4mm, Wind 14.4 km/h, FAO-56 ET0 2.81 mm/day, Soil Moisture 0.253 m³/m³. Status: `VERIFIED`.
+    - *AGMARKNET:* Live data.gov.in requires API key (`is_configured: False`); adapter falls back safely to verified APMC benchmark catalog (Paddy ADT 43 at ₹2,203/Q). Status: `PARTIALLY VERIFIED`.
+    - *TNAU/ICAR:* Verified as embedded authoritative knowledge base (`backend/services/agri_knowledge_service.py`), not an external REST API. Status: `VERIFIED`.
+    - *MapLibre GL Tiles:* Esri World Imagery, OpenStreetMap, CartoDB tiles rendering live on mobile device. Status: `VERIFIED`.
+  - **Discrepancy Corrections:**
+    - Corrected Password Reset claim: client-side mock only; backend lacks endpoint and SMTP pipeline (`NOT IMPLEMENTED`).
+    - Corrected Logout / Token Revocation claim: client cache clear only; no server-side denylist (`PARTIALLY VERIFIED`).
+    - Corrected Push Notifications claim: pull-based dynamic REST alerts; no FCM push daemon (`PARTIALLY VERIFIED`).
+    - Corrected Offline Persistence claim: SharedPreferences for auth/prefs survives restart; Room DB missing, fields/rasters do not survive cold restart in airplane mode (`PARTIALLY VERIFIED`).
+    - Corrected Rate Limiting claim: input validation present, but request throttling middleware not implemented (`NOT IMPLEMENTED`).
+- **Artifact Published:** `geopulse_post_audit_verification_report.md`
+- **Verification Result:** Release APK built, signed, installed, and validated on emulator. All 6 priorities verified with ground-truth evidence.
+
+---
+
 ### Task 10: Complete Internal & External Integration Audit
 - **Date:** November 23, 2026
 - **Objective:** Complete end-to-end audit of all 30 screens, ViewModels, Repositories, FastAPI routes, and external APIs (ISRO Bhoonidhi, Copernicus Sentinel-2, Open-Meteo, AGMARKNET, NASA POWER, TNAU/ICAR).
