@@ -19,9 +19,10 @@
 
 | ID | Component | Finding / Issue | Severity | Status / Recommendation |
 |---|---|---|---|---|
-| **SEC-01** | `AndroidManifest.xml` | **`android:allowBackup="true"`:** Enabled by default in debug manifest, allowing ADB backup extraction of application data. | Low (Debug) / Medium (Release) | Safe for development; must be changed to `android:allowBackup="false"` before publishing production release APK to Google Play. |
-| **SEC-02** | `AndroidManifest.xml` | **`android:usesCleartextTraffic="true"`:** Enabled globally to allow HTTP connection to local development server (`http://10.0.2.2:8000/` or LAN IP `http://172.23.176.200:8000/`). | Low (Debug) / High (Release) | Must be replaced with a `res/xml/network_security_config.xml` that permits cleartext only for internal development IP addresses while enforcing HTTPS for all production domains. |
-| **SEC-03** | `ApiClient.kt` | **Hardcoded Workstation LAN IP Fallback:** Base URL defaults to `http://172.23.176.200:8000/`. When testing on an emulator without reverse port forwarding, network calls to LAN IP may time out unless changed to `10.0.2.2:8000`. | Low | `ApiClient.baseUrl` is mutable and can be dynamically set via `Screen29Activity` (Settings) or during application startup. |
+| **SEC-01** | `AndroidManifest.xml` | **`android:allowBackup="false"`:** Disabled to prevent unauthorized ADB backup extraction of application data. | Low | **RESOLVED** (Commit `8a07587`). Configured `android:allowBackup="false"` in `AndroidManifest.xml`. |
+| **SEC-02** | `AndroidManifest.xml` | **Network Security Configuration:** Restrict cleartext traffic exclusively to local development/emulator IP addresses (`10.0.2.2`, `127.0.0.1`). | High (Release) | **RESOLVED** (Commit `8a07587`). Created `res/xml/network_security_config.xml` enforcing HTTPS for production domains and whitelisting development IPs. |
+| **SEC-03** | `ApiClient.kt` | **Workstation LAN / Emulator IP Handling:** Base URL defaults to `http://10.0.2.2:8000/` or local workstation LAN. | Low | `ApiClient.baseUrl` is mutable and dynamically configurable via `Screen29Activity` (Settings) or during application startup. |
+| **ARC-01** | Client Persistence | **Room Database Architecture Gap:** Android client currently relies on `SharedPreferences` (`geopulse_user_session`, `geopulse_notifications`) and in-memory caches rather than a Room SQLite database. | Medium (Architectural) | **DOCUMENTED** (Task 10 Audit). While adequate for sessions and preferences, migration to Room (`FieldEntity`, `SatelliteCacheEntity`) is recommended for advanced multi-parcel offline caching in post-release milestones. |
 
 ---
 

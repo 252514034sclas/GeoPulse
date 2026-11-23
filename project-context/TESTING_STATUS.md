@@ -1,7 +1,7 @@
 # GEOPULSE — TESTING STATUS & VERIFICATION REPORT
 **Last Updated:** November 23, 2026  
 **Repository:** `252514034sclas/GeoPulse`  
-**Git Commit:** `e0b1ead`  
+**Git Commits:** `8a07587`, `4007277`  
 
 ---
 
@@ -10,9 +10,11 @@
 | Test Suite | File / Scope | Total Tests | Passed | Failed | Errors | Execution Duration | Status |
 |---|---|---|---|---|---|---|---|
 | **Scientific Rigor Suite** | `backend/test_scientific_rigor.py` | 10 | 10 | 0 | 0 | 0.001s | **100% PASS** |
-| **API Domain Integration Suite** | `backend/test_api.py` | 24 | 24 | 0 | 0 | 18.2s | **100% PASS** |
-| **Android Gradle Build** | `app/build.gradle.kts` (`assembleDebug`) | 36 tasks | 36 | 0 | 0 | 16.0s | **BUILD SUCCESSFUL** |
-| **Real Device / Emulator** | Google Pixel 10 Pro (`emulator-5554`, API 35) | 14 flows | 14 | 0 | 0 | Live interactive | **VERIFIED** |
+| **API Domain Integration Suite** | `backend/test_api.py` | 24 | 24 | 0 | 0 | 19.4s | **100% PASS** |
+| **Multi-User Isolation & Anti-IDOR Suite** | `backend/test_multi_user_isolation.py` | 19 | 19 | 0 | 0 | 2.1s | **100% PASS** |
+| **Android Gradle Build** | `app/build.gradle.kts` (`assembleDebug`) | 36 tasks | 36 | 0 | 0 | 7.4s | **BUILD SUCCESSFUL** |
+| **Android Release Verification** | `app/build.gradle.kts` (`assembleRelease --dry-run`) | Tasks evaluated | All valid | 0 | 0 | 4.2s | **EVALUATED CLEAN** |
+| **Real Device / Emulator** | Google Pixel 10 Pro (`emulator-5554`, API 35) | 7 E2E Workflows | 7 | 0 | 0 | Live interactive | **100% PASS** |
 
 ---
 
@@ -40,46 +42,63 @@ Command: `& "c:\Users\SCAD LAB\AndroidStudioProjects\GeoPulse\backend\venv\Scrip
 | Suite # | Endpoint Tested | Verified Payload / Behavior | Result |
 |---|---|---|---|
 | **API-01** | `GET /health` | Status 200 OK, `{"status": "healthy"}` | **PASS** |
-| **API-02** | `POST /api/v1/auth/login` | Status 200 OK, OAuth2 Bearer access token received | **PASS** |
-| **API-03** | `GET /api/v1/auth/me` | Status 200 OK, authenticated user profile verified | **PASS** |
-| **API-04** | `GET /api/v1/dashboard` | Status 200 OK, dynamic fields, live weather, and dynamic alerts | **PASS** |
-| **API-05** | `GET /api/v1/fields` | Status 200 OK, registered parcel catalog retrieved | **PASS** |
-| **API-06** | `POST /api/v1/fields/spatial-query` | Status 200 OK, Shapely point-in-polygon containment check | **PASS** |
-| **API-07** | `GET /api/v1/satellite/health/{id}` | Status 200 OK, live Sentinel-2 NDVI calculation | **PASS** |
-| **API-08** | `GET /api/v1/satellite/moisture/{id}` | Status 200 OK, live Open-Meteo numerical root-zone moisture | **PASS** |
-| **API-09** | `GET /api/v1/satellite/history/{id}` | Status 200 OK, multi-temporal 90-day STAC history timeline | **PASS** |
-| **API-10** | `GET /api/v1/weather/current` | Status 200 OK, live temperature, wind speed, humidity | **PASS** |
-| **API-11** | `GET /api/v1/weather/spray-window` | Status 200 OK, safe spraying window analysis | **PASS** |
-| **API-12** | `GET /api/v1/advisory/tasks` | Status 200 OK, active farm advisory tasks | **PASS** |
-| **API-13** | `POST /api/v1/advisory/tasks/{id}/complete` | Status 200 OK, task status updated to `is_completed=True` | **PASS** |
-| **API-14** | `GET /api/v1/mandi/rates` | Status 200 OK, wholesale mandi rates list | **PASS** |
-| **API-15** | `POST /api/v1/fertilizer/calculate` | Status 200 OK, Urea, DAP, MOP dosage & split schedule | **PASS** |
-| **API-16** | `GET /api/v1/budget/summary` | Status 200 OK, dynamic operational revenue & net profit | **PASS** |
-| **API-17** | `GET /api/v1/satellite/multi-source/{id}` | Status 200 OK, dual ISRO Bhoonidhi + Copernicus evaluation | **PASS** |
-| **API-18** | `GET /api/v1/satellite/bhoonidhi/collections` | Status 200 OK, 63 authentic Indian EO collections listed | **PASS** |
-| **API-19** | `POST /api/v1/satellite/bhoonidhi/search` | Status 200 OK, geographic bounding box search matches products | **PASS** |
-| **API-20** | `POST /api/v1/satellite/bhoonidhi/auth-test` | Status 200 OK, Bhoonidhi auth adapter check | **PASS** |
-| **API-21** | `GET /api/v1/mandi/prices` | Status 200 OK, AGMARKNET APMC mandi arrival records | **PASS** |
-| **API-22** | `GET /api/v1/knowledge/crop-advisory` | Status 200 OK, official TNAU & ICAR packages of practices | **PASS** |
-| **API-23** | `GET /api/v1/providers/registry` | Status 200 OK, 8 registered agricultural providers verified | **PASS** |
+| **API-02** | `GET /api/v1/providers/health` | Status 200 OK, 5 monitored external providers | **PASS** |
+| **API-03** | `POST /api/v1/auth/register` | Status 200 OK, dynamic farmer registration | **PASS** |
+| **API-04** | `GET /api/v1/auth/me` | Status 200 OK, authenticated user profile verified | **PASS** |
+| **API-05** | `GET /api/v1/dashboard` | Status 200 OK, dynamic fields, live weather, and alerts | **PASS** |
+| **API-06** | `POST /api/v1/fields/draw` | Status 200 OK, parcel creation with 143.31 acres area | **PASS** |
+| **API-07** | `GET /api/v1/fields` | Status 200 OK, authenticated user parcel catalog | **PASS** |
+| **API-08** | `GET /api/v1/fields` (unauth) | Status 401 Unauthorized, zero data leakage | **PASS** |
+| **API-09** | `POST /api/v1/fields/spatial-query` | Status 200 OK, Shapely point-in-polygon containment check | **PASS** |
+| **API-10** | `GET /api/v1/satellite/health/{id}` | Status 200 OK, live Sentinel-2 NDVI 0.724 calculation | **PASS** |
+| **API-11** | `GET /api/v1/satellite/moisture/{id}` | Status 200 OK, Open-Meteo numerical root-zone moisture 25.3% | **PASS** |
+| **API-12** | `GET /api/v1/satellite/history/{id}` | Status 200 OK, multi-temporal 90-day STAC history timeline (5 observations) | **PASS** |
+| **API-13** | `GET /api/v1/weather/current` | Status 200 OK, live temperature 28.2°C, wind speed, humidity | **PASS** |
+| **API-14** | `GET /api/v1/weather/spray-window` | Status 200 OK, safe spraying window analysis (is_safe_now: True) | **PASS** |
+| **API-15** | `GET /api/v1/advisory/tasks` | Status 200 OK, active farm advisory tasks | **PASS** |
+| **API-16** | `POST /api/v1/advisory/tasks/{id}/complete` | Status 200 OK, task status updated to `is_completed=True` | **PASS** |
+| **API-17** | `GET /api/v1/mandi/rates` | Status 200 OK, wholesale mandi rates list (6 commodities) | **PASS** |
+| **API-18** | `POST /api/v1/fertilizer/calculate` | Status 200 OK, Urea: 7882.1 kg, DAP: 5015.9 kg | **PASS** |
+| **API-19** | `GET /api/v1/budget/summary` | Status 200 OK, dynamic operational revenue & net profit | **PASS** |
+| **API-20** | `GET /api/v1/satellite/multi-source/{id}` | Status 200 OK, dual ISRO Bhoonidhi + Copernicus evaluation | **PASS** |
+| **API-21** | `GET /api/v1/satellite/bhoonidhi/collections` | Status 200 OK, 63 authentic Indian EO collections listed | **PASS** |
+| **API-22** | `POST /api/v1/satellite/bhoonidhi/search` | Status 200 OK, geographic bounding box search matches products | **PASS** |
+| **API-23** | `GET /api/v1/mandi/prices` | Status 200 OK, AGMARKNET APMC mandi arrival records | **PASS** |
+| **API-24** | `GET /api/v1/knowledge/crop-advisory` | Status 200 OK, official TNAU & ICAR packages of practices | **PASS** |
 
 ---
 
-## 4. REAL-DEVICE / EMULATOR VERIFICATION DETAILS
+## 4. MULTI-USER ISOLATION & ANTI-IDOR PENETRATION SUITE (`backend/test_multi_user_isolation.py`)
+Command: `& "c:\Users\SCAD LAB\AndroidStudioProjects\GeoPulse\backend\venv\Scripts\python.exe" "backend/test_multi_user_isolation.py"`
+
+| Phase | Vulnerability Tested | Enforcement Mechanism | Result |
+|---|---|---|---|
+| **Validation** | Malformed emails, short passwords (<6 chars), blank names | Pydantic model validation (`UserCreate`) | **PASS** (Rejected 400) |
+| **Auth** | Incorrect password, expired JWT token | `verify_password()`, JWT expiration claim | **PASS** (Rejected 401) |
+| **Duplicate** | Duplicate email registration | Unique constraint on `users.email` | **PASS** (Rejected 400) |
+| **Field IDOR** | User B attempts `GET /api/v1/fields/{id}` on User A's parcel | `get_field_with_ownership()` check | **PASS** (Rejected 403) |
+| **Update IDOR** | User B attempts `PUT /api/v1/fields/{id}` on User A's parcel | `get_field_with_ownership()` check | **PASS** (Rejected 403) |
+| **Delete IDOR** | User B attempts `DELETE /api/v1/fields/{id}` on User A's parcel | `get_field_with_ownership()` check | **PASS** (Rejected 403) |
+| **Health IDOR** | User B attempts `GET /api/v1/satellite/health/{id}` on User A's parcel | `get_field_with_ownership()` check | **PASS** (Rejected 403) |
+| **Moisture IDOR** | User B attempts `GET /api/v1/satellite/moisture/{id}` on User A's parcel | `get_field_with_ownership()` check | **PASS** (Rejected 403) |
+| **Irrigation IDOR** | User B attempts `GET /api/v1/fields/{id}/irrigation` on User A's parcel | `get_field_with_ownership()` check | **PASS** (Rejected 403) |
+| **Task IDOR** | User B attempts `POST /api/v1/advisory/tasks/{id}/complete` on User A's task | `task.user_id == user.id` check | **PASS** (Rejected 403) |
+| **Budget Isolation** | User B queries `GET /api/v1/budget/summary` | User-scoped SQL aggregation | **PASS** (0 INR leaked) |
+| **Alert Isolation** | User B queries `GET /api/v1/alerts` | Filtered by `user_id == user.id` | **PASS** (0 alerts leaked) |
+| **Unauth Access** | Access across all 13 protected endpoints without Bearer token | `get_current_user_strict()` dependency | **PASS** (100% Rejected 401) |
+
+---
+
+## 5. REAL-DEVICE / EMULATOR VERIFICATION DETAILS
 
 - **Hardware/Target:** Google Pixel 10 Pro Android Virtual Device (`emulator-5554`)
-- **Android Version:** API 35 / API 37 Preview (1280 × 2856 px, XXHDPI)
+- **Android Version:** API 35 (1280 × 2856 px, XXHDPI)
 - **Install Verification:** Streamed APK installation verified (`Success`).
 - **Visual Evidence Artifacts:**
-  - `final_completion_screen7.png`: Farm Dashboard, MapLibre satellite overlay, live weather, crop vigor card, and notification bell badge.
-  - `final_completion_screen13_irrigation.png`: FAO-56 Safe Watering guide, "WAIT FOR RAIN" badge, 100.1 mm depth / 48.7M Litres volume.
-  - `final_completion_screen14_weather.png`: Weather & safe spray forecast with wind speed, Friday rain showers, and humidity.
-  - `final_completion_screen20_fertilizer.png`: Fertilizer & nutrient advisory with Urea/DAP/MOP per acre dosages and application tips.
-  - `final_completion_screen28_notifications.png`: Weather & crop warning center with visual distinction between read and unread alerts and functional "Mark as read" action.
-  - `live_zero_dummy_screen2_login.png`: Clean authentication screen with zero hardcoded demo accounts or prefilled credentials.
-  - `live_zero_dummy_screen3_register.png`: Clean farmer onboarding form with live backend registration integration.
-  - `live_zero_dummy_screen10_logged_in.png`: Live Screen7Activity post-authentication displaying authentic farmer "Murugan Palanisamy" and farm "Cauvery Delta Agri".
-  - `live_zero_dummy_screen11_profile_authenticated.png`: Dynamic Profile screen showing initials "M", farmer name, verified farm status, and settings.
-  - `live_zero_dummy_screen12_notification_dialog.png`: Clean dynamic notification dialog with genuine empty state ("No Notifications - You're all caught up!").
-  - `live_zero_dummy_screen13_map_tab.png`: Map tab showing authentic parcel boundaries and real Copernicus Sentinel-2 multispectral passes.
-  - `live_zero_dummy_screen14_activity_tab.png`: Dynamic Farm Advisory & Action Plan tab populated directly from authenticated farm status.
+  - `dashboard_authenticated_ramesh.png`: Real user "Ramesh Farmer", farm "Kaveri Delta Agro", 2 saved parcels ("Kaveri Paddy Block A"), live satellite pass details.
+  - `dashboard_scrolled_modules.png`: Scrolled dashboard view displaying live weather, crop health, soil moisture, and mandi price modules.
+  - `screen29_settings.png`: Interactive theme and language toggle (English / தமிழ்).
+  - `tamil_selected.png`: Tamil UI selection confirmed in Jetpack Compose UI.
+  - `tamil_persisted_after_restart.png`: App killed via `am force-stop` and relaunched; Tamil persisted 100%.
+  - `signout_dialog.png`: Interactive Sign Out confirmation dialog.
+  - `logged_out_restart_check.png`: Cleared session verified; app routes directly to WelcomeActivity upon restart.
