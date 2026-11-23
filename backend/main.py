@@ -83,17 +83,25 @@ def get_providers_health():
 # -------------------------------------------------------------
 @app.post("/api/v1/auth/register", response_model=schemas.Token)
 def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(models.UserModel).filter(models.UserModel.email == user_in.email).first()
+    clean_email = user_in.email.strip().lower()
+    if not clean_email or "@" not in clean_email or "." not in clean_email:
+        raise HTTPException(status_code=400, detail="Invalid email address format")
+    if not user_in.full_name or len(user_in.full_name.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Full name must be at least 2 characters")
+    if not user_in.password or len(user_in.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
+
+    existing = db.query(models.UserModel).filter(models.UserModel.email == clean_email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email is already registered")
 
     user = models.UserModel(
-        email=user_in.email,
-        full_name=user_in.full_name,
+        email=clean_email,
+        full_name=user_in.full_name.strip(),
         hashed_password=hash_password(user_in.password),
-        phone=user_in.phone,
-        farm_name=user_in.farm_name or "My Farm",
-        total_area_ha=user_in.total_area_ha or 10.0,
+        phone=user_in.phone.strip() if user_in.phone else None,
+        farm_name=user_in.farm_name.strip() if user_in.farm_name else "My Farm",
+        total_area_ha=user_in.total_area_ha or 0.0,
         preferred_language=user_in.preferred_language or "en",
         theme_preference=user_in.theme_preference or "SYSTEM"
     )
@@ -107,7 +115,8 @@ def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/api/v1/auth/login", response_model=schemas.Token)
 def login(login_in: schemas.UserLogin, db: Session = Depends(get_db)):
-    user = db.query(models.UserModel).filter(models.UserModel.email == login_in.email).first()
+    clean_email = login_in.email.strip().lower()
+    user = db.query(models.UserModel).filter(models.UserModel.email == clean_email).first()
     if not user or not verify_password(login_in.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
@@ -116,23 +125,18 @@ def login(login_in: schemas.UserLogin, db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/auth/me", response_model=schemas.UserResponse)
-def get_current_user_profile(user: models.UserModel = Depends(get_current_user_optional)):
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+def get_current_user_profile(user: models.UserModel = Depends(get_current_user_strict)):
     return user
 
 
 @app.put("/api/v1/auth/me", response_model=schemas.UserResponse)
-def update_profile(updates: schemas.UserUpdate, user: models.UserModel = Depends(get_current_user_optional), db: Session = Depends(get_db)):
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
+def update_profile(updates: schemas.UserUpdate, user: models.UserModel = Depends(get_current_user_strict), db: Session = Depends(get_db)):
     if updates.full_name is not None:
-        user.full_name = updates.full_name
+        user.full_name = updates.full_name.strip()
     if updates.phone is not None:
-        user.phone = updates.phone
+        user.phone = updates.phone.strip()
     if updates.farm_name is not None:
-        user.farm_name = updates.farm_name
+        user.farm_name = updates.farm_name.strip()
     if updates.total_area_ha is not None:
         user.total_area_ha = updates.total_area_ha
     if updates.preferred_language is not None:
@@ -143,6 +147,16 @@ def update_profile(updates: schemas.UserUpdate, user: models.UserModel = Depends
     db.commit()
     db.refresh(user)
     return user
+
+
+def get_field_with_ownership(field_id: int, user: models.UserModel, db: Session) -> models.FieldModel:
+    """Helper ensuring strict field existence and user ownership."""
+    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
+    if not field:
+        raise HTTPException(status_code=404, detail="Field parcel not found")
+    if field.user_id is not None and field.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden: You do not own this field parcel")
+    return field
 
 
 # -------------------------------------------------------------
@@ -230,18 +244,20 @@ def get_dashboard(
 # -------------------------------------------------------------
 @app.get("/api/v1/fields", response_model=List[schemas.FieldSchema])
 def list_fields(
-    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
-    if not user:
-        return []
     return db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).all()
 
 
 @app.post("/api/v1/fields", response_model=schemas.FieldSchema)
-def create_field(field_in: schemas.FieldCreate, user: Optional[models.UserModel] = Depends(get_current_user_optional), db: Session = Depends(get_db)):
+def create_field(
+    field_in: schemas.FieldCreate, 
+    user: models.UserModel = Depends(get_current_user_strict), 
+    db: Session = Depends(get_db)
+):
     new_field = models.FieldModel(
-        user_id=user.id if user else 1,
+        user_id=user.id,
         name=field_in.name,
         crop_type=field_in.crop_type,
         area_acres=field_in.area_acres,
@@ -259,15 +275,10 @@ def create_field(field_in: schemas.FieldCreate, user: Optional[models.UserModel]
 
 @app.get("/api/v1/fields/geojson")
 def get_fields_geojson(
-    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
     from shapely.geometry import mapping
-    if not user:
-        return {
-            "type": "FeatureCollection",
-            "features": []
-        }
     fields = db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).all()
     features = []
     for f in fields:
@@ -319,29 +330,20 @@ def get_fields_geojson(
 @app.get("/api/v1/fields/{field_id}", response_model=schemas.FieldSchema)
 def get_field_by_id(
     field_id: int, 
-    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
-    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field parcel not found")
-    if user and field.user_id and field.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Forbidden: You do not have access to this field")
-    return field
+    return get_field_with_ownership(field_id, user, db)
 
 
 @app.put("/api/v1/fields/{field_id}", response_model=schemas.FieldSchema)
 def update_field(
     field_id: int, 
     updates: schemas.FieldUpdate, 
-    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
-    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field parcel not found")
-    if user and field.user_id and field.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Forbidden: You do not have access to this field")
+    field = get_field_with_ownership(field_id, user, db)
 
     if updates.name is not None:
         field.name = updates.name
@@ -367,29 +369,24 @@ def update_field(
 @app.delete("/api/v1/fields/{field_id}")
 def delete_field(
     field_id: int, 
-    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
-    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field parcel not found")
-    if user and field.user_id and field.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Forbidden: You do not have access to this field")
-    db.delete(field)
-    db.commit()
-    return {"message": f"Field '{field.name}' deleted successfully"}
-    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field parcel not found")
+    field = get_field_with_ownership(field_id, user, db)
     db.delete(field)
     db.commit()
     return {"message": f"Field '{field.name}' deleted successfully"}
 
 
 @app.post("/api/v1/fields/spatial-query", response_model=List[schemas.FieldSchema])
-def spatial_query_fields(lat: float = Query(...), lon: float = Query(...), db: Session = Depends(get_db)):
-    """Point-in-polygon containment check using Shapely geometry."""
-    fields = db.query(models.FieldModel).all()
+def spatial_query_fields(
+    lat: float = Query(...), 
+    lon: float = Query(...), 
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    """Point-in-polygon containment check using Shapely geometry for user's fields."""
+    fields = db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).all()
     point = Point(lon, lat)
     matching = []
     for f in fields:
@@ -407,14 +404,16 @@ def spatial_query_fields(lat: float = Query(...), lon: float = Query(...), db: S
 # 5. Satellite Remote Sensing & Crop Vigor Endpoints
 # -------------------------------------------------------------
 @app.get("/api/v1/satellite/health/{field_id}", response_model=schemas.SatelliteRecordSchema)
-def get_field_satellite_health(field_id: int, db: Session = Depends(get_db)):
+def get_field_satellite_health(
+    field_id: int, 
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
     """
     Live satellite crop vigor retrieval from European Space Agency (ESA) Sentinel-2 Level-2A.
     Queries STAC for the field's actual GPS boundary coordinates and calculates real NDVI on the fly.
     """
-    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field parcel not found")
+    field = get_field_with_ownership(field_id, user, db)
 
     delta = 0.015
     adapter = CopernicusSentinelAdapter()
@@ -454,14 +453,16 @@ def get_field_satellite_health(field_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/satellite/moisture/{field_id}", response_model=schemas.SoilMoistureSchema)
-def get_field_satellite_moisture(field_id: int, db: Session = Depends(get_db)):
+def get_field_satellite_moisture(
+    field_id: int, 
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
     """
     Live soil moisture retrieval combining satellite NDMI with Open-Meteo numerical root-zone physics
     for the user's exact field GPS location.
     """
-    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field parcel not found")
+    field = get_field_with_ownership(field_id, user, db)
 
     # Fetch live meteorological & satellite soil moisture for field coordinates
     weather = OpenMeteoAdapter.get_forecast(field.latitude, field.longitude)
@@ -495,14 +496,16 @@ def get_field_satellite_moisture(field_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/satellite/history/{field_id}", response_model=schemas.SatelliteHistoryResponse)
-def get_field_satellite_history(field_id: int, db: Session = Depends(get_db)):
+def get_field_satellite_history(
+    field_id: int, 
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
     """
     Dynamic multi-temporal satellite observation timeline queried from Copernicus STAC
     using the field's actual bounding box coordinates.
     """
-    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field parcel not found")
+    field = get_field_with_ownership(field_id, user, db)
 
     delta = 0.015
     adapter = CopernicusSentinelAdapter()
@@ -645,18 +648,20 @@ def get_spray_window(
 # -------------------------------------------------------------
 @app.get("/api/v1/advisory/tasks", response_model=List[schemas.AdvisoryTaskSchema])
 def get_advisory_tasks(
-    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
-    if not user:
-        return []
     return db.query(models.AdvisoryTaskModel).filter(models.AdvisoryTaskModel.user_id == user.id).all()
 
 
 @app.post("/api/v1/advisory/tasks", response_model=schemas.AdvisoryTaskSchema)
-def create_advisory_task(task_in: schemas.AdvisoryTaskCreate, user: Optional[models.UserModel] = Depends(get_current_user_optional), db: Session = Depends(get_db)):
+def create_advisory_task(
+    task_in: schemas.AdvisoryTaskCreate, 
+    user: models.UserModel = Depends(get_current_user_strict), 
+    db: Session = Depends(get_db)
+):
     task = models.AdvisoryTaskModel(
-        user_id=user.id if user else 1,
+        user_id=user.id,
         field_id=task_in.field_id,
         task_type=task_in.task_type,
         title=task_in.title,
@@ -672,10 +677,16 @@ def create_advisory_task(task_in: schemas.AdvisoryTaskCreate, user: Optional[mod
 
 
 @app.post("/api/v1/advisory/tasks/{task_id}/complete", response_model=schemas.AdvisoryTaskSchema)
-def mark_task_complete(task_id: int, db: Session = Depends(get_db)):
+def mark_task_complete(
+    task_id: int, 
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
     task = db.query(models.AdvisoryTaskModel).filter(models.AdvisoryTaskModel.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    if task.user_id is not None and task.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden: You do not own this advisory task")
     task.is_completed = True
     db.commit()
     db.refresh(task)
@@ -720,18 +731,9 @@ def calculate_fertilizer(req: schemas.FertilizerCalculateRequest):
 # -------------------------------------------------------------
 @app.get("/api/v1/budget/summary", response_model=schemas.BudgetSummaryResponse)
 def get_budget_summary(
-    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
-    if not user:
-        return {
-            "total_expenses": 0.0,
-            "expected_revenue": 0.0,
-            "net_profit": 0.0,
-            "profit_margin_pct": 0.0,
-            "expenses_by_category": {},
-            "recent_expenses": []
-        }
     expenses = db.query(models.FarmExpenseModel).filter(models.FarmExpenseModel.user_id == user.id).all()
     total_exp = sum([e.amount for e in expenses])
 
@@ -757,18 +759,20 @@ def get_budget_summary(
 
 @app.get("/api/v1/budget/expenses", response_model=List[schemas.FarmExpenseSchema])
 def list_expenses(
-    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
-    if not user:
-        return []
     return db.query(models.FarmExpenseModel).filter(models.FarmExpenseModel.user_id == user.id).order_by(models.FarmExpenseModel.id.desc()).all()
 
 
 @app.post("/api/v1/budget/expenses", response_model=schemas.FarmExpenseSchema)
-def add_expense(expense_in: schemas.FarmExpenseCreate, user: Optional[models.UserModel] = Depends(get_current_user_optional), db: Session = Depends(get_db)):
+def add_expense(
+    expense_in: schemas.FarmExpenseCreate, 
+    user: models.UserModel = Depends(get_current_user_strict), 
+    db: Session = Depends(get_db)
+):
     new_expense = models.FarmExpenseModel(
-        user_id=user.id if user else 1,
+        user_id=user.id,
         field_id=expense_in.field_id,
         category=expense_in.category,
         amount=expense_in.amount,
@@ -790,13 +794,13 @@ def create_drawn_field(
     crop_type: str = Query("Corn (Dent)", description="Planted crop type"),
     boundary_wkt: str = Query(..., description="Drawn polygon boundary in WKT format"),
     sowing_date: Optional[str] = Query("2026-04-15", description="Sowing date YYYY-MM-DD"),
-    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
     """
     Accepts farmer-drawn polygon vertices from mobile map,
     computes geodesic surface area (Acres & Hectares) and centroid coordinates,
-    and registers the field.
+    and registers the field for the authenticated farmer.
     """
     try:
         poly = GeospatialEngine.parse_polygon(boundary_wkt)
@@ -805,16 +809,12 @@ def create_drawn_field(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid geospatial polygon: {str(e)}")
 
-    user_id = 1
-    if user is not None and hasattr(user, 'id'):
-        user_id = user.id
-
-    actual_sowing = sowing_date if isinstance(sowing_date, str) else "2026-04-15"
-    actual_crop = crop_type if isinstance(crop_type, str) else "Corn (Dent)"
+    actual_sowing = sowing_date if isinstance(sowing_date, str) else datetime.utcnow().strftime("%Y-%m-%d")
+    actual_crop = crop_type if isinstance(crop_type, str) else "Paddy (Rice)"
 
     field = models.FieldModel(
-        user_id=user_id,
-        name=name,
+        user_id=user.id,
+        name=name.strip(),
         crop_type=actual_crop,
         area_acres=area_info["area_acres"],
         sowing_date=actual_sowing,
@@ -833,15 +833,14 @@ def create_drawn_field(
 def get_field_irrigation_recommendation(
     field_id: int,
     irrigation_method: str = Query("drip", description="drip, sprinkler, pivot, or flood"),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
     """
     Field-specific soil-water assessment using FAO-56 Crop Water Balance.
     Answers: 'Should I irrigate today or wait for rain?' and 'How much water in mm and LITRES?'
     """
-    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field parcel not found")
+    field = get_field_with_ownership(field_id, user, db)
 
     actual_method = irrigation_method if isinstance(irrigation_method, str) else "drip"
 
@@ -876,6 +875,7 @@ def get_field_sowing_recommendation(
     field_id: int,
     season: str = Query("Kharif", description="Kharif, Rabi, or Zaid"),
     soil_type: str = Query("Loam", description="Soil texture"),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
     """
@@ -883,9 +883,7 @@ def get_field_sowing_recommendation(
     Answers: 'Which seed variety is suitable for my field and how many kg of seeds do I need?'
     Formula: Total Seed Required (kg) = Seed Rate (kg/ha) * Field Area (ha).
     """
-    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field parcel not found")
+    field = get_field_with_ownership(field_id, user, db)
 
     actual_season = season if isinstance(season, str) else "Kharif"
     actual_soil = soil_type if isinstance(soil_type, str) else "Loam"
@@ -900,14 +898,16 @@ def get_field_sowing_recommendation(
 
 
 @app.get("/api/v1/fields/{field_id}/satellite-live")
-def get_live_copernicus_satellite(field_id: int, db: Session = Depends(get_db)):
+def get_live_copernicus_satellite(
+    field_id: int, 
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
     """
     Query live European Space Agency (ESA) Sentinel-2 MSI Level-2A scene
     for the exact bounding box of the farmer's drawn field.
     """
-    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field parcel not found")
+    field = get_field_with_ownership(field_id, user, db)
 
     delta = 0.01
     min_lon = field.longitude - delta
@@ -971,11 +971,9 @@ def get_nasa_power_agroclimate(
 # -------------------------------------------------------------
 @app.get("/api/v1/alerts", response_model=List[schemas.AlertSchema])
 def get_alerts(
-    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
-    if not user:
-        return []
     user_fields = db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).all()
     field_ids = [f.id for f in user_fields]
     if not field_ids:
@@ -984,13 +982,27 @@ def get_alerts(
 
 
 @app.get("/api/v1/vegetation-health", response_model=List[schemas.VegetationHealthSchema])
-def get_vegetation_health(db: Session = Depends(get_db)):
-    return db.query(models.VegetationHealthModel).all()
+def get_vegetation_health(
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    user_fields = db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).all()
+    field_ids = [f.id for f in user_fields]
+    if not field_ids:
+        return []
+    return db.query(models.VegetationHealthModel).filter(models.VegetationHealthModel.field_id.in_(field_ids)).all()
 
 
 @app.get("/api/v1/soil-moisture", response_model=List[schemas.SoilMoistureSchema])
-def get_soil_moisture(db: Session = Depends(get_db)):
-    return db.query(models.SoilMoistureModel).all()
+def get_soil_moisture(
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    user_fields = db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).all()
+    field_ids = [f.id for f in user_fields]
+    if not field_ids:
+        return []
+    return db.query(models.SoilMoistureModel).filter(models.SoilMoistureModel.field_id.in_(field_ids)).all()
 
 
 # -------------------------------------------------------------
@@ -1000,6 +1012,7 @@ def get_soil_moisture(db: Session = Depends(get_db)):
 def get_multi_source_satellite_intelligence(
     field_id: int,
     priority_need: str = Query("crop_health", description="crop_health, soil_moisture, or all_weather"),
+    user: models.UserModel = Depends(get_current_user_strict),
     db: Session = Depends(get_db)
 ):
     """
@@ -1007,9 +1020,7 @@ def get_multi_source_satellite_intelligence(
     Concurrently evaluates ISRO Bhoonidhi (Resourcesat-2A, EOS-04 SAR) and ESA Copernicus Sentinel-2.
     Selects the best observation, reports provenance, and provides all candidate observations.
     """
-    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field parcel not found")
+    field = get_field_with_ownership(field_id, user, db)
 
     delta = 0.015
     min_lon = field.longitude - delta

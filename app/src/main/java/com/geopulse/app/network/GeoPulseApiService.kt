@@ -80,4 +80,7 @@ interface GeoPulseApiService {
     suspend fun getMandiRates(
         @Query("commodity") commodity: String? = null
     ): Response<List<MandiPriceDto>>
+
+    @GET("api/v1/budget/summary")
+    suspend fun getBudgetSummary(): Response<BudgetSummaryDto>
 }

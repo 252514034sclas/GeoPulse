@@ -78,14 +78,13 @@ def test_full_api():
         assert fields[0]["id"] == field_id
         print("[PASS] GET /api/v1/fields -> PASS, authenticated fields count:", len(fields))
 
-        # 8. Unauthenticated fields request returns empty list (Strict Privacy Enforcement)
+        # 8. Unauthenticated fields request returns 401 Unauthorized (Strict Privacy & Zero Data Leakage)
         res_anon = client.get("/api/v1/fields")
-        assert res_anon.status_code == 200
-        assert len(res_anon.json()) == 0
-        print("[PASS] GET /api/v1/fields (unauthenticated) -> PASS, 0 fields leaked")
+        assert res_anon.status_code == 401
+        print("[PASS] GET /api/v1/fields (unauthenticated) -> PASS, rejected 401 Unauthorized")
 
         # 9. Spatial Point-in-Polygon Query
-        res = client.post("/api/v1/fields/spatial-query?lat=10.7850&lon=79.1350")
+        res = client.post("/api/v1/fields/spatial-query?lat=10.7850&lon=79.1350", headers=auth_headers)
         assert res.status_code == 200
         matching = res.json()
         assert len(matching) >= 1
@@ -146,7 +145,7 @@ def test_full_api():
         assert len(res.json()) == 1
         print(f"[PASS] GET /api/v1/advisory/tasks -> PASS, active tasks: {len(res.json())}")
 
-        res = client.post(f"/api/v1/advisory/tasks/{task_id}/complete")
+        res = client.post(f"/api/v1/advisory/tasks/{task_id}/complete", headers=auth_headers)
         assert res.status_code == 200
         assert res.json()["is_completed"] == True
         print("[PASS] POST /api/v1/advisory/tasks/{id}/complete -> PASS")

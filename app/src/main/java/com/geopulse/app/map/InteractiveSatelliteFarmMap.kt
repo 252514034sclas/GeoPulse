@@ -86,7 +86,7 @@ data class FarmFieldParcel(
 @Composable
 fun InteractiveSatelliteFarmMap(
     modifier: Modifier = Modifier,
-    farmName: String = "Green Valley Farm",
+    farmName: String = "Farm Parcel",
     initialSelectedFieldId: Int = 1,
     onOpenFullGisMap: () -> Unit = {},
     onFieldSelected: (FarmFieldParcel) -> Unit = {},

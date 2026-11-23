@@ -18,8 +18,8 @@ class UserCreate(BaseModel):
     full_name: str
     password: str
     phone: Optional[str] = None
-    farm_name: Optional[str] = "Green Valley Farm"
-    total_area_ha: Optional[float] = 12.5
+    farm_name: Optional[str] = "My Farm"
+    total_area_ha: Optional[float] = 0.0
     preferred_language: Optional[str] = "en"
     theme_preference: Optional[str] = "SYSTEM"
 
@@ -282,8 +282,8 @@ class BudgetSummaryResponse(BaseModel):
 # Dashboard Aggregated Summary Schema
 # -------------------------------------------------------------
 class DashboardSummaryResponse(BaseModel):
-    farmer_name: str = "Nithish Kumar"
-    farm_name: str = "Green Valley Farm"
+    farmer_name: str = ""
+    farm_name: str = ""
     total_fields: int
     active_alerts_count: int
     average_soil_moisture: float

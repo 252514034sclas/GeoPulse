@@ -1358,75 +1358,69 @@ fun IrrigationTimingModule() {
 
 
 @Composable
-
 fun WeatherSprayingModule() {
+    var weather by remember { mutableStateOf<com.geopulse.app.network.WeatherDto?>(null) }
+    var sprayWindow by remember { mutableStateOf<com.geopulse.app.network.SprayWindowDto?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-
-        Column(modifier = Modifier.padding(18.dp)) {
-
-            Text("Weather & Safe Spraying Forecast", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text("Hourly rainfall and wind speed forecast for safe crop spraying.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-
-
-            Surface(
-
-                modifier = Modifier.fillMaxWidth(),
-
-                shape = RoundedCornerShape(12.dp),
-
-                color = MaterialTheme.colorScheme.surfaceVariant,
-
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
-            ) {
-
-                Column(modifier = Modifier.padding(12.dp)) {
-
-                    Text("Today's Spray Status: Safe to Spray", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-
-                        "Wind is calm at 8 km/h and rain probability is low (10%). Safe to apply nutrient sprays today. Rain expected Friday afternoon will provide natural watering.",
-
-                        fontSize = 12.sp,
-
-                        color = MaterialTheme.colorScheme.onSurface,
-
-                        lineHeight = 17.sp
-
-                    )
-
-                }
-
-            }
-
-
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-
-                MetricChip("Wind Speed", "8 km/h (Calm)", Modifier.weight(1f))
-
-                MetricChip("Rain Friday", "12 mm Showers", Modifier.weight(1f))
-
-                MetricChip("Humidity", "58%", Modifier.weight(1f))
-
-            }
-
-        }
-
+    LaunchedEffect(Unit) {
+        val repo = GeoPulseRepository()
+        weather = repo.getCurrentWeather()
+        sprayWindow = repo.getSprayWindow()
+        isLoading = false
     }
 
+    Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text("Weather & Safe Spraying Forecast", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Hourly rainfall and wind speed forecast for safe crop spraying.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    val isSafe = sprayWindow?.isSafeNow ?: weather?.spraySafe ?: false
+                    val statusText = if (isLoading) {
+                        "Assessing Weather Telemetry..."
+                    } else if (weather != null || sprayWindow != null) {
+                        if (isSafe) "Today's Spray Status: Safe to Spray" else "Today's Spray Status: Spraying Not Recommended"
+                    } else {
+                        "Weather Forecast Unavailable Offline"
+                    }
+                    val statusColor = if (isSafe) LimeAccent else if (weather == null && sprayWindow == null) MaterialTheme.colorScheme.onSurfaceVariant else RedAccent
+
+                    Text(statusText, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = statusColor)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    val adviceText = if (isLoading) {
+                        "Fetching latest automated weather station data..."
+                    } else {
+                        sprayWindow?.verdict ?: weather?.sprayAdvice ?: "Live meteorological data could not be retrieved. Please verify internet connection."
+                    }
+                    Text(
+                        adviceText,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 17.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                val wind = weather?.windSpeedKmh ?: sprayWindow?.currentWindKmh ?: 0.0
+                val precip = weather?.precipitationMm ?: 0.0
+                val humidity = weather?.humidityPercent ?: sprayWindow?.currentHumidityPct ?: 0.0
+                MetricChip("Wind Speed", if (weather != null || sprayWindow != null) "${wind.toInt()} km/h" else "--", Modifier.weight(1f))
+                MetricChip("Precipitation", if (weather != null) "${precip.toInt()} mm" else "--", Modifier.weight(1f))
+                MetricChip("Humidity", if (weather != null || sprayWindow != null) "${humidity.toInt()}%" else "--", Modifier.weight(1f))
+            }
+        }
+    }
 }
 
 
@@ -2080,167 +2074,165 @@ fun HarvestStorageModule() {
 
 
 @Composable
-
 fun FarmBudgetModule() {
+    var budget by remember { mutableStateOf<com.geopulse.app.network.BudgetSummaryDto?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-
-        Column(modifier = Modifier.padding(18.dp)) {
-
-            Text("Farm Budget & Crop Expense Tracker", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text("Track seed, fertilizer, and labor costs against expected market selling price.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-
-
-            Surface(
-
-                modifier = Modifier.fillMaxWidth(),
-
-                shape = RoundedCornerShape(12.dp),
-
-                color = MaterialTheme.colorScheme.surfaceVariant,
-
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
-            ) {
-
-                Column(modifier = Modifier.padding(12.dp)) {
-
-                    Text("Estimated Net Profit: +₹23,500 / acre", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = LimeAccent)
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-
-                        "Input Costs: ₹18,500/acre (Seed: ₹4,200, Nutrients: ₹7,800, Field Labor: ₹6,500) vs Expected Gross: ₹42,000/acre based on 35 Q/ac @ local mandi price.",
-
-                        fontSize = 12.sp,
-
-                        color = MaterialTheme.colorScheme.onSurface,
-
-                        lineHeight = 17.sp
-
-                    )
-
-                }
-
-            }
-
-
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-
-                MetricChip("Input Costs", "₹18.5k/ac", Modifier.weight(1f))
-
-                MetricChip("Gross Returns", "₹42.0k/ac", Modifier.weight(1f))
-
-                MetricChip("Net Profit", "+₹23.5k/ac", Modifier.weight(1f))
-
-            }
-
-        }
-
+    LaunchedEffect(Unit) {
+        val repo = GeoPulseRepository()
+        budget = repo.getBudgetSummary()
+        isLoading = false
     }
 
+    Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text("Farm Budget & Crop Expense Tracker", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Track seed, fertilizer, and labor costs against expected market selling price.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    val netProfit = budget?.netProfit ?: 0.0
+                    val totalExpenses = budget?.totalExpenses ?: 0.0
+                    val expectedRev = budget?.expectedRevenue ?: 0.0
+                    val profitColor = if (netProfit >= 0) LimeAccent else RedAccent
+
+                    val statusTitle = if (isLoading) {
+                        "Calculating Budget Balance..."
+                    } else if (budget != null) {
+                        if (totalExpenses == 0.0 && expectedRev == 0.0) {
+                            "No Farm Expenses Recorded Yet"
+                        } else {
+                            "Estimated Net Profit: ${if (netProfit >= 0) "+₹" else "-₹"}${netProfit.toInt()}"
+                        }
+                    } else {
+                        "Budget Ledger Offline"
+                    }
+
+                    Text(statusTitle, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (totalExpenses == 0.0 && expectedRev == 0.0) MaterialTheme.colorScheme.onSurface else profitColor)
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    val descText = if (isLoading) {
+                        "Syncing with user expense ledger..."
+                    } else if (budget != null) {
+                        if (totalExpenses == 0.0 && expectedRev == 0.0) {
+                            "Add your seed purchases, fertilizers, and field labor expenses to see real-time net return calculations."
+                        } else {
+                            "Total Input Costs: ₹${totalExpenses.toInt()} vs Expected Gross: ₹${expectedRev.toInt()} (${budget?.profitMarginPct?.toInt() ?: 0}% margin based on market yield estimates)."
+                        }
+                    } else {
+                        "Expense records are unavailable offline. Recorded farm transactions will appear when synchronized."
+                    }
+
+                    Text(
+                        descText,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 17.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                val exp = budget?.totalExpenses ?: 0.0
+                val rev = budget?.expectedRevenue ?: 0.0
+                val net = budget?.netProfit ?: 0.0
+
+                MetricChip("Input Costs", if (budget != null) "₹${(exp / 1000).toInt()}k" else "--", Modifier.weight(1f))
+                MetricChip("Gross Returns", if (budget != null) "₹${(rev / 1000).toInt()}k" else "--", Modifier.weight(1f))
+                MetricChip("Net Profit", if (budget != null) "${if (net >= 0) "+" else "-"}₹${(net / 1000).toInt()}k" else "--", Modifier.weight(1f))
+            }
+        }
+    }
 }
 
 
 
 @Composable
-
 fun MyFieldsModule() {
+    var fields by remember { mutableStateOf<List<com.geopulse.app.network.FieldDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-
-        Column(modifier = Modifier.padding(18.dp)) {
-
-            Text("My Land Parcels & Registered Fields", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text("Overview of all your registered plots and planted crop varieties.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-
-                listOf(
-
-                    Triple("Field 1 (North Sector)", "12.5 ha · Corn · Healthy", LimeAccent),
-
-                    Triple("Field 2 (East Beta)", "8.4 ha · Soybean · Good", LimeAccent),
-
-                    Triple("Field 3 (South Acreage)", "14.5 ha · Wheat · Moisture Low", GoldAccent)
-
-                ).forEach { (name, desc, color) ->
-
-                    Surface(
-
-                        modifier = Modifier.fillMaxWidth(),
-
-                        shape = RoundedCornerShape(10.dp),
-
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
-                    ) {
-
-                        Row(
-
-                            modifier = Modifier.padding(12.dp),
-
-                            horizontalArrangement = Arrangement.SpaceBetween,
-
-                            verticalAlignment = Alignment.CenterVertically
-
-                        ) {
-
-                            Column {
-
-                                Text(name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
-
-                                Text(desc, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                            }
-
-                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-
-                MetricChip("Total Land", "35.4 ha", Modifier.weight(1f))
-
-                MetricChip("Active Fields", "3 Plots", Modifier.weight(1f))
-
-                MetricChip("Primary", "Corn", Modifier.weight(1f))
-
-            }
-
+    LaunchedEffect(Unit) {
+        try {
+            val repo = GeoPulseRepository()
+            fields = repo.getFields()
+        } catch (_: Exception) {
+        } finally {
+            isLoading = false
         }
-
     }
 
+    Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text("My Land Parcels & Registered Fields", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Overview of all your registered plots and planted crop varieties.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(14.dp))
+
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.primary)
+                }
+            } else if (fields.isEmpty()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("No Registered Fields Yet", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Draw or trace your farm boundary on the GIS Map to begin satellite tracking.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    }
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    fields.forEach { field ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(field.name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    val ha = String.format("%.1f", field.areaAcres / 2.47105)
+                                    Text("$ha ha · ${field.cropType} · ${field.status}", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = LimeAccent, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                val totalHa = String.format("%.1f ha", fields.sumOf { it.areaAcres } / 2.47105)
+                val primaryCrop = fields.firstOrNull()?.cropType ?: "None"
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MetricChip("Total Land", totalHa, Modifier.weight(1f))
+                    MetricChip("Active Fields", "${fields.size} Plots", Modifier.weight(1f))
+                    MetricChip("Primary", primaryCrop, Modifier.weight(1f))
+                }
+            }
+        }
+    }
 }
 
 
@@ -2577,84 +2569,67 @@ fun MarketCommodityModule() {
 
 
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-
-                val list = if (mandiRates.isNotEmpty()) mandiRates else listOf(
-
-                    MandiPriceDto(1, "Corn (Maize)", "Kallakurichi Mandi", "Tamil Nadu", 2150.0, 2420.0, 2380.0, "₹ / Quintal", 3.2, "2026-10-29"),
-
-                    MandiPriceDto(2, "Soybeans", "Dharmapuri Mandi", "Tamil Nadu", 4300.0, 4750.0, 4620.0, "₹ / Quintal", 1.8, "2026-10-29"),
-
-                    MandiPriceDto(3, "Cotton (Medium)", "Tiruppur Market", "Tamil Nadu", 6900.0, 7400.0, 7250.0, "₹ / Quintal", 4.1, "2026-10-29"),
-
-                    MandiPriceDto(4, "Paddy (Basmati)", "Thanjavur Market", "Tamil Nadu", 3100.0, 3450.0, 3320.0, "₹ / Quintal", 2.4, "2026-10-29")
-
-                )
-
-
-
-                list.forEach { rate ->
-
-                    Surface(
-
-                        modifier = Modifier.fillMaxWidth(),
-
-                        shape = RoundedCornerShape(10.dp),
-
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
+            if (mandiRates.isEmpty()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-
-                        Row(
-
-                            modifier = Modifier.padding(12.dp),
-
-                            horizontalArrangement = Arrangement.SpaceBetween,
-
-                            verticalAlignment = Alignment.CenterVertically
-
-                        ) {
-
-                            Column {
-
-                                Text(rate.commodity, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
-
-                                Text("${rate.mandiName}, ${rate.state}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                            }
-
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-
-                                Text("₹${rate.modalPrice.toInt()} / Q", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-
-                                val trendSign = if (rate.trendPct >= 0) "+${rate.trendPct}% ↗" else "${rate.trendPct}% ↘"
-
-                                Text(trendSign, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, color = if (rate.trendPct >= 0) LimeAccent else RedAccent)
-
-                            }
-
-                        }
-
+                        Text(
+                            if (isLoading) "Fetching Mandi Wholesale Prices..." else "No Mandi Rates Available",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.5.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            if (isLoading) "Retrieving live wholesale arrivals from Agmarknet..." else "Connect to network to fetch verified AGMARKNET wholesale market rates for your district.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
                     }
-
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    mandiRates.forEach { rate ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(rate.commodity, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    Text("${rate.mandiName}, ${rate.state}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text("₹${rate.modalPrice.toInt()} / Q", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    val trendSign = if (rate.trendPct >= 0) "+${rate.trendPct}% ↗" else "${rate.trendPct}% ↘"
+                                    Text(trendSign, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, color = if (rate.trendPct >= 0) LimeAccent else RedAccent)
+                                }
+                            }
+                        }
+                    }
                 }
 
-            }
-
-
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-
-                MetricChip("Corn", "₹2,380/Q", Modifier.weight(1f))
-
-                MetricChip("Soybean", "₹4,620/Q", Modifier.weight(1f))
-
-                MetricChip("Cotton", "₹7,250/Q", Modifier.weight(1f))
-
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    mandiRates.take(3).forEach { rate ->
+                        val shortName = rate.commodity.split(" ").firstOrNull() ?: rate.commodity
+                        MetricChip(shortName, "₹${rate.modalPrice.toInt()}/Q", Modifier.weight(1f))
+                    }
+                }
             }
 
         }

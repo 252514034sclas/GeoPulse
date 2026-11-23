@@ -159,10 +159,10 @@ class LoginActivity : ComponentActivity() {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Button(
                                     onClick = {
-                                        if (email.isBlank() || !email.contains("@")) {
+                                        if (email.isBlank() || !email.contains("@") || !email.contains(".")) {
                                             errorMessage = "Please enter a valid email address."
-                                        } else if (password.isBlank() || password.length < 4) {
-                                            errorMessage = "Password must be at least 4 characters."
+                                        } else if (password.isBlank() || password.length < 6) {
+                                            errorMessage = "Password must be at least 6 characters."
                                         } else {
                                             isLoading = true
                                             errorMessage = null

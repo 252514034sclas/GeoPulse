@@ -162,4 +162,28 @@ class GeoPulseRepository(
 
         return@withContext emptyList()
     }
+
+    suspend fun getCurrentWeather(): WeatherDto? = withContext(Dispatchers.IO) {
+        try {
+            val response = api.getCurrentWeather()
+            if (response.isSuccessful) return@withContext response.body()
+        } catch (_: Exception) {}
+        return@withContext null
+    }
+
+    suspend fun getSprayWindow(): SprayWindowDto? = withContext(Dispatchers.IO) {
+        try {
+            val response = api.getSprayWindow()
+            if (response.isSuccessful) return@withContext response.body()
+        } catch (_: Exception) {}
+        return@withContext null
+    }
+
+    suspend fun getBudgetSummary(): BudgetSummaryDto? = withContext(Dispatchers.IO) {
+        try {
+            val response = api.getBudgetSummary()
+            if (response.isSuccessful) return@withContext response.body()
+        } catch (_: Exception) {}
+        return@withContext null
+    }
 }

@@ -180,10 +180,10 @@ class CreateAccountActivity : ComponentActivity() {
                                             onClick = {
                                                 if (fullName.isBlank() || farmName.isBlank()) {
                                                     errorMessage = "Please enter your name and farm name."
-                                                } else if (email.isBlank() || !email.contains("@")) {
+                                                } else if (email.isBlank() || !email.contains("@") || !email.contains(".")) {
                                                     errorMessage = "Please enter a valid email address."
-                                                } else if (password.length < 4) {
-                                                    errorMessage = "Password must be at least 4 characters."
+                                                } else if (password.length < 6) {
+                                                    errorMessage = "Password must be at least 6 characters."
                                                 } else if (password != confirmPassword) {
                                                     errorMessage = "Passwords do not match."
                                                 } else {

@@ -11,8 +11,8 @@ class UserModel(Base):
     full_name = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
     phone = Column(String, nullable=True)
-    farm_name = Column(String, default="Green Valley Farm")
-    total_area_ha = Column(Float, default=12.5)
+    farm_name = Column(String, default="My Farm")
+    total_area_ha = Column(Float, default=0.0)
     preferred_language = Column(String, default="en")
     theme_preference = Column(String, default="SYSTEM")
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -29,12 +29,12 @@ class FieldModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     name = Column(String, index=True, nullable=False)
-    crop_type = Column(String, default="Corn (Dent)")
-    area_acres = Column(Float, default=120.4)
-    sowing_date = Column(String, default="2026-04-15")
-    status = Column(String, default="Healthy")  # "Healthy", "Needs Water", "Monitored"
-    latitude = Column(Float, default=37.7749)
-    longitude = Column(Float, default=-122.4194)
+    crop_type = Column(String, default="Paddy (Rice)")
+    area_acres = Column(Float, default=0.0)
+    sowing_date = Column(String, default=lambda: datetime.utcnow().strftime("%Y-%m-%d"))
+    status = Column(String, default="Monitored")  # "Healthy", "Needs Water", "Monitored"
+    latitude = Column(Float, default=0.0)
+    longitude = Column(Float, default=0.0)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
     # Spatial boundary stored as WKT (Well-Known Text) Polygon

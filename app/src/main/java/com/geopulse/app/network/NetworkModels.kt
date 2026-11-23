@@ -250,3 +250,25 @@ data class GeoJsonFieldPropertiesDto(
     val disclaimer: String?
 )
 
+// -------------------------------------------------------------
+// Farm Budget & Expense Models
+// -------------------------------------------------------------
+data class FarmExpenseDto(
+    val id: Int,
+    @SerializedName("user_id") val userId: Int,
+    val category: String,
+    val amount: Double,
+    val description: String?,
+    val date: String
+)
+
+data class BudgetSummaryDto(
+    @SerializedName("total_expenses") val totalExpenses: Double,
+    @SerializedName("expected_revenue") val expectedRevenue: Double,
+    @SerializedName("net_profit") val netProfit: Double,
+    @SerializedName("profit_margin_pct") val profitMarginPct: Double,
+    @SerializedName("expenses_by_category") val expensesByCategory: Map<String, Double> = emptyMap(),
+    @SerializedName("recent_expenses") val recentExpenses: List<FarmExpenseDto> = emptyList()
+)
+
+
