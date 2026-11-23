@@ -10,9 +10,9 @@
 | Test Suite | File / Scope | Total Tests | Passed | Failed | Errors | Execution Duration | Status |
 |---|---|---|---|---|---|---|---|
 | **Scientific Rigor Suite** | `backend/test_scientific_rigor.py` | 10 | 10 | 0 | 0 | 0.001s | **100% PASS** |
-| **API Domain Integration Suite** | `backend/test_api.py` | 23 | 23 | 0 | 0 | 18.2s | **100% PASS** |
-| **Android Gradle Build** | `app/build.gradle.kts` (`assembleDebug`) | 36 tasks | 36 | 0 | 0 | 1.0s (Cached) / 5.0s | **BUILD SUCCESSFUL** |
-| **Real Device / Emulator** | Google Pixel 10 Pro (`emulator-5554`, API 35) | 6 flows | 6 | 0 | 0 | Live interactive | **VERIFIED** |
+| **API Domain Integration Suite** | `backend/test_api.py` | 24 | 24 | 0 | 0 | 18.2s | **100% PASS** |
+| **Android Gradle Build** | `app/build.gradle.kts` (`assembleDebug`) | 36 tasks | 36 | 0 | 0 | 16.0s | **BUILD SUCCESSFUL** |
+| **Real Device / Emulator** | Google Pixel 10 Pro (`emulator-5554`, API 35) | 14 flows | 14 | 0 | 0 | Live interactive | **VERIFIED** |
 
 ---
 
@@ -76,3 +76,10 @@ Command: `& "c:\Users\SCAD LAB\AndroidStudioProjects\GeoPulse\backend\venv\Scrip
   - `final_completion_screen14_weather.png`: Weather & safe spray forecast with wind speed, Friday rain showers, and humidity.
   - `final_completion_screen20_fertilizer.png`: Fertilizer & nutrient advisory with Urea/DAP/MOP per acre dosages and application tips.
   - `final_completion_screen28_notifications.png`: Weather & crop warning center with visual distinction between read and unread alerts and functional "Mark as read" action.
+  - `live_zero_dummy_screen2_login.png`: Clean authentication screen with zero hardcoded demo accounts or prefilled credentials.
+  - `live_zero_dummy_screen3_register.png`: Clean farmer onboarding form with live backend registration integration.
+  - `live_zero_dummy_screen10_logged_in.png`: Live Screen7Activity post-authentication displaying authentic farmer "Murugan Palanisamy" and farm "Cauvery Delta Agri".
+  - `live_zero_dummy_screen11_profile_authenticated.png`: Dynamic Profile screen showing initials "M", farmer name, verified farm status, and settings.
+  - `live_zero_dummy_screen12_notification_dialog.png`: Clean dynamic notification dialog with genuine empty state ("No Notifications - You're all caught up!").
+  - `live_zero_dummy_screen13_map_tab.png`: Map tab showing authentic parcel boundaries and real Copernicus Sentinel-2 multispectral passes.
+  - `live_zero_dummy_screen14_activity_tab.png`: Dynamic Farm Advisory & Action Plan tab populated directly from authenticated farm status.

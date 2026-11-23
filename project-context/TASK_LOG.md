@@ -6,6 +6,54 @@
 
 ## 1. COMPLETED ENGINEERING TASKS
 
+### Task 8: Zero Dummy Data & Complete Live Data Enforcement
+- **Date:** November 23, 2026
+- **Objective:** Application-wide migration and audit ensuring every displayed data value in GeoPulse originates from authentic user input, live satellite STAC (Copernicus / ISRO), or live weather/market providers (Open-Meteo, AGMARKNET, TNAU/ICAR).
+- **Key Changes:**
+  - **Backend Seed Purge & User Isolation:**
+    - Completely removed `seed_initial_data` from `backend/main.py`. Startup creates database tables cleanly without default users, mock fields, or dummy tasks.
+    - Scoped all user endpoints (`/api/v1/fields`, `/api/v1/dashboard`, `/api/v1/advisory/tasks`, `/api/v1/budget/summary`, `/api/v1/alerts`) strictly to authenticated `user.id`.
+    - Unauthenticated requests return clean empty collections (0 fields/tasks/alerts leaked).
+    - Purged legacy dummy rows from `backend/geopulse.db`.
+  - **Live Provider Health & Data Quality Monitoring:**
+    - Created `backend/services/provider_health_monitor.py` tracking: status (ONLINE/DEGRADED/OFFLINE), last success, latest data acquisition timestamp, freshness label, latency ms, failure reason, and retry status.
+    - Exposed via `GET /api/v1/providers/health` in `backend/main.py`.
+  - **Android Zero Dummy Data Migration:**
+    - `NetworkModels.kt` & `GeoPulseApiService.kt`: Added `LoginRequestDto`, `RegisterRequestDto`, `UserDto`, `AuthResponseDto`, and auth endpoints (`POST login`, `POST register`, `GET me`).
+    - `ApiClient.kt`: Added dynamic `authToken` with header injection interceptor `Authorization: Bearer <token>`.
+    - `UserSession.kt`: Created singleton for persisting session, JWT tokens, full name, and farm name in `SharedPreferences`.
+    - `GeoPulseRepository.kt`: Purged all hardcoded fallbacks ("Nithish Kumar", "Green Valley Farm", "North Sector Alpha", fake 34.0% moisture, fake mandi prices). When network fails, returns clean empty/unavailable states.
+    - `InteractiveSatelliteFarmMap.kt`: Removed fallback to dummy fields. Clean empty state overlay ("No fields added yet").
+    - `NotificationRepository.kt`: Purged hardcoded `baseNotifications` list. Added empty state in `GeoNotificationDialog` ("No Notifications - You're all caught up!").
+    - `Screen7Activity.kt`: Profile tab and dashboard header dynamically bind to `UserSession.getFullName()` and `UserSession.getFarmName()`.
+    - `LoginActivity.kt` & `CreateAccountActivity.kt`: Removed demo account shortcuts. Connected directly to live backend auth endpoints.
+  - **Verification:**
+    - `backend/test_api.py`: 24 of 24 domain test suites passed (100% PASS).
+    - `backend/test_scientific_rigor.py`: 10 of 10 tests passed (100% PASS).
+    - Android Gradle build: `assembleDebug` passed cleanly in 16 seconds.
+    - Pixel 10 Pro live verification: Registered dynamic user, logged in, verified authentic farmer "Murugan Palanisamy", authentic farm "Cauvery Delta Agri", clean map parcel, empty notifications, and dynamic profile card.
+- **Files Modified:**
+  - `backend/main.py`
+  - `backend/adapters/copernicus_adapter.py`
+  - `backend/adapters/open_meteo_adapter.py`
+  - `backend/services/auth_service.py`
+  - `backend/services/provider_health_monitor.py` (Created)
+  - `backend/test_api.py`
+  - `app/src/main/java/com/geopulse/app/network/NetworkModels.kt`
+  - `app/src/main/java/com/geopulse/app/network/GeoPulseApiService.kt`
+  - `app/src/main/java/com/geopulse/app/network/ApiClient.kt`
+  - `app/src/main/java/com/geopulse/app/network/UserSession.kt` (Created)
+  - `app/src/main/java/com/geopulse/app/network/GeoPulseRepository.kt`
+  - `app/src/main/java/com/geopulse/app/map/InteractiveSatelliteFarmMap.kt`
+  - `app/src/main/java/com/geopulse/app/notifications/NotificationRepository.kt`
+  - `app/src/main/java/com/geopulse/app/Screen7Activity.kt`
+  - `app/src/main/java/com/geopulse/app/ui/premium/PremiumComponents.kt`
+  - `app/src/main/java/com/geopulse/app/LoginActivity.kt`
+  - `app/src/main/java/com/geopulse/app/CreateAccountActivity.kt`
+  - `app/src/main/java/com/geopulse/app/SplashActivity.kt`
+
+---
+
 ### Task 7: Persistent Project Intelligence Setup
 - **Date:** November 23, 2026
 - **Objective:** Eliminate repeated full-project discovery and analysis cycles by establishing an authoritative, persistent project context repository.

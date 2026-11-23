@@ -30,6 +30,7 @@ from adapters.agmarknet_adapter import AgmarknetAdapter
 from services.multi_source_satellite_service import MultiSourceSatelliteService
 from services.agri_knowledge_service import AgriculturalKnowledgeService
 from services.provider_registry import ProviderRegistry
+from services.provider_health_monitor import ProviderHealthMonitor
 
 # Create all database tables
 models.Base.metadata.create_all(bind=engine)
@@ -48,223 +49,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# -------------------------------------------------------------
-# Database Seeder (Rich Realistic Farmer Data)
-# -------------------------------------------------------------
-def seed_initial_data(db: Session):
-    # 1. Seed Default Demo Farmer
-    default_user = db.query(models.UserModel).filter(models.UserModel.email == "demo@geopulse.com").first()
-    if not default_user:
-        default_user = models.UserModel(
-            email="demo@geopulse.com",
-            full_name="Nithish Kumar",
-            hashed_password=hash_password("geopulse123"),
-            phone="+91 98765 43210",
-            farm_name="Green Valley Farm",
-            total_area_ha=12.5,
-            preferred_language="en",
-            theme_preference="SYSTEM"
-        )
-        db.add(default_user)
-        db.commit()
-        db.refresh(default_user)
-
-    # 2. Seed Fields
-    if db.query(models.FieldModel).first() is None:
-        fields = [
-            models.FieldModel(
-                user_id=default_user.id,
-                name="North Sector Alpha",
-                crop_type="Corn (Dent)",
-                area_acres=120.4,
-                sowing_date="2026-04-10",
-                status="Healthy",
-                latitude=13.0645,
-                longitude=80.2060,
-                boundary="POLYGON((80.2020 13.0610, 80.2100 13.0615, 80.2090 13.0680, 80.2020 13.0675, 80.2020 13.0610))"
-            ),
-            models.FieldModel(
-                user_id=default_user.id,
-                name="East Field Beta",
-                crop_type="Soybeans",
-                area_acres=84.2,
-                sowing_date="2026-04-20",
-                status="Monitored",
-                latitude=13.0620,
-                longitude=80.2175,
-                boundary="POLYGON((80.2130 13.0580, 80.2220 13.0585, 80.2210 13.0655, 80.2130 13.0650, 80.2130 13.0580))"
-            ),
-            models.FieldModel(
-                user_id=default_user.id,
-                name="South Center Pivot",
-                crop_type="Winter Wheat",
-                area_acres=145.0,
-                sowing_date="2026-03-25",
-                status="Needs Water",
-                latitude=13.0515,
-                longitude=80.2090,
-                boundary="POLYGON((80.2040 13.0470, 80.2140 13.0475, 80.2150 13.0560, 80.2050 13.0555, 80.2040 13.0470))"
-            )
-        ]
-        db.add_all(fields)
-        db.commit()
-
-    # 3. Seed Satellite Records
-    if db.query(models.SatelliteRecordModel).first() is None:
-        field1 = db.query(models.FieldModel).filter(models.FieldModel.name == "North Sector Alpha").first()
-        field2 = db.query(models.FieldModel).filter(models.FieldModel.name == "East Field Beta").first()
-        field3 = db.query(models.FieldModel).filter(models.FieldModel.name == "South Center Pivot").first()
-
-        sat_records = [
-            models.SatelliteRecordModel(
-                field_id=field1.id if field1 else 1,
-                recorded_date="2026-10-28",
-                ndvi_value=0.84,
-                ndwi_value=0.72,
-                chlorophyll_spad=44.2,
-                canopy_cover_pct=88.0,
-                health_status="Optimal Vigor",
-                layman_advice="Canopy greenness is peak. Chlorophyll levels indicate strong photosynthesis and high grain-filling potential.",
-                is_sample=False
-            ),
-            models.SatelliteRecordModel(
-                field_id=field2.id if field2 else 2,
-                recorded_date="2026-10-28",
-                ndvi_value=0.78,
-                ndwi_value=0.65,
-                chlorophyll_spad=39.5,
-                canopy_cover_pct=76.0,
-                health_status="Healthy / Good",
-                layman_advice="Steady canopy growth. Foliar nutrition application will maximize pod development.",
-                is_sample=False
-            ),
-            models.SatelliteRecordModel(
-                field_id=field3.id if field3 else 3,
-                recorded_date="2026-10-28",
-                ndvi_value=0.62,
-                ndwi_value=0.48,
-                chlorophyll_spad=31.0,
-                canopy_cover_pct=58.0,
-                health_status="Moisture Deficit",
-                layman_advice="Satellite water band indicates moisture stress in the root-zone. Irrigate within 24 hours.",
-                is_sample=False
-            )
-        ]
-        db.add_all(sat_records)
-        db.commit()
-
-    # 4. Seed Weather
-    if db.query(models.WeatherModel).first() is None:
-        weather = models.WeatherModel(
-            location="Chennai, Tamil Nadu",
-            temperature_c=28.0,
-            humidity_percent=58.0,
-            precipitation_mm=0.0,
-            wind_speed_kmh=8.5,
-            spray_safe=True,
-            spray_advice="Safe Spraying Window Open: Wind 8.5 km/h (< 15 km/h safe limit), 0% rain chance. Safe for morning foliar sprays.",
-            status_message="Clear skies and calm breeze across farm quadrant.",
-            data_source="High-Resolution Satellite Meteorological Grid (Hourly)"
-        )
-        db.add(weather)
-        db.commit()
-
-    # 5. Seed Soil Moisture
-    if db.query(models.SoilMoistureModel).first() is None:
-        moisture_records = [
-            models.SoilMoistureModel(field_id=1, moisture_percentage=72.0, depth_cm=30.0, status="Optimal", watering_advice="Adequate moisture. No watering needed today.", recorded_at="2026-10-29T08:00:00Z"),
-            models.SoilMoistureModel(field_id=2, moisture_percentage=65.0, depth_cm=30.0, status="Good", watering_advice="Normal root moisture. Next irrigation on Saturday.", recorded_at="2026-10-29T08:00:00Z"),
-            models.SoilMoistureModel(field_id=3, moisture_percentage=48.0, depth_cm=30.0, status="Dry", watering_advice="Watering recommended tomorrow morning (06:00 - 09:00 AM).", recorded_at="2026-10-29T08:00:00Z")
-        ]
-        db.add_all(moisture_records)
-        db.commit()
-
-    # 6. Seed Advisory Tasks
-    if db.query(models.AdvisoryTaskModel).first() is None:
-        tasks = [
-            models.AdvisoryTaskModel(
-                user_id=default_user.id,
-                field_id=1,
-                task_type="Spraying",
-                title="Safe Spraying Window Open Today",
-                description="Wind is calm at 8.5 km/h and humidity 58%. Safe to spray foliar nutrients before Friday rains.",
-                time_badge="Today",
-                priority="High",
-                is_completed=False
-            ),
-            models.AdvisoryTaskModel(
-                user_id=default_user.id,
-                field_id=3,
-                task_type="Irrigation",
-                title="Topsoil Moisture Dropping (Field 3)",
-                description="Satellite water index indicates moisture at 48% in South Center Pivot. Schedule watering tomorrow morning.",
-                time_badge="Next 24h",
-                priority="High",
-                is_completed=False
-            ),
-            models.AdvisoryTaskModel(
-                user_id=default_user.id,
-                field_id=1,
-                task_type="Fertilizer",
-                title="Nitrogen Fertilizer Top-Dressing",
-                description="Satellite NDVI shows strong canopy vigor. Apply split Urea dose (45 kg/acre) before rains.",
-                time_badge="This Week",
-                priority="Medium",
-                is_completed=False
-            ),
-            models.AdvisoryTaskModel(
-                user_id=default_user.id,
-                field_id=2,
-                task_type="Pest",
-                title="Pest & Leaf Blight Watch",
-                description="Warm temperatures favor caterpillar emergence. Inspect under-leaf canopy in Sector Beta.",
-                time_badge="Advisory",
-                priority="Medium",
-                is_completed=False
-            )
-        ]
-        db.add_all(tasks)
-        db.commit()
-
-    # 7. Seed Mandi Prices
-    if db.query(models.MandiPriceModel).first() is None:
-        mandi_list = [
-            models.MandiPriceModel(commodity="Corn (Maize)", mandi_name="Kallakurichi Mandi", state="Tamil Nadu", min_price=2150.0, max_price=2420.0, modal_price=2380.0, trend_pct=3.2),
-            models.MandiPriceModel(commodity="Soybeans", mandi_name="Dharmapuri Mandi", state="Tamil Nadu", min_price=4300.0, max_price=4750.0, modal_price=4620.0, trend_pct=1.8),
-            models.MandiPriceModel(commodity="Wheat (Sharbati)", mandi_name="Coimbatore Mandi", state="Tamil Nadu", min_price=2600.0, max_price=2950.0, modal_price=2840.0, trend_pct=-0.5),
-            models.MandiPriceModel(commodity="Cotton (Medium)", mandi_name="Tiruppur Cotton Market", state="Tamil Nadu", min_price=6900.0, max_price=7400.0, modal_price=7250.0, trend_pct=4.1),
-            models.MandiPriceModel(commodity="Paddy (Basmati)", mandi_name="Thanjavur Regulated Market", state="Tamil Nadu", min_price=3100.0, max_price=3450.0, modal_price=3320.0, trend_pct=2.4),
-            models.MandiPriceModel(commodity="Mustard Seeds", mandi_name="Salem Mandi", state="Tamil Nadu", min_price=5100.0, max_price=5550.0, modal_price=5400.0, trend_pct=0.8)
-        ]
-        db.add_all(mandi_list)
-        db.commit()
-
-    # 8. Seed Farm Expenses
-    if db.query(models.FarmExpenseModel).first() is None:
-        expenses = [
-            models.FarmExpenseModel(user_id=default_user.id, category="Seeds", amount=14200.0, notes="Certified hybrid Corn seeds (Field 1)", expense_date="2026-04-10"),
-            models.FarmExpenseModel(user_id=default_user.id, category="Fertilizer", amount=18500.0, notes="DAP and Urea basal applications", expense_date="2026-04-12"),
-            models.FarmExpenseModel(user_id=default_user.id, category="Fuel", amount=7400.0, notes="Tractor plowing diesel (40 liters)", expense_date="2026-04-15"),
-            models.FarmExpenseModel(user_id=default_user.id, category="Labor", amount=9600.0, notes="Sowing and weed clearance labor", expense_date="2026-04-20")
-        ]
-        db.add_all(expenses)
-        db.commit()
-
-    # 9. Seed Alerts
-    if db.query(models.AlertModel).first() is None:
-        alerts = [
-            models.AlertModel(field_id=1, severity="Medium", message="Rain Forecast: 12mm Showers on Friday. Complete foliar sprays beforehand.", category="Weather", is_resolved=False),
-            models.AlertModel(field_id=3, severity="High", message="Topsoil dryness detected: Schedule irrigation for Field 3.", category="Moisture", is_resolved=False),
-            models.AlertModel(field_id=2, severity="Low", message="Satellite greenness increased +8% over the past 14 days.", category="Vegetation", is_resolved=True)
-        ]
-        db.add_all(alerts)
-        db.commit()
-
 
 @app.on_event("startup")
 def startup_event():
-    db = next(get_db())
-    seed_initial_data(db)
+    # Verify and create database tables without seeding dummy data
+    models.Base.metadata.create_all(bind=engine)
 
 
 # -------------------------------------------------------------
@@ -277,6 +66,16 @@ def health_check():
         "version": "2.0.0",
         "timestamp": datetime.utcnow().isoformat()
     }
+
+
+@app.get("/api/v1/providers/health")
+def get_providers_health():
+    """
+    Automated live provider health & data quality monitoring system.
+    Tracks live API status, response latency, last acquisition timestamp,
+    data freshness, and failure diagnoses across all 8 integrated providers.
+    """
+    return ProviderHealthMonitor.get_summary()
 
 
 # -------------------------------------------------------------
@@ -356,49 +155,61 @@ def get_dashboard(
     user: Optional[models.UserModel] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    fields = db.query(models.FieldModel).all()
     if user:
-        user_fields = [f for f in fields if f.user_id == user.id]
-        if user_fields:
-            fields = user_fields
+        fields = db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).all()
+        farmer_name = user.full_name
+        farm_name = user.farm_name or "My Farm"
+    else:
+        fields = []
+        farmer_name = "Guest Farmer"
+        farm_name = "My Farm"
+
+    field_ids = [f.id for f in fields]
 
     weather = get_current_weather(lat=lat, lon=lon, db=db)
     mandi = db.query(models.MandiPriceModel).limit(4).all()
 
-    moisture_records = db.query(models.SoilMoistureModel).all()
-    avg_moisture = sum([m.moisture_percentage for m in moisture_records]) / len(moisture_records) if moisture_records else 70.0
+    moisture_records = db.query(models.SoilMoistureModel).filter(models.SoilMoistureModel.field_id.in_(field_ids)).all() if field_ids else []
+    avg_moisture = sum([m.moisture_percentage for m in moisture_records]) / len(moisture_records) if moisture_records else 0.0
 
-    sat_records = db.query(models.SatelliteRecordModel).all()
-    avg_vigor = sum([s.ndvi_value for s in sat_records]) / len(sat_records) if sat_records else 0.80
+    sat_records = db.query(models.SatelliteRecordModel).filter(models.SatelliteRecordModel.field_id.in_(field_ids)).all() if field_ids else []
+    avg_vigor = sum([s.ndvi_value for s in sat_records]) / len(sat_records) if sat_records else 0.0
 
     spray_safe = weather.spray_safe if weather else True
 
-    # Dynamically generate live alerts based on real-time weather & field conditions
     dynamic_alerts = []
-    if weather and weather.wind_speed_kmh > 15.0:
-        dynamic_alerts.append(models.AlertModel(
-            field_id=fields[0].id if fields else 1,
-            severity="Medium",
-            message=f"High wind warning ({weather.wind_speed_kmh} km/h). Delay foliar sprays to prevent chemical drift.",
-            category="Weather",
-            is_resolved=False
-        ))
-    if weather and weather.precipitation_mm > 5.0:
-        dynamic_alerts.append(models.AlertModel(
-            field_id=fields[0].id if fields else 1,
-            severity="High",
-            message=f"Active rain detected ({weather.precipitation_mm} mm). Postpone irrigation.",
-            category="Moisture",
-            is_resolved=False
-        ))
+    if fields:
+        if weather and weather.wind_speed_kmh > 15.0:
+            dynamic_alerts.append(models.AlertModel(
+                field_id=fields[0].id,
+                severity="Medium",
+                message=f"High wind warning ({weather.wind_speed_kmh} km/h). Delay foliar sprays to prevent chemical drift.",
+                category="Weather",
+                is_resolved=False
+            ))
+        if weather and weather.precipitation_mm > 5.0:
+            dynamic_alerts.append(models.AlertModel(
+                field_id=fields[0].id,
+                severity="High",
+                message=f"Active rain detected ({weather.precipitation_mm} mm). Postpone irrigation.",
+                category="Moisture",
+                is_resolved=False
+            ))
 
-    db_alerts = db.query(models.AlertModel).filter(models.AlertModel.is_resolved == False).all()
+    db_alerts = db.query(models.AlertModel).filter(
+        models.AlertModel.field_id.in_(field_ids),
+        models.AlertModel.is_resolved == False
+    ).all() if field_ids else []
     all_alerts = dynamic_alerts + [a for a in db_alerts if a not in dynamic_alerts]
-    tasks = db.query(models.AdvisoryTaskModel).filter(models.AdvisoryTaskModel.is_completed == False).all()
+
+    tasks = db.query(models.AdvisoryTaskModel).filter(
+        models.AdvisoryTaskModel.user_id == user.id,
+        models.AdvisoryTaskModel.is_completed == False
+    ).all() if user else []
 
     return {
-        "farmer_name": user.full_name if user else "Farmer",
-        "farm_name": user.farm_name if user else "My Farm",
+        "farmer_name": farmer_name,
+        "farm_name": farm_name,
         "total_fields": len(fields),
         "active_alerts_count": len(all_alerts),
         "average_soil_moisture": round(avg_moisture, 1),
@@ -418,8 +229,13 @@ def get_dashboard(
 # 4. Field Management & Geospatial Endpoints
 # -------------------------------------------------------------
 @app.get("/api/v1/fields", response_model=List[schemas.FieldSchema])
-def list_fields(db: Session = Depends(get_db)):
-    return db.query(models.FieldModel).all()
+def list_fields(
+    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    if not user:
+        return []
+    return db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).all()
 
 
 @app.post("/api/v1/fields", response_model=schemas.FieldSchema)
@@ -429,7 +245,7 @@ def create_field(field_in: schemas.FieldCreate, user: Optional[models.UserModel]
         name=field_in.name,
         crop_type=field_in.crop_type,
         area_acres=field_in.area_acres,
-        sowing_date=field_in.sowing_date or "2026-04-15",
+        sowing_date=field_in.sowing_date or datetime.utcnow().strftime("%Y-%m-%d"),
         status="Healthy",
         latitude=field_in.latitude,
         longitude=field_in.longitude,
@@ -442,9 +258,17 @@ def create_field(field_in: schemas.FieldCreate, user: Optional[models.UserModel]
 
 
 @app.get("/api/v1/fields/geojson")
-def get_fields_geojson(db: Session = Depends(get_db)):
+def get_fields_geojson(
+    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
     from shapely.geometry import mapping
-    fields = db.query(models.FieldModel).all()
+    if not user:
+        return {
+            "type": "FeatureCollection",
+            "features": []
+        }
+    fields = db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).all()
     features = []
     for f in fields:
         geom = None
@@ -478,12 +302,12 @@ def get_fields_geojson(db: Session = Depends(get_db)):
                 "latitude": f.latitude,
                 "longitude": f.longitude,
                 "boundary_wkt": f.boundary,
-                "latest_satellite_date": sat.recorded_date if sat else "2026-10-11",
-                "ndvi_value": sat.ndvi_value if sat else 0.33,
-                "health_status": sat.health_status if sat else "Stressed",
-                "moisture_pct": moist.moisture_percentage if moist else 34.0,
-                "moisture_status": moist.status if moist else "Mild Water Deficit",
-                "disclaimer": sat.disclaimer if sat else "Verified Copernicus Sentinel-2C Level-2A"
+                "latest_satellite_date": sat.recorded_date if sat else None,
+                "ndvi_value": sat.ndvi_value if sat else None,
+                "health_status": sat.health_status if sat else "No Observation",
+                "moisture_pct": moist.moisture_percentage if moist else None,
+                "moisture_status": moist.status if moist else "Unmeasured",
+                "disclaimer": sat.disclaimer if sat else None
             }
         })
     return {
@@ -493,18 +317,31 @@ def get_fields_geojson(db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/fields/{field_id}", response_model=schemas.FieldSchema)
-def get_field_by_id(field_id: int, db: Session = Depends(get_db)):
+def get_field_by_id(
+    field_id: int, 
+    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
     field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
     if not field:
         raise HTTPException(status_code=404, detail="Field parcel not found")
+    if user and field.user_id and field.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden: You do not have access to this field")
     return field
 
 
 @app.put("/api/v1/fields/{field_id}", response_model=schemas.FieldSchema)
-def update_field(field_id: int, updates: schemas.FieldUpdate, db: Session = Depends(get_db)):
+def update_field(
+    field_id: int, 
+    updates: schemas.FieldUpdate, 
+    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
     field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
     if not field:
         raise HTTPException(status_code=404, detail="Field parcel not found")
+    if user and field.user_id and field.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden: You do not have access to this field")
 
     if updates.name is not None:
         field.name = updates.name
@@ -528,7 +365,19 @@ def update_field(field_id: int, updates: schemas.FieldUpdate, db: Session = Depe
 
 
 @app.delete("/api/v1/fields/{field_id}")
-def delete_field(field_id: int, db: Session = Depends(get_db)):
+def delete_field(
+    field_id: int, 
+    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
+    if not field:
+        raise HTTPException(status_code=404, detail="Field parcel not found")
+    if user and field.user_id and field.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden: You do not have access to this field")
+    db.delete(field)
+    db.commit()
+    return {"message": f"Field '{field.name}' deleted successfully"}
     field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
     if not field:
         raise HTTPException(status_code=404, detail="Field parcel not found")
@@ -795,8 +644,13 @@ def get_spray_window(
 # 7. Advisory & Action Planner Endpoints
 # -------------------------------------------------------------
 @app.get("/api/v1/advisory/tasks", response_model=List[schemas.AdvisoryTaskSchema])
-def get_advisory_tasks(db: Session = Depends(get_db)):
-    return db.query(models.AdvisoryTaskModel).all()
+def get_advisory_tasks(
+    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    if not user:
+        return []
+    return db.query(models.AdvisoryTaskModel).filter(models.AdvisoryTaskModel.user_id == user.id).all()
 
 
 @app.post("/api/v1/advisory/tasks", response_model=schemas.AdvisoryTaskSchema)
@@ -865,17 +719,28 @@ def calculate_fertilizer(req: schemas.FertilizerCalculateRequest):
 # 10. Farm Budget & Expense Ledger Endpoints
 # -------------------------------------------------------------
 @app.get("/api/v1/budget/summary", response_model=schemas.BudgetSummaryResponse)
-def get_budget_summary(db: Session = Depends(get_db)):
-    expenses = db.query(models.FarmExpenseModel).all()
+def get_budget_summary(
+    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    if not user:
+        return {
+            "total_expenses": 0.0,
+            "expected_revenue": 0.0,
+            "net_profit": 0.0,
+            "profit_margin_pct": 0.0,
+            "expenses_by_category": {},
+            "recent_expenses": []
+        }
+    expenses = db.query(models.FarmExpenseModel).filter(models.FarmExpenseModel.user_id == user.id).all()
     total_exp = sum([e.amount for e in expenses])
 
     cat_map = {}
     for e in expenses:
         cat_map[e.category] = cat_map.get(e.category, 0.0) + e.amount
 
-    fields = db.query(models.FieldModel).all()
-    total_acres = sum(f.area_acres for f in fields) if fields else 120.0
-    # Expected gross harvest value dynamically calculated from registered field acreage (~₹820/acre yield)
+    fields = db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).all()
+    total_acres = sum(f.area_acres for f in fields) if fields else 0.0
     expected_revenue = round(total_acres * 820.0, 2)
     net_profit = round(expected_revenue - total_exp, 2)
     margin = round((net_profit / expected_revenue) * 100, 1) if expected_revenue > 0 else 0.0
@@ -891,8 +756,13 @@ def get_budget_summary(db: Session = Depends(get_db)):
 
 
 @app.get("/api/v1/budget/expenses", response_model=List[schemas.FarmExpenseSchema])
-def list_expenses(db: Session = Depends(get_db)):
-    return db.query(models.FarmExpenseModel).order_by(models.FarmExpenseModel.id.desc()).all()
+def list_expenses(
+    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    if not user:
+        return []
+    return db.query(models.FarmExpenseModel).filter(models.FarmExpenseModel.user_id == user.id).order_by(models.FarmExpenseModel.id.desc()).all()
 
 
 @app.post("/api/v1/budget/expenses", response_model=schemas.FarmExpenseSchema)
@@ -1100,8 +970,17 @@ def get_nasa_power_agroclimate(
 # 11. Legacy Endpoints Compatibility Bridges
 # -------------------------------------------------------------
 @app.get("/api/v1/alerts", response_model=List[schemas.AlertSchema])
-def get_alerts(db: Session = Depends(get_db)):
-    return db.query(models.AlertModel).all()
+def get_alerts(
+    user: Optional[models.UserModel] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    if not user:
+        return []
+    user_fields = db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).all()
+    field_ids = [f.id for f in user_fields]
+    if not field_ids:
+        return []
+    return db.query(models.AlertModel).filter(models.AlertModel.field_id.in_(field_ids)).all()
 
 
 @app.get("/api/v1/vegetation-health", response_model=List[schemas.VegetationHealthSchema])

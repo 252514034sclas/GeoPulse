@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geopulse.app.ui.theme.*
+import kotlinx.coroutines.launch
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +37,8 @@ class LoginActivity : ComponentActivity() {
                 var password by remember { mutableStateOf("") }
                 var passwordVisible by remember { mutableStateOf(false) }
                 var errorMessage by remember { mutableStateOf<String?>(null) }
+                var isLoading by remember { mutableStateOf(false) }
+                val coroutineScope = rememberCoroutineScope()
 
                 val isDark = ThemePreferences.isDarkTheme
                 val bgBrush = if (isDark) {
@@ -143,18 +146,9 @@ class LoginActivity : ComponentActivity() {
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    horizontalArrangement = Arrangement.End,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    TextButton(
-                                        onClick = {
-                                            email = "farmer.john@geopulse.com"
-                                            password = "farmsecure123"
-                                            errorMessage = null
-                                        }
-                                    ) {
-                                        Text("Use Demo Account", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
-                                    }
                                     TextButton(onClick = {
                                         startActivity(Intent(this@LoginActivity, ForgotPasswordActivity::class.java))
                                     }) {
@@ -170,20 +164,52 @@ class LoginActivity : ComponentActivity() {
                                         } else if (password.isBlank() || password.length < 4) {
                                             errorMessage = "Password must be at least 4 characters."
                                         } else {
-                                            startActivity(Intent(this@LoginActivity, Screen7Activity::class.java))
-                                            finish()
+                                            isLoading = true
+                                            errorMessage = null
+                                            coroutineScope.launch {
+                                                try {
+                                                    val resp = com.geopulse.app.network.ApiClient.service.login(
+                                                        com.geopulse.app.network.LoginRequestDto(email.trim(), password.trim())
+                                                    )
+                                                    if (resp.isSuccessful && resp.body() != null) {
+                                                        val auth = resp.body()!!
+                                                        auth.user?.let { user ->
+                                                            com.geopulse.app.network.UserSession.saveSession(this@LoginActivity, auth.accessToken, user)
+                                                        } ?: run {
+                                                            com.geopulse.app.network.ApiClient.authToken = auth.accessToken
+                                                        }
+                                                        startActivity(Intent(this@LoginActivity, Screen7Activity::class.java))
+                                                        finish()
+                                                    } else {
+                                                        errorMessage = "Invalid email or password. Please verify credentials."
+                                                    }
+                                                } catch (e: Exception) {
+                                                    errorMessage = "Cannot connect to server. Check network connection."
+                                                } finally {
+                                                    isLoading = false
+                                                }
+                                            }
                                         }
                                     },
+                                    enabled = !isLoading,
                                     modifier = Modifier.fillMaxWidth().height(52.dp),
                                     shape = RoundedCornerShape(14.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                                 ) {
-                                    Text(
-                                        text = "Login",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimary
-                                    )
+                                    if (isLoading) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "Login",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    }
                                 }
                                 Spacer(modifier = Modifier.height(16.dp))
                                 TextButton(onClick = {

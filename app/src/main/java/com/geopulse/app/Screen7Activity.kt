@@ -85,6 +85,7 @@ class Screen7Activity : ComponentActivity() {
                             Button(
                                 onClick = {
                                     showLogoutDialog = false
+                                    com.geopulse.app.network.UserSession.clearSession(this@Screen7Activity)
                                     startActivity(Intent(this@Screen7Activity, LoginActivity::class.java))
                                     finish()
                                 },
@@ -242,92 +243,7 @@ data class GisZone(
     val source: String = "Sentinel-2 L2A (10m) · Copernicus & ISRO"
 )
 
-val initialGisZones = listOf(
-    GisZone(
-        id = "1",
-        name = "North Sector Alpha",
-        acreage = "120.4 Acres (48.7 ha)",
-        hectares = 48.7,
-        crop = "Corn (Dent)",
-        cropHealth = "84% (Optimal)",
-        moisture = "72%",
-        status = "Healthy",
-        offsetFraction = Offset(0.35f, 0.35f),
-        polygonPoints = listOf(Offset(0.15f, 0.15f), Offset(0.55f, 0.12f), Offset(0.50f, 0.48f), Offset(0.18f, 0.45f)),
-        geoPoints = listOf(
-            LatLng(13.0610, 80.2020),
-            LatLng(13.0615, 80.2100),
-            LatLng(13.0680, 80.2090),
-            LatLng(13.0675, 80.2020)
-        ),
-        irrigationVerdict = "NO IRRIGATION NEEDED",
-        irrigationDepthMm = 0.0,
-        irrigationVolumeLitres = 0L,
-        irrigationVolumeM3 = 0.0,
-        seedVariety = "DKC 9108 (Bio-Seed)",
-        seedRateKgHa = 20.0,
-        totalSeedKg = 974.0,
-        approxBags = "39 bags (25kg)",
-        spraySafe = true,
-        sprayExplanation = "Wind calm at 8.5 km/h · No rain in 48h"
-    ),
-    GisZone(
-        id = "2",
-        name = "East Field Beta",
-        acreage = "84.2 Acres (34.1 ha)",
-        hectares = 34.1,
-        crop = "Soybeans",
-        cropHealth = "78% (Good)",
-        moisture = "65%",
-        status = "Monitored",
-        offsetFraction = Offset(0.68f, 0.42f),
-        polygonPoints = listOf(Offset(0.58f, 0.18f), Offset(0.88f, 0.22f), Offset(0.85f, 0.55f), Offset(0.54f, 0.52f)),
-        geoPoints = listOf(
-            LatLng(13.0580, 80.2130),
-            LatLng(13.0585, 80.2220),
-            LatLng(13.0655, 80.2210),
-            LatLng(13.0650, 80.2130)
-        ),
-        irrigationVerdict = "NO IRRIGATION NEEDED",
-        irrigationDepthMm = 0.0,
-        irrigationVolumeLitres = 0L,
-        irrigationVolumeM3 = 0.0,
-        seedVariety = "JS 335 (ICAR-IISR)",
-        seedRateKgHa = 75.0,
-        totalSeedKg = 2557.5,
-        approxBags = "85 bags (30kg)",
-        spraySafe = true,
-        sprayExplanation = "Safe foliar spraying window open"
-    ),
-    GisZone(
-        id = "3",
-        name = "South Center Pivot",
-        acreage = "145.0 Acres (58.7 ha)",
-        hectares = 58.7,
-        crop = "Winter Wheat",
-        cropHealth = "62% (Moderate)",
-        moisture = "48%",
-        status = "Needs Water",
-        offsetFraction = Offset(0.48f, 0.68f),
-        polygonPoints = listOf(Offset(0.35f, 0.60f), Offset(0.62f, 0.60f), Offset(0.62f, 0.85f), Offset(0.35f, 0.85f)),
-        geoPoints = listOf(
-            LatLng(13.0470, 80.2040),
-            LatLng(13.0475, 80.2140),
-            LatLng(13.0560, 80.2150),
-            LatLng(13.0555, 80.2050)
-        ),
-        irrigationVerdict = "IRRIGATE TODAY",
-        irrigationDepthMm = 35.0,
-        irrigationVolumeLitres = 20545000L,
-        irrigationVolumeM3 = 20545.0,
-        seedVariety = "HD 2967 (ICAR-IARI)",
-        seedRateKgHa = 100.0,
-        totalSeedKg = 5870.0,
-        approxBags = "147 bags (40kg)",
-        spraySafe = true,
-        sprayExplanation = "Irrigate early AM before evaporation loss"
-    )
-)
+val initialGisZones: List<GisZone> = emptyList()
 
 private fun calculateShoelaceArea(points: List<Offset>): Double {
     if (points.size < 3) return 0.0
@@ -348,7 +264,7 @@ fun FullGisMapTab(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val zones = remember { mutableStateListOf(*initialGisZones.toTypedArray()) }
-    var selectedZone by remember { mutableStateOf(zones[0]) }
+    var selectedZone by remember { mutableStateOf<GisZone?>(zones.firstOrNull()) }
     var selectedLayer by remember { mutableStateOf("Crop Health") }
     var activeBasemap by remember { mutableStateOf(MapConfig.getSelectedBasemap(context)) }
 
@@ -403,6 +319,9 @@ fun FullGisMapTab(
                             )
                         )
                     }
+                }
+                if (selectedZone == null && zones.isNotEmpty()) {
+                    selectedZone = zones.firstOrNull()
                 }
             }
         } catch (_: Exception) {}
@@ -681,192 +600,225 @@ fun FullGisMapTab(
 
                 // Comprehensive Precision Agriculture Card for Selected Field
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                    ) {
-                        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            // Header
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(selectedZone.name, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
-                                    Text("${selectedZone.acreage} · ${selectedZone.crop}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val currentZone = selectedZone
+                    if (currentZone != null) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                        ) {
+                            Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                                // Header
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(currentZone.name, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
+                                        Text("${currentZone.acreage} · ${currentZone.crop}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.primaryContainer
+                                    ) {
+                                        Text(
+                                            currentZone.status,
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp
+                                        )
+                                    }
                                 }
+
+                                // Provenance Citation
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(Icons.Default.Sensors, contentDescription = null, tint = LimeAccent, modifier = Modifier.size(14.dp))
+                                        Text("Data Source: ${currentZone.source}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+
+                                // 3 Primary Sensor Metrics
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    MetricChip("Crop Health", currentZone.cropHealth, Modifier.weight(1f))
+                                    MetricChip("Soil Moisture", currentZone.moisture, Modifier.weight(1f))
+                                    MetricChip("Spray Window", if (currentZone.spraySafe) "Safe Today" else "Wait", Modifier.weight(1f))
+                                }
+
+                                // 1. Scientific Crop Water Balance
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.primaryContainer
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text(
-                                        selectedZone.status,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp
-                                    )
-                                }
-                            }
-
-                            // Provenance Citation
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(Icons.Default.Sensors, contentDescription = null, tint = LimeAccent, modifier = Modifier.size(14.dp))
-                                    Text("Data Source: ${selectedZone.source}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-
-                            // 3 Primary Sensor Metrics
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                MetricChip("Crop Health", selectedZone.cropHealth, Modifier.weight(1f))
-                                MetricChip("Soil Moisture", selectedZone.moisture, Modifier.weight(1f))
-                                MetricChip("Spray Window", if (selectedZone.spraySafe) "Safe Today" else "Wait", Modifier.weight(1f))
-                            }
-
-                            // 1. Scientific Crop Water Balance
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text("💧 Crop Water Balance", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
-                                        Surface(
-                                            shape = RoundedCornerShape(6.dp),
-                                            color = if (selectedZone.irrigationVerdict == "NO IRRIGATION NEEDED") EmeraldPrimary.copy(alpha = 0.3f) else RedAccent.copy(alpha = 0.3f)
+                                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(
-                                                text = selectedZone.irrigationVerdict,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 10.sp,
-                                                color = if (selectedZone.irrigationVerdict == "NO IRRIGATION NEEDED") LimeAccent else RedAccent
-                                            )
+                                            Text("💧 Crop Water Balance", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = if (currentZone.irrigationVerdict == "NO IRRIGATION NEEDED") EmeraldPrimary.copy(alpha = 0.3f) else RedAccent.copy(alpha = 0.3f)
+                                            ) {
+                                                Text(
+                                                    text = currentZone.irrigationVerdict,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 10.sp,
+                                                    color = if (currentZone.irrigationVerdict == "NO IRRIGATION NEEDED") LimeAccent else RedAccent
+                                                )
+                                            }
                                         }
+
+                                        Text(
+                                            text = if (currentZone.irrigationVerdict == "NO IRRIGATION NEEDED")
+                                                "Soil moisture (${currentZone.moisture}) is within optimal root-zone threshold. Crop has sufficient water storage."
+                                            else
+                                                "Root-zone water depletion exceeded threshold (48%). Apply irrigation immediately before afternoon peak heat.",
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            lineHeight = 16.sp
+                                        )
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text("Required Depth", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                Text("${currentZone.irrigationDepthMm} mm", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                            }
+                                            Column(modifier = Modifier.weight(1.5f)) {
+                                                Text("Total Water Volume", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                Text(
+                                                    "${String.format(java.util.Locale.US, "%,d", currentZone.irrigationVolumeLitres)} Litres",
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = LimeAccent
+                                                )
+                                            }
+                                        }
+
+                                        Text(
+                                            text = "Physical Formula: 1 mm water over 1 ha = 10,000 Litres (10 m³). Over ${currentZone.hectares} ha.",
+                                            fontSize = 10.5.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                        )
                                     }
-
-                                    Text(
-                                        text = if (selectedZone.irrigationVerdict == "NO IRRIGATION NEEDED")
-                                            "Soil moisture (${selectedZone.moisture}) is within optimal root-zone threshold. Crop has sufficient water storage."
-                                        else
-                                            "Root-zone water depletion exceeded threshold (48%). Apply irrigation immediately before afternoon peak heat.",
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        lineHeight = 16.sp
-                                    )
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("Required Depth", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text("${selectedZone.irrigationDepthMm} mm", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                        }
-                                        Column(modifier = Modifier.weight(1.5f)) {
-                                            Text("Total Water Volume", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text(
-                                                "${String.format(java.util.Locale.US, "%,d", selectedZone.irrigationVolumeLitres)} Litres",
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = LimeAccent
-                                            )
-                                        }
-                                    }
-
-                                    Text(
-                                        text = "Physical Formula: 1 mm water over 1 ha = 10,000 Litres (10 m³). Over ${selectedZone.hectares} ha.",
-                                        fontSize = 10.5.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                                    )
                                 }
-                            }
 
-                            // 2. Verified ICAR Seed & Sowing Recommendation
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text("🌱 Verified ICAR Sowing & Seed Calculator", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
-                                    Text(
-                                        text = "Recommended Variety: ${selectedZone.seedVariety} · Sowing Window: June 15 - July 15",
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("Recommended Seed Rate", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text("${selectedZone.seedRateKgHa} kg/ha", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                        }
-                                        Column(modifier = Modifier.weight(1.5f)) {
-                                            Text("Total Seed Required", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text(
-                                                "${selectedZone.totalSeedKg} kg (${selectedZone.approxBags})",
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = LimeAccent
-                                            )
-                                        }
-                                    }
-
-                                    Text(
-                                        text = "Planting Geometry: 60 cm (row) x 20 cm (plant) · Sowing Depth: 3 - 5 cm",
-                                        fontSize = 10.5.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                                    )
-                                }
-                            }
-
-                            // Quick Action Navigation Buttons
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Button(
-                                    onClick = onVegetationClick,
-                                    modifier = Modifier.weight(1f).height(46.dp),
+                                // 2. Verified ICAR Seed & Sowing Recommendation
+                                Surface(
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("Vegetation", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text("🌱 Verified ICAR Sowing & Seed Calculator", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
+                                        Text(
+                                            text = "Recommended Variety: ${currentZone.seedVariety} · Sowing Window: June 15 - July 15",
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text("Recommended Seed Rate", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                Text("${currentZone.seedRateKgHa} kg/ha", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                            }
+                                            Column(modifier = Modifier.weight(1.5f)) {
+                                                Text("Total Seed Required", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                Text(
+                                                    "${currentZone.totalSeedKg} kg (${currentZone.approxBags})",
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = LimeAccent
+                                                )
+                                            }
+                                        }
+
+                                        Text(
+                                            text = "Planting Geometry: 60 cm (row) x 20 cm (plant) · Sowing Depth: 3 - 5 cm",
+                                            fontSize = 10.5.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                        )
+                                    }
                                 }
 
-                                OutlinedButton(
+                                // Quick Action Navigation Buttons
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Button(
+                                        onClick = onVegetationClick,
+                                        modifier = Modifier.weight(1f).height(46.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
+                                    ) {
+                                        Text("Vegetation", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            isDrawingMode = true
+                                            statusNotice = "Drawing mode enabled. Tap map corners to redefine parcel boundary."
+                                        },
+                                        modifier = Modifier.weight(1f).height(46.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                                    ) {
+                                        Text("Redraw Parcel", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Clean Empty State Card
+                        Card(
+                            modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(24.dp).fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(Icons.Default.Landscape, contentDescription = null, tint = LimeAccent, modifier = Modifier.size(44.dp))
+                                Text("No Farm Parcels Added Yet", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                                Text(
+                                    "Tap 'Interactive Boundary' above or tap on the map to draw your field boundary and get live satellite intelligence.",
+                                    fontSize = 12.5.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                                Button(
                                     onClick = {
                                         isDrawingMode = true
-                                        statusNotice = "Drawing mode enabled. Tap map corners to redefine parcel boundary."
+                                        statusNotice = "Tap 3 or more points on the map to enclose your farmland parcel."
                                     },
-                                    modifier = Modifier.weight(1f).height(46.dp),
-                                    shape = RoundedCornerShape(12.dp),
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                                    colors = ButtonDefaults.buttonColors(containerColor = LimeAccent, contentColor = PineDark)
                                 ) {
-                                    Text("Redraw Parcel", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                    Text("Trace Field Boundary", fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -1161,6 +1113,11 @@ fun FullProfileSettingsTab(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
+                            val context = androidx.compose.ui.platform.LocalContext.current
+                            val fullName = remember { com.geopulse.app.network.UserSession.getFullName(context).ifBlank { "Registered Farmer" } }
+                            val farmName = remember { com.geopulse.app.network.UserSession.getFarmName(context).ifBlank { "GeoPulse Farmland" } }
+                            val initial = fullName.take(1).uppercase()
+
                             Box(
                                 modifier = Modifier
                                     .size(54.dp)
@@ -1168,12 +1125,12 @@ fun FullProfileSettingsTab(
                                     .background(Brush.linearGradient(listOf(LimeAccent, EmeraldPrimary))),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("N", color = PineDark, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                Text(initial, color = PineDark, fontSize = 24.sp, fontWeight = FontWeight.Black)
                             }
                             Column {
-                                Text("Nithish Kumar", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                Text("Green Valley Farm · 12.5 ha", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("Primary Crops: Corn & Soybean", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                                Text(fullName, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                Text("$farmName · Active Account", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Verified Geospatial Intelligence Account", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }

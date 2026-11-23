@@ -3,6 +3,42 @@ package com.geopulse.app.network
 import com.google.gson.annotations.SerializedName
 
 // -------------------------------------------------------------
+// Authentication & User Profile
+// -------------------------------------------------------------
+data class LoginRequestDto(
+    val email: String,
+    val password: String
+)
+
+data class RegisterRequestDto(
+    val email: String,
+    val password: String,
+    @SerializedName("full_name") val fullName: String,
+    val phone: String? = null,
+    @SerializedName("farm_name") val farmName: String? = null,
+    @SerializedName("total_area_ha") val totalAreaHa: Double? = 10.0,
+    @SerializedName("preferred_language") val preferredLanguage: String? = "en",
+    @SerializedName("theme_preference") val themePreference: String? = "SYSTEM"
+)
+
+data class UserDto(
+    val id: Int,
+    val email: String,
+    @SerializedName("full_name") val fullName: String,
+    val phone: String?,
+    @SerializedName("farm_name") val farmName: String?,
+    @SerializedName("total_area_ha") val totalAreaHa: Double?,
+    @SerializedName("preferred_language") val preferredLanguage: String?,
+    @SerializedName("theme_preference") val themePreference: String?
+)
+
+data class AuthResponseDto(
+    @SerializedName("access_token") val accessToken: String,
+    @SerializedName("token_type") val tokenType: String,
+    val user: UserDto?
+)
+
+// -------------------------------------------------------------
 // Health
 // -------------------------------------------------------------
 data class HealthDto(

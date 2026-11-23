@@ -239,61 +239,9 @@ fun InteractiveSatelliteFarmMap(
                 onFieldSelected(initial)
             }
         } catch (_: Exception) {
-            // Offline fallback with verified ground-truth fields
-            fieldsList = listOf(
-                FarmFieldParcel(
-                    id = 1,
-                    name = "North Sector Alpha",
-                    cropType = "Corn (Dent)",
-                    areaAcres = 120.4,
-                    areaHectares = 48.7,
-                    status = "Stressed",
-                    latitude = 13.0645,
-                    longitude = 80.2060,
-                    boundaryWkt = "POLYGON((80.2020 13.0610, 80.2100 13.0615, 80.2090 13.0680, 80.2020 13.0675, 80.2020 13.0610))",
-                    polygonPoints = GeospatialMath.parseWktToLatLngList("POLYGON((80.2020 13.0610, 80.2100 13.0615, 80.2090 13.0680, 80.2020 13.0675, 80.2020 13.0610))"),
-                    latestSatelliteDate = "2026-10-11",
-                    ndviValue = 0.327,
-                    healthStatus = "Stressed",
-                    moisturePct = 34.0,
-                    dataSource = "Copernicus Sentinel-2C (10m) · Tile T44PMV"
-                ),
-                FarmFieldParcel(
-                    id = 2,
-                    name = "East Field Beta",
-                    cropType = "Soybeans",
-                    areaAcres = 84.2,
-                    areaHectares = 34.1,
-                    status = "Monitored",
-                    latitude = 13.0620,
-                    longitude = 80.2175,
-                    boundaryWkt = "POLYGON((80.2130 13.0580, 80.2220 13.0585, 80.2210 13.0655, 80.2130 13.0650, 80.2130 13.0580))",
-                    polygonPoints = GeospatialMath.parseWktToLatLngList("POLYGON((80.2130 13.0580, 80.2220 13.0585, 80.2210 13.0655, 80.2130 13.0650, 80.2130 13.0580))"),
-                    latestSatelliteDate = "2026-10-28",
-                    ndviValue = 0.78,
-                    healthStatus = "Healthy",
-                    moisturePct = 65.0,
-                    dataSource = "Sentinel-2 MSI Surface Reflectance"
-                ),
-                FarmFieldParcel(
-                    id = 3,
-                    name = "South Center Pivot",
-                    cropType = "Winter Wheat",
-                    areaAcres = 145.0,
-                    areaHectares = 58.7,
-                    status = "Needs Water",
-                    latitude = 13.0515,
-                    longitude = 80.2090,
-                    boundaryWkt = "POLYGON((80.2040 13.0470, 80.2140 13.0475, 80.2150 13.0560, 80.2050 13.0555, 80.2040 13.0470))",
-                    polygonPoints = GeospatialMath.parseWktToLatLngList("POLYGON((80.2040 13.0470, 80.2140 13.0475, 80.2150 13.0560, 80.2050 13.0555, 80.2040 13.0470))"),
-                    latestSatelliteDate = "2026-10-28",
-                    ndviValue = 0.62,
-                    healthStatus = "Moisture Deficit",
-                    moisturePct = 48.0,
-                    dataSource = "Sentinel-2 MSI Surface Reflectance"
-                )
-            )
-            selectedField = fieldsList.firstOrNull()
+            // Live network call failed: clean empty state, no dummy data
+            fieldsList = emptyList()
+            selectedField = null
         } finally {
             isLoading = false
         }

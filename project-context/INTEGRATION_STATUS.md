@@ -41,8 +41,20 @@ DATA_GOV_IN_API_KEY=""
 
 ---
 
-## 3. INTEGRATION REGISTRY AUDIT SUMMARY
+## 3. INTEGRATION REGISTRY & LIVE HEALTH MONITORING AUDIT SUMMARY
 
+### A. Live Provider Health Monitoring (`GET /api/v1/providers/health`)
+Implemented in `backend/services/provider_health_monitor.py` and exposed via `GET /api/v1/providers/health`:
+- **Real-Time Health Checks:** Actively pings and records health metrics for Open-Meteo, Planetary Computer STAC, Copernicus CDSE, ISRO Bhoonidhi, AGMARKNET, and NASA POWER.
+- **Provider Status Fields:** `status` (ONLINE / DEGRADED / OFFLINE), `last_successful_fetch`, `latest_data_timestamp`, `freshness_label` (Live / Cached / Stale), `latency_ms`, `failure_reason`, and `retry_scheduled`.
+- **System Health Aggregation:** Calculates overall system health (`healthy`, `degraded`, `offline`) and counts total operational providers.
+
+### B. Dynamic User Scoping & Authentication Matrix
+- **Authentication:** Scoped via JWT bearer token (`POST /api/v1/auth/login`, `POST /api/v1/auth/register`, `GET /api/v1/auth/me`).
+- **Data Scoping:** All field, dashboard, advisory task, and budget endpoints strictly filter by `user.id`.
+- **Zero Dummy Data:** Startup seed data removed completely. Unauthenticated or empty accounts return clean empty lists (0 leaked records).
+
+### C. Active Production Providers Matrix
 Verified by the Provider Registry (`GET /api/v1/providers/registry`):
 - **Total Registered Data Resources:** 8
 - **Active Production Providers:**
@@ -54,4 +66,4 @@ Verified by the Provider Registry (`GET /api/v1/providers/registry`):
   6. Indian Council of Agricultural Research (ICAR)
   7. AGMARKNET / Ministry of Agriculture & Farmers Welfare
   8. Kisan Call Center (KCC) Agronomic Advisory
-- **Operational Health:** All 8 providers marked `ACTIVE` and operational in system registry.
+- **Operational Health:** All providers registered, monitored, and traced to genuine data sources.

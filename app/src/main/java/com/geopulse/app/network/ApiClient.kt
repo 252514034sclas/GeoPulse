@@ -17,6 +17,9 @@ object ApiClient {
             apiServiceInstance = null
         }
 
+    @Volatile
+    var authToken: String? = null
+
     private var retrofitInstance: Retrofit? = null
     private var apiServiceInstance: GeoPulseApiService? = null
 
@@ -25,6 +28,14 @@ object ApiClient {
             level = HttpLoggingInterceptor.Level.BASIC
         }
         return OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val original = chain.request()
+                val requestBuilder = original.newBuilder()
+                authToken?.let { token ->
+                    requestBuilder.header("Authorization", "Bearer $token")
+                }
+                chain.proceed(requestBuilder.build())
+            }
             .addInterceptor(logging)
             .connectTimeout(4, TimeUnit.SECONDS)
             .readTimeout(6, TimeUnit.SECONDS)

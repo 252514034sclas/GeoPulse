@@ -82,15 +82,14 @@ def decode_access_token(token: str) -> Optional[dict]:
         return None
 
 def get_current_user_optional(token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> Optional[models.UserModel]:
-    """Get authenticated user if token present, or fallback to default user for seamless local usage."""
+    """Get authenticated user if valid Bearer token present, otherwise None."""
     if token:
         payload = decode_access_token(token)
         if payload and "sub" in payload:
             user = db.query(models.UserModel).filter(models.UserModel.email == payload["sub"]).first()
             if user:
                 return user
-    # Fallback to the first seeded user so testing never breaks
-    return db.query(models.UserModel).first()
+    return None
 
 def get_current_user_strict(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> models.UserModel:
     """Strict authentication dependency requiring valid Bearer token."""

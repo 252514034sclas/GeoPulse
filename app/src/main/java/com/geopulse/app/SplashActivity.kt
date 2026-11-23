@@ -30,10 +30,15 @@ import kotlin.time.Duration.Companion.milliseconds
 class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.geopulse.app.network.UserSession.initSession(this)
         lifecycleScope.launch {
             delay(1800.milliseconds)
             if (!isFinishing && !isDestroyed) {
-                startActivity(Intent(this@SplashActivity, WelcomeActivity::class.java))
+                if (com.geopulse.app.network.UserSession.isLoggedIn(this@SplashActivity)) {
+                    startActivity(Intent(this@SplashActivity, Screen7Activity::class.java))
+                } else {
+                    startActivity(Intent(this@SplashActivity, WelcomeActivity::class.java))
+                }
                 finish()
             }
         }

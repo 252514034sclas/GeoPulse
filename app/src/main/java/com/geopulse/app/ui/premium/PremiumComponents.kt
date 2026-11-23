@@ -218,15 +218,15 @@ private fun HomeHeader(
     val context = LocalContext.current
     val unreadCount = remember { NotificationRepository.getUnreadCount(context) }
     var showFarmDialog by remember { mutableStateOf(false) }
-    var selectedFarmName by remember { mutableStateOf("Green Valley Farm") }
-    var selectedFieldSubtitle by remember { mutableStateOf("Field 1 · 12.5 ha (30.9 ac)") }
+    val savedFarmName = remember { com.geopulse.app.network.UserSession.getFarmName(context).ifBlank { "My Farm" } }
+    val farmerName = remember { com.geopulse.app.network.UserSession.getFullName(context).ifBlank { "Farmer" } }
+    var selectedFarmName by remember { mutableStateOf(savedFarmName) }
+    var selectedFieldSubtitle by remember { mutableStateOf("Live Satellite Tracking") }
 
     val farmsList = remember {
         listOf(
-            "Green Valley Farm" to "Field 1 · 12.5 ha (30.9 ac)",
-            "East Field Beta" to "Sector 2 · 34.1 ha (84.2 ac)",
-            "North Sector Alpha" to "Sector 1 · 48.7 ha (120.4 ac)",
-            "South Center Pivot" to "Sector 3 · 58.7 ha (145.0 ac)"
+            savedFarmName to "Primary Agricultural Property",
+            "Mark New Parcel" to "Draw field boundary (+)"
         )
     }
 
@@ -337,7 +337,7 @@ private fun HomeHeader(
                 )
             }
             Text(
-                text = "Good Morning, Nithish 👋 · $selectedFieldSubtitle",
+                text = "Welcome, $farmerName 👋 · $selectedFieldSubtitle",
                 color = colors.textSecondary,
                 fontSize = 11.5.sp,
                 fontWeight = FontWeight.Medium,
@@ -408,9 +408,11 @@ private fun FieldMapCard(
     onMapClick: () -> Unit,
     onFieldBoundaryClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val farmName = remember { com.geopulse.app.network.UserSession.getFarmName(context).ifBlank { "My Farm" } }
     InteractiveSatelliteFarmMap(
         modifier = Modifier.fillMaxWidth(),
-        farmName = "Green Valley Farm",
+        farmName = farmName,
         onOpenFullGisMap = onMapClick,
         onDetailedHealthClick = { onFieldBoundaryClick() }
     )

@@ -44,40 +44,13 @@ object NotificationRepository {
     private const val PREFS_NAME = "geopulse_notifications"
     private const val KEY_READ_IDS = "read_notification_ids"
 
-    private val baseNotifications = listOf(
-        GeoNotification(
-            id = "notif_1",
-            title = "Rain Advisory: 12mm Showers on Friday",
-            message = "Cover harvested produce and complete foliar sprays before Friday afternoon.",
-            timestamp = "Today · 08:30 AM",
-            priority = "HIGH",
-            category = "Weather"
-        ),
-        GeoNotification(
-            id = "notif_2",
-            title = "Nitrogen Top-Dress Window: Field 1",
-            message = "Optimal soil moisture detected in Field 1 for Urea split dose application.",
-            timestamp = "Yesterday · 02:15 PM",
-            priority = "MEDIUM",
-            category = "Agronomy"
-        ),
-        GeoNotification(
-            id = "notif_3",
-            title = "Canopy Water Status: Mild Deficit",
-            message = "Canopy NDMI 0.08 indicates leaf water stress. Inspect physical soil 10-15 cm deep.",
-            timestamp = "28 Oct · 09:00 AM",
-            priority = "MEDIUM",
-            category = "Soil Water"
-        ),
-        GeoNotification(
-            id = "notif_4",
-            title = "Mandi Price Alert: Corn +3.2%",
-            message = "Wholesale corn prices rose to ₹2,380/Quintal at Kallakurichi Mandi.",
-            timestamp = "27 Oct · 11:45 AM",
-            priority = "LOW",
-            category = "Market"
-        )
-    )
+    private val liveNotifications = mutableListOf<GeoNotification>()
+
+    fun addNotification(notification: GeoNotification) {
+        if (liveNotifications.none { it.id == notification.id }) {
+            liveNotifications.add(0, notification)
+        }
+    }
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -89,7 +62,7 @@ object NotificationRepository {
 
     fun getNotifications(context: Context): List<GeoNotification> {
         val readIds = getReadIds(context)
-        return baseNotifications.map { notif ->
+        return liveNotifications.map { notif ->
             notif.copy(isRead = readIds.contains(notif.id))
         }
     }
@@ -101,13 +74,13 @@ object NotificationRepository {
     }
 
     fun markAllAsRead(context: Context) {
-        val allIds = baseNotifications.map { it.id }.toSet()
+        val allIds = liveNotifications.map { it.id }.toSet()
         getPrefs(context).edit().putStringSet(KEY_READ_IDS, allIds).apply()
     }
 
     fun getUnreadCount(context: Context): Int {
         val readIds = getReadIds(context)
-        return baseNotifications.count { !readIds.contains(it.id) }
+        return liveNotifications.count { !readIds.contains(it.id) }
     }
 }
 
@@ -194,14 +167,45 @@ fun GeoNotificationDialog(
                     .heightIn(max = 420.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(notificationList, key = { it.id }) { notif ->
-                    NotificationCardItem(
-                        notification = notif,
-                        onMarkRead = {
-                            NotificationRepository.markAsRead(context, notif.id)
-                            refreshList()
+                if (notificationList.isEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.NotificationsNone,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(44.dp)
+                            )
+                            Text(
+                                text = "No Notifications",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "You are all caught up! Real-time alerts will appear here when weather or crop events occur.",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
                         }
-                    )
+                    }
+                } else {
+                    items(notificationList, key = { it.id }) { notif ->
+                        NotificationCardItem(
+                            notification = notif,
+                            onMarkRead = {
+                                NotificationRepository.markAsRead(context, notif.id)
+                                refreshList()
+                            }
+                        )
+                    }
                 }
             }
         },
