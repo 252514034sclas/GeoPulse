@@ -14,8 +14,21 @@ import models
 
 config = context.config
 
-# Set sqlalchemy.url from database.py / environment
-config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
+# Set sqlalchemy.url from database.py / environment if not passed explicitly
+override_url = os.getenv("ALEMBIC_DB_URL")
+if override_url:
+    target_url = override_url
+elif not config.get_main_option("sqlalchemy.url") or config.get_main_option("sqlalchemy.url") == "driver://user:pass@localhost/dbname":
+    target_url = SQLALCHEMY_DATABASE_URL
+else:
+    target_url = config.get_main_option("sqlalchemy.url")
+
+if target_url.startswith("postgresql://"):
+    target_url = target_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+elif target_url.startswith("postgres://"):
+    target_url = target_url.replace("postgres://", "postgresql+psycopg2://", 1)
+
+config.set_main_option("sqlalchemy.url", target_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

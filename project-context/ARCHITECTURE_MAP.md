@@ -32,14 +32,14 @@ All activities are located in `app/src/main/java/com/geopulse/app/`:
 | **18** | `Screen18Activity.kt` | Crop Calendar & Phenology Stage Tracker | Growth phase monitoring & sowing timelines |
 | **19** | `Screen19Activity.kt` | Soil Health & Organic Composting Guide | Soil conservation, bio-fertilizers & organic matter |
 | **20** | `Screen20Activity.kt` | Fertilizer & Nutrient Guide (Urea, DAP, MOP) | Tailored N-P-K dosages, split timing & soil texture leaching advice |
-| **21** | `Screen21Activity.kt` | Farm Machinery & Equipment Maintenance Ledger | Tractor & implement operating hours and service logs |
+| **21** | `Screen21Activity.kt` | Harvest Preparation & Storage Tips | Post-harvest drying methods, safe grain moisture, and pest-free storage; links to Mandi Rates (`Screen27`) & Harvest Estimator (`Screen16`) |
 | **22** | `Screen22Activity.kt` | Farm Labor & Field Work Tracking | Worker task allocations & daily wage tracking |
 | **23** | `Screen23Activity.kt` | Multi-Field Parcel Management & Overview | Master list of all registered farm parcels |
-| **24** | `Screen24Activity.kt` | Scouting Journal & Geotagged Field Notes | Agronomic photo scouting & problem quadrant notes |
+| **24** | `Screen24Activity.kt` | Satellite Growth History | Bi-weekly multi-temporal satellite vegetation greenness history; links to Crop Vigor (`Screen11`) & Growth Calendar (`Screen18`) |
 | **25** | `Screen25Activity.kt` | Farm Budget & Operational Expense Ledger | Expense categorization (Seeds, Fertilizer, Fuel, Labor) & Net Profit |
-| **26** | `Screen26Activity.kt` | Agronomist Advisory & Expert Support Chat | Live expert guidance & extension advice |
+| **26** | `Screen26Activity.kt` | Kisan Helpline & Agronomist Support | Direct connection to Kisan Call Center (1800-180-1551) & certified extension specialists |
 | **27** | `Screen27Activity.kt` | Wholesale Mandi Market Commodity Rates | Real-time APMC arrivals & price trends per quintal |
-| **28** | `Screen28Activity.kt` | Weather & Crop Warning Center / Notification Center | Real-time weather warnings, unread indicators, mark-as-read sync |
+| **28** | `Screen28Activity.kt` | Weather & Crop Warning Center | Severe thunderstorm, frost, heatwave and spray warnings; links to 7-Day Weather (`Screen14`) & Watering Guide (`Screen13`) |
 | **29** | `Screen29Activity.kt` | Settings, Language Preferences & Offline Sync | English/Tamil language selector, dark/light theme, network sync status |
 | **30** | `Screen30Activity.kt` | Data Export, Cloud Backup & Privacy Controls | Parcel GeoJSON export, CSV ledger download, account deletion |
 

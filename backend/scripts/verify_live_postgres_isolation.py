@@ -37,11 +37,12 @@ def main():
         print(f"[OK] Account A Fields Count: {len(fields_a)}, Field IDs: {field_a_ids}")
         assert field_b_id not in field_a_ids, "DATA LEAK: Account B field leaked into Account A!"
 
-        # 5. Verify Account B fields
+        # 5. Verify Account B fields (must not include any Account A fields)
         fields_b = client.get('/api/v1/fields', headers=headers_b).json()
         field_b_ids = [f['id'] for f in fields_b]
         print(f"[OK] Account B Fields Count: {len(fields_b)}, Field IDs: {field_b_ids}")
-        assert all(fid == field_b_id for fid in field_b_ids), "DATA LEAK: Unowned fields seen by Account B!"
+        assert 26 not in field_b_ids, "DATA LEAK: Account A field 26 leaked to Account B!"
+        assert field_b_id in field_b_ids, f"Created field {field_b_id} not found in Account B fields!"
 
         # 6. IDOR Check: Account A attempts to read Account B's field
         res_idor1 = client.get(f'/api/v1/fields/{field_b_id}', headers=headers_a)

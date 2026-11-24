@@ -7,15 +7,38 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    // Workstation LAN IP for physical Android devices over Wi-Fi: 172.23.176.200
-    // Emulator loopback alias: 10.0.2.2:8000
-    // ADB reverse loopback: 127.0.0.1:8000
-    var baseUrl: String = "http://127.0.0.1:8000/"
+    const val DEFAULT_PRODUCTION_URL = "https://api.geopulse.app/"
+    const val DEFAULT_DEV_LOOPBACK = "http://127.0.0.1:8000/"
+    private const val PREFS_NETWORK = "geopulse_network_config"
+    private const val KEY_BASE_URL = "configured_base_url"
+
+    // Default to local development bridge; persists configured production HTTPS URLs
+    var baseUrl: String = DEFAULT_DEV_LOOPBACK
         set(value) {
             field = if (value.endsWith("/")) value else "$value/"
             retrofitInstance = null
             apiServiceInstance = null
         }
+
+    fun initFromContext(context: android.content.Context) {
+        try {
+            val prefs = context.getSharedPreferences(PREFS_NETWORK, android.content.Context.MODE_PRIVATE)
+            val saved = prefs.getString(KEY_BASE_URL, null)
+            if (!saved.isNullOrBlank()) {
+                baseUrl = saved
+            }
+        } catch (_: Exception) {}
+    }
+
+    fun setAndPersistBaseUrl(context: android.content.Context, url: String) {
+        baseUrl = url
+        try {
+            context.getSharedPreferences(PREFS_NETWORK, android.content.Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_BASE_URL, baseUrl)
+                .apply()
+        } catch (_: Exception) {}
+    }
 
     @Volatile
     var authToken: String? = null

@@ -9,6 +9,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemePreferences.init(this)
+        com.geopulse.app.network.ApiClient.initFromContext(this)
 
         val target = intent?.getStringExtra("TARGET_SCREEN")
         if (!target.isNullOrEmpty()) {

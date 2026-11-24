@@ -70,6 +70,39 @@ class Screen7Activity : ComponentActivity() {
                     }
                 }
 
+                val repo = remember { com.geopulse.app.network.GeoPulseRepository() }
+                LaunchedEffect(Unit) {
+                    try {
+                        val summary = repo.getDashboardSummary()
+                        summary.todaysTasks.forEach { task ->
+                            com.geopulse.app.notifications.NotificationRepository.addNotification(
+                                com.geopulse.app.notifications.GeoNotification(
+                                    id = "task_${task.id}",
+                                    title = task.title,
+                                    message = task.description,
+                                    timestamp = task.timeBadge,
+                                    priority = task.priority,
+                                    category = "Advisory"
+                                )
+                            )
+                        }
+                        summary.weather?.let { w ->
+                            if (!w.spraySafe || w.precipitationMm > 0) {
+                                com.geopulse.app.notifications.NotificationRepository.addNotification(
+                                    com.geopulse.app.notifications.GeoNotification(
+                                        id = "weather_alert_${w.id}",
+                                        title = if (!w.spraySafe) "Spray Window Warning" else "Precipitation Notice",
+                                        message = w.sprayAdvice,
+                                        timestamp = "Today",
+                                        priority = if (!w.spraySafe) "HIGH" else "MEDIUM",
+                                        category = "Weather"
+                                    )
+                                )
+                            }
+                        }
+                    } catch (_: Exception) {}
+                }
+
                 if (showNotificationDialog) {
                     com.geopulse.app.notifications.GeoNotificationDialog(
                         onDismiss = { showNotificationDialog = false }
