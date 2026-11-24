@@ -43,11 +43,13 @@ GeoPulse is a high-reliability, hardware-free, precision agricultural intelligen
 ### B. Python Geospatial Backend
 - **Framework:** FastAPI `0.100+` (ASGI via Uvicorn)
 - **Runtime:** Python 3.11 (`backend/venv/Scripts/python.exe`)
-- **ORM & Database:** SQLAlchemy `2.0+` with SQLite database (`backend/geopulse.db`)
+- **ORM & Database:** SQLAlchemy `2.1+` with native PostgreSQL 18.7 (`127.0.0.1:5432/geopulse_db`) via `psycopg2-binary` (v2.9.10)
+- **Database Migrations:** Alembic versioned migrations (`backend/alembic/`)
+- **Connection Pooling:** Pool size 10, max overflow 20, pre-ping enabled, strict fail-fast enforcement (zero silent fallback to SQLite)
 - **Geospatial Processing:** Shapely `2.0+` (geodesic polygon parsing, point-in-polygon containment, WKT serialization, centroid calculation), NumPy, Tifffile (Sentinel-2 COG tile deflated raster decoding)
-- **Security & Auth:** OAuth2 Bearer JWT (`python-jose`), Passlib with salted `bcrypt` hashing
+- **Security & Auth:** OAuth2 Bearer JWT (`python-jose`), PBKDF2 600,000-iteration password hashing, sliding-window rate limiting
 - **HTTP Client:** HTTPX `0.24+` with connection pooling and timeouts
-- **Backend Host:** `0.0.0.0:8000` (LAN IP: `172.23.176.200:8000`, Emulator: `10.0.2.2:8000`)
+- **Backend Host:** `0.0.0.0:8000` (LAN IP: `172.23.176.200:8000`, Emulator: `10.0.2.2:8000` or `127.0.0.1:8000` via ADB reverse)
 
 ---
 

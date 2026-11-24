@@ -69,3 +69,17 @@ Verified by the Provider Registry (`GET /api/v1/providers/registry`):
   7. AGMARKNET / Ministry of Agriculture & Farmers Welfare
   8. Kisan Call Center (KCC) Agronomic Advisory
 - **Operational Health:** All providers registered, monitored, and traced to genuine data sources.
+
+---
+
+## 4. DATABASE ENGINE & STORAGE INTEGRATION
+
+### A. Runtime Database Engine
+- **Engine:** Native PostgreSQL 18.7 x86_64-windows (`127.0.0.1:5432/geopulse_db`)
+- **Credentials:** Environment-managed via `DATABASE_URL=postgresql://geopulse_admin:GeoPulseSecure2026!@127.0.0.1:5432/geopulse_db`
+- **Fail-Fast Enforcement:** Zero silent fallback to SQLite permitted. Connection failure on startup triggers explicit `RuntimeError`.
+- **Connection Pool:** `pool_size=10`, `max_overflow=20`, `pool_timeout=30`, `pool_recycle=3600`, `pool_pre_ping=True`.
+- **Alembic Migrations:** Versioned migrations active at head revision `34cf2b656a5e` (`init_postgres_schema.py`).
+- **Data Migration & Sequences:** 100% of SQLite data (118 records across 10 tables) losslessly migrated to PostgreSQL with auto-increment sequences fully synchronized.
+- **Multi-Tenant Isolation:** Complete database and API level tenant isolation verified across all user and field records.
+

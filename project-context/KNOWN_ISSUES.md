@@ -39,5 +39,5 @@
 ## 3. REGRESSION RISKS TO MONITOR
 
 1. **MapLibre Native SDK Surface Destruction:** When switching between full-screen map mode and dialogs, Compose must preserve MapView lifecycle hooks (`onStart`, `onResume`, `onPause`, `onStop`, `onDestroy`) to prevent OpenGL surface recreation crashes.
-2. **Database Migration Consistency:** Any future modification to SQLAlchemy models in `backend/models.py` must either be reflected in SQLite tables via Alembic migrations or require dropping and regenerating `geopulse.db` during development.
+2. **Database Migration Consistency:** Native PostgreSQL 18.7 is the primary database. Any future schema alterations in `backend/models.py` must be tracked via Alembic (`alembic revision --autogenerate`, `alembic upgrade head`). Zero silent fallback to SQLite is allowed by `database.py`.
 3. **External API Rate Limiting:** While Open-Meteo and NASA POWER do not enforce strict API keys, high-frequency polling can result in HTTP 429 Too Many Requests. Backend caching ensures repeat requests within a 15-minute window use cached observations.
