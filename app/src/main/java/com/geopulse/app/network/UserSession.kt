@@ -12,6 +12,7 @@ object UserSession {
     private const val KEY_FARM_NAME = "farm_name"
     private const val KEY_TOTAL_AREA_HA = "total_area_ha"
     private const val KEY_LANGUAGE = "preferred_language"
+    private const val KEY_SELECTED_FIELD_ID = "selected_field_id"
 
     private fun getPrefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -55,6 +56,35 @@ object UserSession {
 
     fun setLanguage(context: Context, lang: String) {
         getPrefs(context).edit().putString(KEY_LANGUAGE, lang).apply()
+    }
+
+    fun getSelectedFieldId(context: Context): Int? {
+        val id = getPrefs(context).getInt(KEY_SELECTED_FIELD_ID, -1)
+        return if (id != -1) id else null
+    }
+
+    fun setSelectedFieldId(context: Context, fieldId: Int?) {
+        val editor = getPrefs(context).edit()
+        if (fieldId != null && fieldId > 0) {
+            editor.putInt(KEY_SELECTED_FIELD_ID, fieldId)
+        } else {
+            editor.remove(KEY_SELECTED_FIELD_ID)
+        }
+        editor.apply()
+    }
+
+    fun resolveSelectedField(context: Context, availableFields: List<FieldDto>): FieldDto? {
+        if (availableFields.isEmpty()) {
+            setSelectedFieldId(context, null)
+            return null
+        }
+        val savedId = getSelectedFieldId(context)
+        val matched = availableFields.find { it.id == savedId }
+        if (matched != null) return matched
+
+        val fallback = availableFields.first()
+        setSelectedFieldId(context, fallback.id)
+        return fallback
     }
 
     fun isLoggedIn(context: Context): Boolean =

@@ -912,125 +912,360 @@ fun ExpandableScientificDetails(
 
 
 @Composable
+fun EmptyFieldStateCard(
+    title: String,
+    message: String,
+    actionLabel: String = "Register First Field",
+    onActionClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .glassSurface(cornerRadius = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = LimeAccent.copy(alpha = 0.15f),
+                border = BorderStroke(1.dp, LimeAccent.copy(alpha = 0.3f)),
+                modifier = Modifier.size(52.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Place,
+                        contentDescription = "No Field",
+                        tint = LimeAccent,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = message,
+                fontSize = 12.5.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                lineHeight = 18.sp
+            )
+
+            Button(
+                onClick = onActionClick,
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    tint = DarkBackground,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = actionLabel,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = DarkBackground
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FieldSelectorHeader(
+    fields: List<FieldDto>,
+    selectedField: FieldDto,
+    onFieldSelected: (FieldDto) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Place,
+                    contentDescription = "Active Field",
+                    tint = LimeAccent,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = "Active Field: ${selectedField.name}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.5.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    val ha = String.format(java.util.Locale.US, "%.1f", selectedField.areaAcres / 2.47105)
+                    Text(
+                        text = "$ha ha · ${selectedField.cropType}",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            if (fields.size > 1) {
+                Box {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = EmeraldPrimary.copy(alpha = 0.2f),
+                        border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.4f)),
+                        modifier = Modifier.clickable { expanded = true }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Switch ▾",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = LimeAccent
+                            )
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier
+                            .background(Color(0xFF0D2014))
+                            .border(1.dp, Color(0xFF2E7D32), RoundedCornerShape(8.dp))
+                    ) {
+                        fields.forEach { field ->
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(
+                                            field.name,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (field.id == selectedField.id) LimeAccent else Color.White,
+                                            fontSize = 13.sp
+                                        )
+                                        val fHa = String.format(java.util.Locale.US, "%.1f", field.areaAcres / 2.47105)
+                                        Text(
+                                            "$fHa ha · ${field.cropType}",
+                                            color = Color(0xFFA5D6A7),
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    expanded = false
+                                    onFieldSelected(field)
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = if (field.id == selectedField.id) LimeAccent else Color.Transparent,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun VegetationHealthModule() {
+    val context = LocalContext.current
+    val repo = remember { GeoPulseRepository() }
+    var fields by remember { mutableStateOf<List<FieldDto>>(emptyList()) }
+    var selectedField by remember { mutableStateOf<FieldDto?>(null) }
     var satRecord by remember { mutableStateOf<SatelliteRecordDto?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
+    var isLoadingFields by remember { mutableStateOf(true) }
+    var isLoadingTelemetry by remember { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         try {
-            val repo = GeoPulseRepository()
-            val fields = repo.getFields()
-            val targetFieldId = fields.firstOrNull()?.id ?: 1
-            satRecord = repo.getSatelliteHealth(targetFieldId)
+            isLoadingFields = true
+            val fetched = repo.getFields()
+            fields = fetched
+            selectedField = UserSession.resolveSelectedField(context, fetched)
         } catch (e: Exception) {
             isError = true
         } finally {
-            isLoading = false
+            isLoadingFields = false
         }
     }
 
-    val record = satRecord
-    val ndviVal = record?.ndviValue?.toFloat() ?: 0.327f
-    var growthStageSlider by remember { mutableStateOf(ndviVal) }
-
-    LaunchedEffect(record) {
-        if (record != null) {
-            growthStageSlider = record.ndviValue.toFloat()
+    LaunchedEffect(selectedField?.id) {
+        val field = selectedField
+        if (field != null) {
+            isLoadingTelemetry = true
+            try {
+                satRecord = repo.getSatelliteHealth(field.id)
+            } catch (e: Exception) {
+                isError = true
+            } finally {
+                isLoadingTelemetry = false
+            }
+        } else {
+            satRecord = null
         }
     }
 
-    Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column {
-                    Text("Crop Health", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Copernicus Sentinel-2C (MSI 10m Surface Reflectance)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary)
+    if (isLoadingFields) {
+        Card(
+            modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        ) {
+            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.primary)
+            }
+        }
+    } else if (fields.isEmpty() || selectedField == null) {
+        EmptyFieldStateCard(
+            title = "Crop Health & Sentinel-2 Telemetry",
+            message = "No registered agricultural fields found. Draw or trace your parcel boundary on the GIS Map to begin satellite crop vigor tracking.",
+            onActionClick = {
+                context.startActivity(Intent(context, Screen7Activity::class.java))
+            }
+        )
+    } else {
+        val activeField = selectedField!!
+        val record = satRecord
+        val ndviVal = record?.ndviValue?.toFloat() ?: 0.327f
+        var growthStageSlider by remember(record?.ndviValue) { mutableStateOf(ndviVal) }
+
+        Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                FieldSelectorHeader(
+                    fields = fields,
+                    selectedField = activeField,
+                    onFieldSelected = { newField ->
+                        selectedField = newField
+                        UserSession.setSelectedFieldId(context, newField.id)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Column {
+                        Text("Crop Health", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Copernicus Sentinel-2C (MSI 10m Surface Reflectance)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary)
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = EmeraldPrimary.copy(alpha = 0.2f),
+                        border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.4f))
+                    ) {
+                        Text(
+                            text = if (isLoadingTelemetry) "SYNCING" else "100% CLEAR",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = LimeAccent,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Satellite Image Date: ${record?.recordedDate ?: "2026-10-11"} (Tile: T44PMV · Tamil Nadu)",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Canopy Greenness Level", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontSize = 13.5.sp)
+                    val statusText = if (growthStageSlider > 0.70f) "Optimal Vigor" else if (growthStageSlider > 0.40f) "Moderate" else "Yellowing / Stressed"
+                    val statusColor = if (growthStageSlider > 0.70f) LimeAccent else if (growthStageSlider > 0.40f) GoldAccent else RedAccent
+                    Text("${(growthStageSlider * 100).toInt()}% · $statusText", fontWeight = FontWeight.Bold, color = statusColor, fontSize = 14.sp)
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+                Slider(
+                    value = growthStageSlider,
+                    onValueChange = { growthStageSlider = it },
+                    valueRange = 0.1f..1.0f,
+                    colors = SliderDefaults.colors(thumbColor = LimeAccent, activeTrackColor = EmeraldPrimary)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = EmeraldPrimary.copy(alpha = 0.2f),
-                    border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.4f))
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                 ) {
-                    Text(
-                        text = if (isLoading) "SYNCING" else "100% CLEAR",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = LimeAccent,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("Farmer Recommendation", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = LimeAccent)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = record?.laymanAdvice ?: "Crop greenness index is 33% from Copernicus Sentinel-2C observation (Oct 11, 2026). Cloud-free observation over boundary. Water stress detected.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            lineHeight = 17.sp
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Satellite Image Date: ${record?.recordedDate ?: "2026-10-11"} (Tile: T44PMV · Tamil Nadu)",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Canopy Greenness Level", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontSize = 13.5.sp)
-                val statusText = if (growthStageSlider > 0.70f) "Optimal Vigor" else if (growthStageSlider > 0.40f) "Moderate" else "Yellowing / Stressed"
-                val statusColor = if (growthStageSlider > 0.70f) LimeAccent else if (growthStageSlider > 0.40f) GoldAccent else RedAccent
-                Text("${(growthStageSlider * 100).toInt()}% · $statusText", fontWeight = FontWeight.Bold, color = statusColor, fontSize = 14.sp)
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-            Slider(
-                value = growthStageSlider,
-                onValueChange = { growthStageSlider = it },
-                valueRange = 0.1f..1.0f,
-                colors = SliderDefaults.colors(thumbColor = LimeAccent, activeTrackColor = EmeraldPrimary)
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text("Farmer Recommendation", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = LimeAccent)
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = record?.laymanAdvice ?: "Crop greenness index is 33% from Copernicus Sentinel-2C observation (Oct 11, 2026). Cloud-free observation over boundary. Water stress detected.",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        lineHeight = 17.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-            // 24-day Freshness Notice
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Spacer(modifier = Modifier.height(10.dp))
+                // 24-day Freshness Notice
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                 ) {
-                    Icon(Icons.Default.Info, contentDescription = "Notice", tint = GoldAccent, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Scan is 24 days old (Oct 11, 2026). 5,901 pixels clipped to boundary. Next clear pass pending.",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Info, contentDescription = "Notice", tint = GoldAccent, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Scan is 24 days old (Oct 11, 2026). 5,901 pixels clipped to boundary. Next clear pass pending.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MetricChip("Crop Health", String.format("%.3f", record?.ndviValue ?: 0.327), Modifier.weight(1f))
-                MetricChip("Scan Date", "Oct 11, 2026", Modifier.weight(1f))
-                MetricChip("Valid Pixels", "5,901 Clear", Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MetricChip("Crop Health", String.format(java.util.Locale.US, "%.3f", record?.ndviValue ?: 0.327), Modifier.weight(1f))
+                    MetricChip("Scan Date", "Oct 11, 2026", Modifier.weight(1f))
+                    MetricChip("Valid Pixels", "5,901 Clear", Modifier.weight(1f))
+                }
             }
         }
     }
@@ -1038,109 +1273,160 @@ fun VegetationHealthModule() {
 
 @Composable
 fun SoilMoistureModule() {
+    val context = LocalContext.current
+    val repo = remember { GeoPulseRepository() }
+    var fields by remember { mutableStateOf<List<FieldDto>>(emptyList()) }
+    var selectedField by remember { mutableStateOf<FieldDto?>(null) }
     var soilMoistureData by remember { mutableStateOf<SoilMoistureDto?>(null) }
     var selectedDepth by remember { mutableStateOf("0-15 cm (Topsoil)") }
-    var isLoading by remember { mutableStateOf(true) }
+    var isLoadingFields by remember { mutableStateOf(true) }
+    var isLoadingTelemetry by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         try {
-            val repo = GeoPulseRepository()
-            val fields = repo.getFields()
-            val targetFieldId = fields.firstOrNull()?.id ?: 1
-            soilMoistureData = repo.getSatelliteMoisture(targetFieldId)
+            isLoadingFields = true
+            val fetched = repo.getFields()
+            fields = fetched
+            selectedField = UserSession.resolveSelectedField(context, fetched)
         } catch (_: Exception) {
         } finally {
-            isLoading = false
+            isLoadingFields = false
         }
     }
 
-    val sm = soilMoistureData
-    val moistureVal = sm?.moisturePercentage ?: 34.0
+    LaunchedEffect(selectedField?.id) {
+        val field = selectedField
+        if (field != null) {
+            isLoadingTelemetry = true
+            try {
+                soilMoistureData = repo.getSatelliteMoisture(field.id)
+            } catch (_: Exception) {
+            } finally {
+                isLoadingTelemetry = false
+            }
+        } else {
+            soilMoistureData = null
+        }
+    }
 
-    Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column {
-                    Text("Crop Water Status & Soil Moisture", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Canopy NDMI (10m) & Soil Moisture Model", fontSize = 11.5.sp, color = CyanAccent)
+    if (isLoadingFields) {
+        Card(
+            modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        ) {
+            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.primary)
+            }
+        }
+    } else if (fields.isEmpty() || selectedField == null) {
+        EmptyFieldStateCard(
+            title = "Crop Water Status & Soil Moisture",
+            message = "No registered agricultural fields found. Draw or trace your parcel boundary on the GIS Map to assess topsoil moisture and root-zone water balance.",
+            onActionClick = {
+                context.startActivity(Intent(context, Screen7Activity::class.java))
+            }
+        )
+    } else {
+        val activeField = selectedField!!
+        val sm = soilMoistureData
+        val moistureVal = sm?.moisturePercentage ?: 34.0
+
+        Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                FieldSelectorHeader(
+                    fields = fields,
+                    selectedField = activeField,
+                    onFieldSelected = { newField ->
+                        selectedField = newField
+                        UserSession.setSelectedFieldId(context, newField.id)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Column {
+                        Text("Crop Water Status & Soil Moisture", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Canopy NDMI (10m) & Soil Moisture Model", fontSize = 11.5.sp, color = CyanAccent)
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (moistureVal < 40.0) RedAccent.copy(alpha = 0.2f) else EmeraldPrimary.copy(alpha = 0.2f),
+                        border = BorderStroke(1.dp, if (moistureVal < 40.0) RedAccent.copy(alpha = 0.5f) else EmeraldPrimary.copy(alpha = 0.5f))
+                    ) {
+                        Text(
+                            text = if (isLoadingTelemetry) "SYNCING" else if (moistureVal < 40.0) "DEFICIT" else "ADEQUATE",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (moistureVal < 40.0) RedAccent else LimeAccent,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Satellite Image Date: 2026-10-11 (Pass Tile: T44PMV · Tamil Nadu)",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("0-15 cm (Topsoil)", "15-40 cm (Root Zone)").forEach { depth ->
+                        FilterChip(
+                            selected = selectedDepth == depth,
+                            onClick = { selectedDepth = depth },
+                            label = { Text(depth, fontSize = 12.sp) }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                // Consolidated Farmer Action Guide
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (moistureVal < 40.0) RedAccent.copy(alpha = 0.2f) else EmeraldPrimary.copy(alpha = 0.2f),
-                    border = BorderStroke(1.dp, if (moistureVal < 40.0) RedAccent.copy(alpha = 0.5f) else EmeraldPrimary.copy(alpha = 0.5f))
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                 ) {
-                    Text(
-                        text = if (moistureVal < 40.0) "DEFICIT" else "ADEQUATE",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (moistureVal < 40.0) RedAccent else LimeAccent,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Text("Farmer Recommendation", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Estimated Topsoil Moisture is ${moistureVal.toInt()}% (Mild Deficit) and leaf hydration is slightly low. Check the soil 10–15 cm deep with a trowel before starting pumps. If dry, plan an early morning watering tomorrow before 8:30 AM.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            lineHeight = 17.sp
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Satellite Image Date: 2026-10-11 (Pass Tile: T44PMV · Tamil Nadu)",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("0-15 cm (Topsoil)", "15-40 cm (Root Zone)").forEach { depth ->
-                    FilterChip(
-                        selected = selectedDepth == depth,
-                        onClick = { selectedDepth = depth },
-                        label = { Text(depth, fontSize = 12.sp) }
-                    )
+                Spacer(modifier = Modifier.height(10.dp))
+                // Expandable Scientific & Physical Details
+                ExpandableScientificDetails {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = "• Canopy NDMI (Normalized Difference Moisture Index) = (B8A - B11) / (B8A + B11) = 0.076. Measures leaf water absorption via Sentinel-2 SWIR bands.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            lineHeight = 15.sp
+                        )
+                        Text(
+                            text = "• Soil moisture proxy is derived from multispectral water absorption reflection. C-band SAR radar penetration (EOS-04/Sentinel-1) is limited to 0–5 cm dielectric skin layer.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            lineHeight = 15.sp
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(14.dp))
-            // Consolidated Farmer Action Guide
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-            ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Text("Farmer Recommendation", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Estimated Topsoil Moisture is 34% (Mild Deficit) and leaf hydration is slightly low. Check the soil 10–15 cm deep with a trowel before starting pumps. If dry, plan an early morning watering tomorrow before 8:30 AM.",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        lineHeight = 17.sp
-                    )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MetricChip("Crop Water Status", "NDMI 0.08", Modifier.weight(1f))
+                    MetricChip("Soil Estimate", "${moistureVal.toInt()}% (Exp.)", Modifier.weight(1f))
+                    MetricChip("Scan Date", "Oct 11, 2026", Modifier.weight(1f))
                 }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-            // Expandable Scientific & Physical Details
-            ExpandableScientificDetails {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = "• Canopy NDMI (Normalized Difference Moisture Index) = (B8A - B11) / (B8A + B11) = 0.076. Measures leaf water absorption via Sentinel-2 SWIR bands.",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                        lineHeight = 15.sp
-                    )
-                    Text(
-                        text = "• Soil moisture proxy is derived from multispectral water absorption reflection. C-band SAR radar penetration (EOS-04/Sentinel-1) is limited to 0–5 cm dielectric skin layer.",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                        lineHeight = 15.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MetricChip("Crop Water Status", "NDMI 0.08", Modifier.weight(1f))
-                MetricChip("Soil Estimate", "34% (Exp.)", Modifier.weight(1f))
-                MetricChip("Scan Date", "Oct 11, 2026", Modifier.weight(1f))
             }
         }
     }
@@ -1148,213 +1434,183 @@ fun SoilMoistureModule() {
 
 @Composable
 fun IrrigationTimingModule() {
-
+    val context = LocalContext.current
+    val repo = remember { GeoPulseRepository() }
+    var fields by remember { mutableStateOf<List<FieldDto>>(emptyList()) }
+    var selectedField by remember { mutableStateOf<FieldDto?>(null) }
     var irrigationData by remember { mutableStateOf<IrrigationDto?>(null) }
-
-    var isLoading by remember { mutableStateOf(true) }
-
-
+    var isLoadingFields by remember { mutableStateOf(true) }
+    var isLoadingTelemetry by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        val repo = GeoPulseRepository()
-        val fields = repo.getFields()
-        val targetFieldId = fields.firstOrNull()?.id ?: 1
-        irrigationData = repo.getIrrigationRecommendation(targetFieldId)
-        isLoading = false
-    }
-
-
-
-    val data = irrigationData
-
-
-
-    Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-
-        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
-            Row(
-
-                modifier = Modifier.fillMaxWidth(),
-
-                horizontalArrangement = Arrangement.SpaceBetween,
-
-                verticalAlignment = Alignment.CenterVertically
-
-            ) {
-
-                Column {
-
-                    Text("Safe Watering & Evaporation Guide", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-
-                    Text("Scientific Crop Water Balance calculation", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                }
-
-                if (data != null) {
-
-                    Surface(
-
-                        shape = RoundedCornerShape(8.dp),
-
-                        color = if (data.irrigationRecommendation.contains("NO", ignoreCase = true)) EmeraldPrimary.copy(alpha = 0.25f) else RedAccent.copy(alpha = 0.25f)
-
-                    ) {
-
-                        Text(
-
-                            data.irrigationRecommendation,
-
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-
-                            color = if (data.irrigationRecommendation.contains("NO", ignoreCase = true)) LimeAccent else RedAccent,
-
-                            fontWeight = FontWeight.Bold,
-
-                            fontSize = 11.sp
-
-                        )
-
-                    }
-
-                }
-
-            }
-
-
-
-            Surface(
-
-                modifier = Modifier.fillMaxWidth(),
-
-                shape = RoundedCornerShape(12.dp),
-
-                color = MaterialTheme.colorScheme.surfaceVariant,
-
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
-            ) {
-
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-
-                    Text(
-
-                        text = if (!data?.recommendedTiming.isNullOrBlank()) "Best Window: ${data?.recommendedTiming}" else "Best Window: Tomorrow 6:00 AM - 8:30 AM",
-
-                        fontWeight = FontWeight.Bold,
-
-                        fontSize = 13.5.sp,
-
-                        color = LimeAccent
-
-                    )
-
-                    Text(
-
-                        text = data?.actionExplanation ?: "Early morning watering allows moisture to soak deep before sun rises. Avoid 11 AM - 3 PM watering when high heat causes up to 40% evaporation loss.",
-
-                        fontSize = 12.sp,
-
-                        color = MaterialTheme.colorScheme.onSurface,
-
-                        lineHeight = 17.sp
-
-                    )
-
-                }
-
-            }
-
-
-
-            // Depth in mm & Exact Volume in LITRES
-
-            Surface(
-
-                modifier = Modifier.fillMaxWidth(),
-
-                shape = RoundedCornerShape(12.dp),
-
-                color = MaterialTheme.colorScheme.surfaceVariant,
-
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
-            ) {
-
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-
-                    Row(
-
-                        modifier = Modifier.fillMaxWidth(),
-
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-
-                    ) {
-
-                        Column(modifier = Modifier.weight(1f)) {
-
-                            Text("Recommended Depth", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                            Text("${data?.recommendedDepthMm ?: 0.0} mm", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-
-                        }
-
-                        Column(modifier = Modifier.weight(1.5f)) {
-
-                            Text("Total Water Volume", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                            Text(
-
-                                "${String.format(java.util.Locale.US, "%,d", data?.totalWaterVolumeLitres ?: 0L)} Litres",
-
-                                fontSize = 16.sp,
-
-                                fontWeight = FontWeight.Bold,
-
-                                color = LimeAccent
-
-                            )
-
-                        }
-
-                    }
-
-                    Text(
-                        text = "Calculated using FAO-56 Crop Evapotranspiration balance for ${data?.fieldAreaHa ?: 48.7} ha field.",
-                        fontSize = 10.5.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                    )
-                }
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MetricChip("Crop Demand", "${data?.dailyCropWaterDemandMm ?: 5.4} mm/d", Modifier.weight(1f))
-                MetricChip("Soil Moisture", "${data?.currentMoisturePct?.toInt() ?: 72}%", Modifier.weight(1f))
-                MetricChip("Calculation", "Water Balance", Modifier.weight(1f))
-            }
-
-            // Expandable Scientific Calculation Details
-            ExpandableScientificDetails {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = "• Physical Conversion: 1 mm water depth over 1 hectare = 10,000 Litres = 10 m³.",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                        lineHeight = 15.sp
-                    )
-                    Text(
-                        text = "• Crop water balance calculated via FAO-56 Penman-Monteith reference evapotranspiration (ET₀) and crop coefficient Kc (1.15) for ${data?.fieldAreaHa ?: 48.7} ha field.",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                        lineHeight = 15.sp
-                    )
-                }
-            }
-
+        try {
+            isLoadingFields = true
+            val fetched = repo.getFields()
+            fields = fetched
+            selectedField = UserSession.resolveSelectedField(context, fetched)
+        } catch (_: Exception) {
+        } finally {
+            isLoadingFields = false
         }
-
     }
 
+    LaunchedEffect(selectedField?.id) {
+        val field = selectedField
+        if (field != null) {
+            isLoadingTelemetry = true
+            try {
+                irrigationData = repo.getIrrigationRecommendation(field.id)
+            } catch (_: Exception) {
+            } finally {
+                isLoadingTelemetry = false
+            }
+        } else {
+            irrigationData = null
+        }
+    }
+
+    if (isLoadingFields) {
+        Card(
+            modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        ) {
+            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.primary)
+            }
+        }
+    } else if (fields.isEmpty() || selectedField == null) {
+        EmptyFieldStateCard(
+            title = "Safe Watering & Evaporation Guide",
+            message = "No registered agricultural fields found. Register your field boundary to calculate FAO-56 crop evapotranspiration water balance and precise irrigation volume in Litres.",
+            onActionClick = {
+                context.startActivity(Intent(context, Screen7Activity::class.java))
+            }
+        )
+    } else {
+        val activeField = selectedField!!
+        val data = irrigationData
+
+        Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+            Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                FieldSelectorHeader(
+                    fields = fields,
+                    selectedField = activeField,
+                    onFieldSelected = { newField ->
+                        selectedField = newField
+                        UserSession.setSelectedFieldId(context, newField.id)
+                    }
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Safe Watering & Evaporation Guide", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Scientific Crop Water Balance calculation", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (data != null) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (data.irrigationRecommendation.contains("NO", ignoreCase = true)) EmeraldPrimary.copy(alpha = 0.25f) else RedAccent.copy(alpha = 0.25f)
+                        ) {
+                            Text(
+                                data.irrigationRecommendation,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                color = if (data.irrigationRecommendation.contains("NO", ignoreCase = true)) LimeAccent else RedAccent,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = if (!data?.recommendedTiming.isNullOrBlank()) "Best Window: ${data?.recommendedTiming}" else "Best Window: Tomorrow 6:00 AM - 8:30 AM",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.5.sp,
+                            color = LimeAccent
+                        )
+                        Text(
+                            text = data?.actionExplanation ?: "Early morning watering allows moisture to soak deep before sun rises. Avoid 11 AM - 3 PM watering when high heat causes up to 40% evaporation loss.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            lineHeight = 17.sp
+                        )
+                    }
+                }
+
+                // Depth in mm & Exact Volume in LITRES
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Recommended Depth", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${data?.recommendedDepthMm ?: 0.0} mm", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                            }
+                            Column(modifier = Modifier.weight(1.5f)) {
+                                Text("Total Water Volume", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    "${String.format(java.util.Locale.US, "%,d", data?.totalWaterVolumeLitres ?: 0L)} Litres",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = LimeAccent
+                                )
+                            }
+                        }
+
+                        val displayAreaHa = data?.fieldAreaHa ?: (activeField.areaAcres / 2.47105)
+                        Text(
+                            text = "Calculated using FAO-56 Crop Evapotranspiration balance for ${String.format(java.util.Locale.US, "%.1f", displayAreaHa)} ha field.",
+                            fontSize = 10.5.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MetricChip("Crop Demand", "${data?.dailyCropWaterDemandMm ?: 5.4} mm/d", Modifier.weight(1f))
+                    MetricChip("Soil Moisture", "${data?.currentMoisturePct?.toInt() ?: 72}%", Modifier.weight(1f))
+                    MetricChip("Calculation", "Water Balance", Modifier.weight(1f))
+                }
+
+                // Expandable Scientific Calculation Details
+                ExpandableScientificDetails {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = "• Physical Conversion: 1 mm water depth over 1 hectare = 10,000 Litres = 10 m³.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            lineHeight = 15.sp
+                        )
+                        val displayAreaHa = data?.fieldAreaHa ?: (activeField.areaAcres / 2.47105)
+                        Text(
+                            text = "• Crop water balance calculated via FAO-56 Penman-Monteith reference evapotranspiration (ET₀) and crop coefficient Kc (1.15) for ${String.format(java.util.Locale.US, "%.1f", displayAreaHa)} ha field.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            lineHeight = 15.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 
@@ -1650,175 +1906,152 @@ fun FieldBoundaryModule() {
 
 
 @Composable
-
 fun CropCalendarModule() {
-
+    val context = LocalContext.current
+    val repo = remember { GeoPulseRepository() }
+    var fields by remember { mutableStateOf<List<FieldDto>>(emptyList()) }
+    var selectedField by remember { mutableStateOf<FieldDto?>(null) }
     var sowingData by remember { mutableStateOf<SowingDto?>(null) }
-
-    var isLoading by remember { mutableStateOf(true) }
-
-
+    var isLoadingFields by remember { mutableStateOf(true) }
+    var isLoadingTelemetry by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        val repo = GeoPulseRepository()
-        val fields = repo.getFields()
-        val targetFieldId = fields.firstOrNull()?.id ?: 1
-        sowingData = repo.getSowingRecommendation(targetFieldId)
-        isLoading = false
-    }
-
-
-
-    val data = sowingData
-
-
-
-    Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-
-        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
-            Text("Crop Sowing Calendar & Variety Guide", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-
-            Text("Verified regional seeds and sowing windows from ICAR/KVK Package of Practices.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-
-
-            Surface(
-
-                modifier = Modifier.fillMaxWidth(),
-
-                shape = RoundedCornerShape(12.dp),
-
-                color = MaterialTheme.colorScheme.surfaceVariant,
-
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
-            ) {
-
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-
-                    Text(
-
-                        text = "Recommended Variety: ${data?.recommendedVariety ?: "DKC 9108 (Bio-Seed)"}",
-
-                        fontWeight = FontWeight.Bold,
-
-                        fontSize = 13.5.sp,
-
-                        color = LimeAccent
-
-                    )
-
-                    Text(
-
-                        text = "Sowing Window: ${data?.recommendedSowingWindow ?: "June 15 - July 15 (Kharif) or Oct 15 - Nov 20 (Rabi)"}",
-
-                        fontSize = 12.sp,
-
-                        color = MaterialTheme.colorScheme.onSurface,
-
-                        lineHeight = 17.sp
-
-                    )
-
-                    Text(
-
-                        text = "Soil Preparation: ${data?.soilPreparationSteps ?: "1 deep disc ploughing followed by 2 harrowings. Incorporate 10 tonnes/ha FYM."}",
-
-                        fontSize = 11.5.sp,
-
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-
-                    )
-
-                }
-
-            }
-
-
-
-            // Seed Rate & Total kg needed
-
-            Surface(
-
-                modifier = Modifier.fillMaxWidth(),
-
-                shape = RoundedCornerShape(12.dp),
-
-                color = MaterialTheme.colorScheme.surfaceVariant,
-
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
-            ) {
-
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-
-                    Row(
-
-                        modifier = Modifier.fillMaxWidth(),
-
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-
-                    ) {
-
-                        Column(modifier = Modifier.weight(1f)) {
-
-                            Text("Recommended Seed Rate", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                            Text("${data?.seedRatePerHaKg ?: 20.0} kg/ha", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-
-                        }
-
-                        Column(modifier = Modifier.weight(1.5f)) {
-
-                            Text("Total Seed Required", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                            Text(
-
-                                "${data?.totalSeedRequiredKg ?: 974.0} kg (${data?.approxBagsNeeded ?: "39 bags"})",
-
-                                fontSize = 15.sp,
-
-                                fontWeight = FontWeight.Bold,
-
-                                color = LimeAccent
-
-                            )
-
-                        }
-
-                    }
-
-                    Text(
-
-                        text = "Planting Geometry: ${data?.plantingGeometry ?: "60 cm x 20 cm"} · Depth: ${data?.sowingDepth ?: "3 - 5 cm"}",
-
-                        fontSize = 11.sp,
-
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-
-                    )
-
-                }
-
-            }
-
-
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-
-                MetricChip("Expected Yield", data?.expectedYieldRange?.split(" ")?.firstOrNull() ?: "28-34 Q", Modifier.weight(1f))
-
-                MetricChip("Duration", data?.duration?.split(" ")?.firstOrNull() ?: "110 D", Modifier.weight(1f))
-
-                MetricChip("Water Need", "550 mm", Modifier.weight(1f))
-
-            }
-
+        try {
+            isLoadingFields = true
+            val fetched = repo.getFields()
+            fields = fetched
+            selectedField = UserSession.resolveSelectedField(context, fetched)
+        } catch (_: Exception) {
+        } finally {
+            isLoadingFields = false
         }
-
     }
 
+    LaunchedEffect(selectedField?.id) {
+        val field = selectedField
+        if (field != null) {
+            isLoadingTelemetry = true
+            try {
+                sowingData = repo.getSowingRecommendation(field.id)
+            } catch (_: Exception) {
+            } finally {
+                isLoadingTelemetry = false
+            }
+        } else {
+            sowingData = null
+        }
+    }
+
+    if (isLoadingFields) {
+        Card(
+            modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        ) {
+            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.primary)
+            }
+        }
+    } else if (fields.isEmpty() || selectedField == null) {
+        EmptyFieldStateCard(
+            title = "Crop Sowing Calendar & Variety Guide",
+            message = "No registered agricultural fields found. Register your field boundary and acreage to receive ICAR/TNAU seed variety and sowing window recommendations.",
+            onActionClick = {
+                context.startActivity(Intent(context, Screen7Activity::class.java))
+            }
+        )
+    } else {
+        val activeField = selectedField!!
+        val data = sowingData
+
+        Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+            Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                FieldSelectorHeader(
+                    fields = fields,
+                    selectedField = activeField,
+                    onFieldSelected = { newField ->
+                        selectedField = newField
+                        UserSession.setSelectedFieldId(context, newField.id)
+                    }
+                )
+
+                Text("Crop Sowing Calendar & Variety Guide", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text("Verified regional seeds and sowing windows from ICAR/KVK Package of Practices.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = "Recommended Variety: ${data?.recommendedVariety ?: "DKC 9108 (Bio-Seed)"}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.5.sp,
+                            color = LimeAccent
+                        )
+                        Text(
+                            text = "Sowing Window: ${data?.recommendedSowingWindow ?: "June 15 - July 15 (Kharif) or Oct 15 - Nov 20 (Rabi)"}",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            lineHeight = 17.sp
+                        )
+                        Text(
+                            text = "Soil Preparation: ${data?.soilPreparationSteps ?: "1 deep disc ploughing followed by 2 harrowings. Incorporate 10 tonnes/ha FYM."}",
+                            fontSize = 11.5.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Seed Rate & Total kg needed
+                val fHa = activeField.areaAcres / 2.47105
+                val seedRate = data?.seedRatePerHaKg ?: 20.0
+                val totalSeed = data?.totalSeedRequiredKg ?: (kotlin.math.round(seedRate * fHa * 10.0) / 10.0)
+                val approxBags = data?.approxBagsNeeded ?: "${kotlin.math.ceil(totalSeed / 25.0).toInt()} bags (25kg)"
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Recommended Seed Rate", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("$seedRate kg/ha", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                            }
+                            Column(modifier = Modifier.weight(1.5f)) {
+                                Text("Total Seed Required", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    "$totalSeed kg ($approxBags)",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = LimeAccent
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "Planting Geometry: ${data?.plantingGeometry ?: "60 cm x 20 cm"} · Depth: ${data?.sowingDepth ?: "3 - 5 cm"}",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MetricChip("Expected Yield", data?.expectedYieldRange?.split(" ")?.firstOrNull() ?: "28-34 Q", Modifier.weight(1f))
+                    MetricChip("Duration", data?.duration?.split(" ")?.firstOrNull() ?: "110 D", Modifier.weight(1f))
+                    MetricChip("Water Need", "550 mm", Modifier.weight(1f))
+                }
+            }
+        }
+    }
 }
 
 
@@ -2157,6 +2390,7 @@ fun FarmBudgetModule() {
 
 @Composable
 fun MyFieldsModule() {
+    val context = LocalContext.current
     var fields by remember { mutableStateOf<List<com.geopulse.app.network.FieldDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -2190,11 +2424,21 @@ fun MyFieldsModule() {
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text("No Registered Fields Yet", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Spacer(modifier = Modifier.height(4.dp))
                         Text("Draw or trace your farm boundary on the GIS Map to begin satellite tracking.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                        Button(
+                            onClick = { context.startActivity(Intent(context, Screen7Activity::class.java)) },
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, tint = DarkBackground, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Draw Parcel on GIS Map", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = DarkBackground)
+                        }
                     }
                 }
             } else {

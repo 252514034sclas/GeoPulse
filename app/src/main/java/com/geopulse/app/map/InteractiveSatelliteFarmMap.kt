@@ -233,9 +233,13 @@ fun InteractiveSatelliteFarmMap(
             }
 
             fieldsList = parsedFields
-            val initial = parsedFields.firstOrNull { it.id == initialSelectedFieldId } ?: parsedFields.firstOrNull()
+            val savedFieldId = com.geopulse.app.network.UserSession.getSelectedFieldId(context)
+            val initial = parsedFields.firstOrNull { it.id == savedFieldId }
+                ?: parsedFields.firstOrNull { it.id == initialSelectedFieldId }
+                ?: parsedFields.firstOrNull()
             selectedField = initial
             if (initial != null) {
+                com.geopulse.app.network.UserSession.setSelectedFieldId(context, initial.id)
                 onFieldSelected(initial)
             }
         } catch (_: Exception) {
@@ -351,6 +355,7 @@ fun InteractiveSatelliteFarmMap(
                                 }
                                 if (clicked != null) {
                                     selectedField = clicked
+                                    com.geopulse.app.network.UserSession.setSelectedFieldId(context, clicked.id)
                                     onFieldSelected(clicked)
                                     focusField(map, clicked)
                                     true
@@ -456,6 +461,7 @@ fun InteractiveSatelliteFarmMap(
                                 },
                                 onClick = {
                                     selectedField = field
+                                    com.geopulse.app.network.UserSession.setSelectedFieldId(context, field.id)
                                     onFieldSelected(field)
                                     showFieldDropdown = false
                                     mapLibreInstance?.let { focusField(it, field) }

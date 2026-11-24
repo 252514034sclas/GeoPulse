@@ -303,6 +303,36 @@
 
 ---
 
+### Task 14: Final Empty-Field State & Multi-Field Selection Correction
+- **Date:** November 24, 2026
+- **Objective:** Fix the defect where `GeoComponents.kt` advisory modules utilized `val targetFieldId = fields.firstOrNull()?.id ?: 1`, transmitting requests for Field ID 1 when a farmer has zero registered fields.
+- **Key Changes & Remediations:**
+  - **Zero-Field Empty State:**
+    - Created `EmptyFieldStateCard` with glassmorphic styling, icon badge, clear descriptive explanation, and an actionable primary button ("Register First Field") routing directly to GIS parcel boundary drawing (`Screen7Activity`).
+    - Updated `VegetationHealthModule`, `SoilMoistureModule`, `IrrigationTimingModule`, and `CropCalendarModule`: when `fields.isEmpty()` or `selectedField == null`, the composable renders `EmptyFieldStateCard` and sends zero network requests to backend telemetry endpoints (`getSatelliteHealth`, `getSatelliteMoisture`, `getIrrigationRecommendation`, `getSowingRecommendation`).
+    - Added "Draw Parcel on GIS Map" button to `MyFieldsModule` when 0 fields exist.
+  - **Multi-Field Selection & Switching:**
+    - Created `FieldSelectorHeader` showing active field name, acreage, and crop type. When `fields.size > 1`, provides a "Switch ▾" button with `DropdownMenu` listing all user parcels.
+    - Updated `UserSession`: implemented `getSelectedFieldId`, `setSelectedFieldId`, and `resolveSelectedField(context, availableFields)`.
+    - Synchronized selection between GIS map (`InteractiveSatelliteFarmMap`), parcel drawing (`Screen7Activity`), and all advisory detail modules.
+  - **Cross-Account Anti-IDOR Security:**
+    - Backend strictly validates `field.user_id == current_user.id`. Any unauthorized access to another user's parcel returns `403 Forbidden`.
+    - Client `resolveSelectedField` strictly filters saved ID against the authenticated user's `availableFields`. Foreign field IDs are safely discarded.
+  - **Repository Hardening:**
+    - Removed default `= 1` fallback parameters from `GeoPulseRepository.getSatelliteHealth` and `getSatelliteMoisture`, enforcing explicit field validation.
+  - **Physical Device Validation (IFP ARM64 Display, Android 8.0.0 API 26):**
+    - Installed updated signed release APK (`FC7C3F49...`) over previous build without data loss.
+    - Verified `Screen11Activity`, `Screen13Activity`, and `Screen18Activity` rendering `EmptyFieldStateCard` on live hardware with zero network calls.
+  - **Automated Test Matrix Verification:**
+    - Executed `backend/test_empty_and_multi_field_state.py` covering all 5 required phases: 0-field account, 1-field account, multi-field account with switching, anti-IDOR cross-account access, and unauthenticated access (100% PASS).
+- **Final Release Artifact:**
+  - Release APK: `app/build/outputs/apk/release/app-release.apk`
+  - APK SHA-256: `FC7C3F49F9F3B0B95B4FBA097D74996EFCF400B19E38063E1DFBB50BF701E246`
+  - Signing Cert SHA-256: `464070A93C24BFD9BF67F4B6E9F777CF470AEC4009EA3C710C3D8E8F849F8143` (Matches Production Key)
+  - Preserved Artifact: `app-release-emptyfield-fix.apk`
+
+---
+
 ## 2. UPCOMING PRIORITIES & ROADMAP
 
 1. **Distributed Rate Limiting (Post-RC-1 Cloud Deployment):**
