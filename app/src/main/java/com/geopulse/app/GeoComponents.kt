@@ -920,7 +920,9 @@ fun VegetationHealthModule() {
     LaunchedEffect(Unit) {
         try {
             val repo = GeoPulseRepository()
-            satRecord = repo.getSatelliteHealth(1)
+            val fields = repo.getFields()
+            val targetFieldId = fields.firstOrNull()?.id ?: 1
+            satRecord = repo.getSatelliteHealth(targetFieldId)
         } catch (e: Exception) {
             isError = true
         } finally {
@@ -1043,7 +1045,9 @@ fun SoilMoistureModule() {
     LaunchedEffect(Unit) {
         try {
             val repo = GeoPulseRepository()
-            soilMoistureData = repo.getSatelliteMoisture(1)
+            val fields = repo.getFields()
+            val targetFieldId = fields.firstOrNull()?.id ?: 1
+            soilMoistureData = repo.getSatelliteMoisture(targetFieldId)
         } catch (_: Exception) {
         } finally {
             isLoading = false
@@ -1152,13 +1156,11 @@ fun IrrigationTimingModule() {
 
 
     LaunchedEffect(Unit) {
-
         val repo = GeoPulseRepository()
-
-        irrigationData = repo.getIrrigationRecommendation(1)
-
+        val fields = repo.getFields()
+        val targetFieldId = fields.firstOrNull()?.id ?: 1
+        irrigationData = repo.getIrrigationRecommendation(targetFieldId)
         isLoading = false
-
     }
 
 
@@ -1658,13 +1660,11 @@ fun CropCalendarModule() {
 
 
     LaunchedEffect(Unit) {
-
         val repo = GeoPulseRepository()
-
-        sowingData = repo.getSowingRecommendation(1)
-
+        val fields = repo.getFields()
+        val targetFieldId = fields.firstOrNull()?.id ?: 1
+        sowingData = repo.getSowingRecommendation(targetFieldId)
         isLoading = false
-
     }
 
 

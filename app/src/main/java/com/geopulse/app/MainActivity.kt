@@ -10,6 +10,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         ThemePreferences.init(this)
         com.geopulse.app.network.ApiClient.initFromContext(this)
+        com.geopulse.app.network.UserSession.initSession(this)
 
         val target = intent?.getStringExtra("TARGET_SCREEN")
         if (!target.isNullOrEmpty()) {

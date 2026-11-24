@@ -200,11 +200,17 @@ class CreateAccountActivity : ComponentActivity() {
                                                             val resp = com.geopulse.app.network.ApiClient.service.register(req)
                                                             if (resp.isSuccessful && resp.body() != null) {
                                                                 val auth = resp.body()!!
-                                                                auth.user?.let { user ->
-                                                                    com.geopulse.app.network.UserSession.saveSession(this@CreateAccountActivity, auth.accessToken, user)
-                                                                } ?: run {
-                                                                    com.geopulse.app.network.ApiClient.authToken = auth.accessToken
-                                                                }
+                                                                val user = auth.user ?: com.geopulse.app.network.UserDto(
+                                                                    id = -1,
+                                                                    email = email.trim(),
+                                                                    fullName = fullName.trim(),
+                                                                    phone = null,
+                                                                    farmName = farmName.trim(),
+                                                                    totalAreaHa = 0.0,
+                                                                    preferredLanguage = "en",
+                                                                    themePreference = "SYSTEM"
+                                                                )
+                                                                com.geopulse.app.network.UserSession.saveSession(this@CreateAccountActivity, auth.accessToken, user)
                                                                 startActivity(Intent(this@CreateAccountActivity, Screen7Activity::class.java))
                                                                 finish()
                                                             } else {

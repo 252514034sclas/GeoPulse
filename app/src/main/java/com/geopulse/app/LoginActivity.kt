@@ -173,11 +173,17 @@ class LoginActivity : ComponentActivity() {
                                                     )
                                                     if (resp.isSuccessful && resp.body() != null) {
                                                         val auth = resp.body()!!
-                                                        auth.user?.let { user ->
-                                                            com.geopulse.app.network.UserSession.saveSession(this@LoginActivity, auth.accessToken, user)
-                                                        } ?: run {
-                                                            com.geopulse.app.network.ApiClient.authToken = auth.accessToken
-                                                        }
+                                                        val user = auth.user ?: com.geopulse.app.network.UserDto(
+                                                            id = -1,
+                                                            email = email.trim(),
+                                                            fullName = "",
+                                                            phone = null,
+                                                            farmName = "",
+                                                            totalAreaHa = 0.0,
+                                                            preferredLanguage = "en",
+                                                            themePreference = "SYSTEM"
+                                                        )
+                                                        com.geopulse.app.network.UserSession.saveSession(this@LoginActivity, auth.accessToken, user)
                                                         startActivity(Intent(this@LoginActivity, Screen7Activity::class.java))
                                                         finish()
                                                     } else {
