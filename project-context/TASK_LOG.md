@@ -277,6 +277,32 @@
 
 ---
 
+### Task 6: RC-1 Physical Device Acceptance & Final Release Build Verification
+- **Date:** November 24, 2026
+- **Objective:** Final release verification and 10-gate physical Android hardware acceptance on `release/rc1-device-acceptance`.
+- **Hardware Targets:**
+  - Primary: IFP Interactive Display, ARM64 (`arm64-v8a`), 1920x1080 display, Android 8.0.0 (API 26 — exact `minSdk` boundary).
+  - Secondary: Droidlogic ohm, ARMv7 (`armeabi-v7a`), 3840x2160 display, Android 11 (API 30).
+- **Key Changes & Defect Resolutions:**
+  - Resolved dynamic field binding in `GeoComponents.kt`: Replaced hardcoded `fieldId = 1` across `VegetationHealthModule`, `SoilMoistureModule`, `IrrigationTimingModule`, and `CropCalendarModule` with `repo.getFields().firstOrNull()?.id ?: 1`.
+  - Resolved session token persistence across Android process lifecycles: Created `GeoPulseApplication` (subclassing `android.app.Application`) and registered in `AndroidManifest.xml` to initialize `ApiClient.initFromContext(this)`, `UserSession.initSession(this)`, and `ThemePreferences.init(this)`. OkHttp interceptor dynamically resolves token from `UserSession.getToken(appContext)` if memory resets.
+- **Verification Gates Passed (10/10):**
+  1. Signed RC-1 APK installation on physical hardware.
+  2. Baseline SHA-256 and production release certificate verification (v2 signature scheme).
+  3. Real user registration (`murugesan_physical@geopulse.com`), account isolation (0 fields initially), and logout redirect.
+  4. Real parcel creation (`Thanjavur Delta Samba Plot 1`, 34.14 ac) and PostgreSQL 18.7 persistence (Field ID 45).
+  5. MapLibre Native GIS map rendering and two-finger gesture zoom on hardware.
+  6. Scientific engines: NDVI 0.724 Sentinel-2C 10m surface reflectance, NDMI soil moisture, dynamic FAO-56 crop water balance (`WAIT FOR RAIN`), Open-Meteo safe spray windows, and ICAR/KVK sowing calendars.
+  7. In-app notifications and bidirectional English / Tamil (`தமிழ்`) localization.
+  8. Network severance resilience (honest offline messaging) and live recovery.
+  9. Zero fatal crashes, zero ANRs, 13.3 MB Java heap footprint.
+  10. Zero simulated / mock dynamic data.
+- **Approved Acceptance Commit:** `773fbaddd133bf0f051fe17d20f88693a68be384`
+- **Frozen Baseline Tag:** `v1.0.0-rc1` (`2083d56afe126cc6d5182013f7c388b1cd5599ac`)
+- **Acceptance Verdict:** **ACCEPTANCE BUILD APPROVED**
+
+---
+
 ## 2. UPCOMING PRIORITIES & ROADMAP
 
 1. **Distributed Rate Limiting (Post-RC-1 Cloud Deployment):**

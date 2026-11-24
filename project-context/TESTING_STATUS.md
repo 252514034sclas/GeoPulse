@@ -2,7 +2,7 @@
 **Last Updated:** November 24, 2026  
 **Repository:** `252514034sclas/GeoPulse`  
 **Database Verified:** Native PostgreSQL 18.7 (`geopulse_db`)  
-**Git Commits:** `8a07587`, `4007277`, `d305b49`  
+**Git Commits:** `8a07587`, `4007277`, `d305b49`, `2083d56` (tag `v1.0.0-rc1`), `773fbad` (branch `release/rc1-device-acceptance`)  
 
 ---
 
@@ -16,6 +16,7 @@
 | **Multi-User Isolation & Anti-IDOR Suite** | `backend/test_multi_user_isolation.py` | 19 | 19 | 0 | 0 | 2.3s | **100% PASS** |
 | **Live PostgreSQL Multi-User IDOR Verification** | `backend/scripts/verify_live_postgres_isolation.py` | 11 checks | 11 | 0 | 0 | 1.1s | **100% PASS** |
 | **Final Release Security Suite** | `backend/test_final_release_security.py` | 7 | 7 | 0 | 0 | 3.1s | **100% PASS** |
+| **Physical Hardware Acceptance Test** | IFP ARM64 (API 26 `minSdk`) & Droidlogic ohm (API 30) | 10 Gates | 10 | 0 | 0 | Live interactive | **100% PASS** |
 | **Android Release Verification** | Google Pixel 10 Pro (`emulator-5554`, API 35) | 8 E2E Workflows | 8 | 0 | 0 | Live interactive | **100% PASS** |
 
 ---
