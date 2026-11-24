@@ -277,11 +277,46 @@
 
 ---
 
+### Task 6: PostgreSQL 18.7 Migration & Multi-Tenant Data Verification
+- **Date:** November 24, 2026
+- **Objective:** Migrate backend database architecture from SQLite to native PostgreSQL 18.7 with Alembic versioned migrations, strict fail-fast connection pooling, lossless data migration, and complete tenant isolation verification.
+- **Key Changes:**
+  - `backend/database.py`: Integrated native PostgreSQL engine via `psycopg2-binary` with strict fail-fast `DATABASE_URL` parsing (zero silent fallback to SQLite).
+  - `backend/alembic/`: Established Alembic versioned migration environment at revision `34cf2b656a5e` (`init_postgres_schema.py`).
+  - `backend/scripts/migrate_sqlite_to_postgres.py`: Migrated 118 records across 8 tables with 100% field parity and auto-increment sequence synchronization.
+  - `backend/scripts/compare_sqlite_postgres_field_level.py`: Evaluated 1,156 fields across 118 records with 0 discrepancies.
+  - `backend/scripts/test_postgres_advanced_integrity.py`: Validated foreign key constraints, unique constraints, ACID rollback, 5-thread concurrency (50 transactions), and fresh database migration.
+  - `backend/scripts/verify_live_postgres_isolation.py`: Verified multi-tenant data isolation and anti-IDOR enforcement.
+  - `backend/scripts/test_zero_sqlite_runtime_dependency.py`: Confirmed zero runtime dependency on SQLite with isolated `.db` file.
+- **Commit:** `5bc6b4e`
+
+---
+
+### Task 7: RC-1 Freeze, Inconsistency Resolution & Baseline Preservation
+- **Date:** November 24, 2026
+- **Objective:** Reconcile documentation inconsistencies for screens 21, 24, 26, and 28; wire dynamic in-app notification badges into dashboard; establish configurable network endpoint persistence; and freeze the RC-1 baseline.
+- **Key Changes:**
+  - `project-context/ARCHITECTURE_MAP.md`: Reconciled screen identities to match verified Jetpack Compose code (Screen 21: Harvest Prep, Screen 24: Satellite Growth History, Screen 26: Kisan Helpline Bridge, Screen 28: Weather Warning Center).
+  - `app/src/main/java/com/geopulse/app/Screen7Activity.kt`: Dynamically populated `NotificationRepository` from live dashboard tasks and weather alerts on boot.
+  - `app/src/main/java/com/geopulse/app/network/ApiClient.kt` & `MainActivity.kt`: Added configurable base URLs (`DEFAULT_PRODUCTION_URL`, `DEFAULT_DEV_LOOPBACK`) with persistent SharedPreferences storage.
+  - Created and applied protected release tag `v1.0.0-rc1` to commit `2083d56afe126cc6d5182013f7c388b1cd5599ac`.
+  - Authored comprehensive baseline freeze record `project-context/RC1_BASELINE_RECORD.md`.
+- **Baseline Commit:** `2083d56afe126cc6d5182013f7c388b1cd5599ac`
+- **Protected Release Tag:** `v1.0.0-rc1`
+- **Operational Verdict:** **READY FOR RC-1 TESTING**
+
+---
+
 ## 2. UPCOMING PRIORITIES & ROADMAP
 
-1. **Distributed Rate Limiting (Post-RC-1 Cloud Deployment):**
+1. **Public Cloud Container Deployment:**
+   - Author multi-stage `Dockerfile` and `docker-compose.yml` for FastAPI + PostgreSQL stack.
+   - Deploy backend to public cloud container (Google Cloud Run / AWS ECS) and bind custom domain with CA-signed TLS (`https://api.geopulse.app/`).
+2. **Managed Cloud PostgreSQL Database:**
+   - Provision managed cloud database (Cloud SQL / Amazon RDS) with SSL enforcement (`sslmode=require`), automated daily snapshots, and connection pooler.
+3. **Distributed Rate Limiting (Post-RC-1 Cloud Deployment):**
    - Connect Redis to replace process-local `InMemoryRateLimiter` when scaling across multi-worker cloud servers.
-2. **Production SMTP Credentials:**
+4. **Production SMTP Credentials:**
    - Provision production email server credentials (`SMTP_SERVER`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`) for automated password recovery.
-3. **Room Database Full Offline Parcel Storage:**
+5. **Room Database Full Offline Parcel Storage:**
    - Implement Room DB SQLite persistence for offline field geometry caching.

@@ -2,7 +2,9 @@
 **Last Updated:** November 24, 2026  
 **Repository:** `252514034sclas/GeoPulse`  
 **Database Verified:** Native PostgreSQL 18.7 (`geopulse_db`)  
-**Git Commits:** `8a07587`, `4007277`, `d305b49`  
+**Frozen Baseline Commit:** `2083d56afe126cc6d5182013f7c388b1cd5599ac`  
+**Protected Release Tag:** `v1.0.0-rc1`  
+**Operational Status:** **READY FOR RC-1 TESTING**  
 
 ---
 
@@ -10,13 +12,15 @@
 
 | Test Suite | File / Scope | Total Tests | Passed | Failed | Errors | Execution Duration | Status |
 |---|---|---|---|---|---|---|---|
-| **PostgreSQL Migration & Sequence Test** | `backend/scripts/migrate_sqlite_to_postgres.py` | 10 tables | 10 | 0 | 0 | 0.8s | **100% MATCH** |
+| **Field-Level Data Parity Test** | `backend/scripts/compare_sqlite_postgres_field_level.py` | 1,156 fields / 118 rows | 1,156 | 0 | 0 | 0.5s | **100% MATCH** |
 | **Scientific Rigor Suite** | `backend/test_scientific_rigor.py` | 12 | 12 | 0 | 0 | 0.001s | **100% PASS** |
 | **API Domain Integration Suite (PostgreSQL)** | `backend/test_api.py` | 24 | 24 | 0 | 0 | 18.2s | **100% PASS** |
 | **Multi-User Isolation & Anti-IDOR Suite** | `backend/test_multi_user_isolation.py` | 19 | 19 | 0 | 0 | 2.3s | **100% PASS** |
 | **Live PostgreSQL Multi-User IDOR Verification** | `backend/scripts/verify_live_postgres_isolation.py` | 11 checks | 11 | 0 | 0 | 1.1s | **100% PASS** |
+| **Advanced PostgreSQL Integrity & Concurrency** | `backend/scripts/test_postgres_advanced_integrity.py` | 4 phases (FKs, ACID, 50-thread concurrency, Clean Migrations) | 4 | 0 | 0 | 3.5s | **100% PASS** |
+| **Zero SQLite Runtime Dependency Test** | `backend/scripts/test_zero_sqlite_runtime_dependency.py` | Live REST with SQLite file isolated | 1 | 0 | 0 | 2.1s | **100% PASS** |
 | **Final Release Security Suite** | `backend/test_final_release_security.py` | 7 | 7 | 0 | 0 | 3.1s | **100% PASS** |
-| **Android Release Verification** | Google Pixel 10 Pro (`emulator-5554`, API 35) | 8 E2E Workflows | 8 | 0 | 0 | Live interactive | **100% PASS** |
+| **Android Release Verification** | Google Pixel 10 Pro (`emulator-5554`, API 35) | 10 E2E Workflows | 10 | 0 | 0 | Live interactive | **100% PASS** |
 
 ---
 

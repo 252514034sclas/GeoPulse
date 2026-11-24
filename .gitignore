@@ -31,3 +31,7 @@ __pycache__/
 *.keystore
 keystore.properties
 *.properties.local
+
+# Presentations & Scratch Media Exports
+*.pptx
+geopulse_project_timeline.png
