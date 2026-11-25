@@ -2871,6 +2871,11 @@ fun NotificationCenterModule() {
     var notificationList by remember { mutableStateOf(NotificationRepository.getNotifications(context)) }
     val unreadCount = notificationList.count { !it.isRead }
 
+    LaunchedEffect(Unit) {
+        val synced = NotificationRepository.syncWithBackend(context)
+        notificationList = synced
+    }
+
     fun refreshList() {
         notificationList = NotificationRepository.getNotifications(context)
     }

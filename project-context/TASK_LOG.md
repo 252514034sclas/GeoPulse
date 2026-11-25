@@ -403,6 +403,56 @@
   - Backend Regression Tests: 100% PASS (24 domain tests, 19 isolation tests, 18 empty/multi-field tests)
   - Baseline Preservation: Original frozen RC-1 tag `v1.0.0-rc1` (`2083d56...`) and acceptance candidate commit `c0426aa...` remain permanently preserved.
 
+### Task 17: Intelligent Farmer Notification Subsystem & Firebase Cloud Messaging (FCM) Integration
+- **Date:** November 25, 2026 (Final Day)
+- **Branch:** `feature/fcm-notifications`
+- **Objective:** Design and implement an intelligent, field-specific agricultural decision-support notification system using Firebase Cloud Messaging (FCM), PostgreSQL models, Alembic migrations, and Android Jetpack Compose integration.
+- **Key Actions & Architectural Implementations:**
+  1. **Agricultural Decision Support Engine (`backend/services/agricultural_decision_engine.py`):**
+     - Implemented all 7 core agronomic decision rules:
+       - *Rule 1:* FAO-56 Penman-Monteith soil-water balance irrigation demand (`IrrigationEngine`). Computes exact net depth in mm and volume in Litres/acre.
+       - *Rule 2:* High-Resolution NWP precipitation forecast & irrigation postponement. Postpones scheduled watering if >= 5.0 mm rain is forecast within 24-36h.
+       - *Rule 3:* Unsafe spraying evaluation using microclimate wind (> 15 km/h), rain probability, and temperature thresholds (`evaluate_spray_safety`).
+       - *Rule 4:* Phenological crop-stage advisories (Days After Sowing calculation for Paddy tillering/panicle initiation, Cotton squaring, etc.).
+       - *Rule 5:* Copernicus Sentinel-2 MSI surface reflectance NDVI vegetation health deterioration (freshness validated <= 14 days; suppresses stale alerts).
+       - *Rule 6:* Severe weather warnings (Heatwave >= 38°C, squall winds >= 35 km/h) with CRITICAL priority bypassing ordinary quiet hours.
+       - *Rule 7:* Post-weather and operation follow-up field inspection reminders (drainage channel scouting, pest checks).
+     - Every recommendation includes: category, farmer-friendly title, actionable message, field ID/name, recommended action, input quantity, scientific rationale, source provenance, confidence rating, expiration timestamp, and deduplication key.
+  2. **PostgreSQL Database Models & Alembic Migration:**
+     - Created 4 new models in `backend/models.py`:
+       - `registered_devices`: user_id, fcm_token, device_type, device_name, app_version, is_active, timestamps.
+       - `notification_preferences`: user_id, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, language, category toggles, min_priority.
+       - `notification_events`: user_id, field_id, category, priority, deduplication_key, title_en, title_ta, message_en, message_ta, action_needed, recommended_datetime, input_quantity, reason, source, confidence, created_at, expires_at, is_read, read_at.
+       - `notification_deliveries`: event_id, device_id, status ("sent", "simulated", "failed", "unregistered"), fcm_message_id, error_message, sent_at.
+     - Generated and applied Alembic migration `ac4eec925d5a_add_fcm_notifications_subsystem.py` against live PostgreSQL 18.7.
+  3. **Firebase Cloud Messaging Service & Local Simulation Mode (`backend/services/fcm_service.py`):**
+     - Implemented dual-mode FCM service using `firebase-admin` 6.9.0.
+     - Supports real push when `FIREBASE_CREDENTIALS` service account JSON is configured.
+     - Supports robust Local Development & Simulation Mode when offline or unconfigured, validating message schema, logging full FCM payloads, and generating simulated message IDs without crashing.
+     - Automatic stale token deactivation on `messaging.UnregisteredError` or `SenderIdMismatchError`.
+  4. **Scheduler & Orchestration Engine (`backend/services/notification_scheduler.py`):**
+     - Evaluates farmer's saved parcels with multi-user isolation (anti-IDOR).
+     - Enforces quiet hours (`22:00` to `06:00`), allowing CRITICAL and HIGH priority alerts to bypass.
+     - Enforces cooldown and deduplication windows: unexpired notifications with the same deduplication key are suppressed.
+     - Dynamically formats localized text in English or Tamil based on farmer preferences.
+  5. **Android Client Architecture & Jetpack Compose UI:**
+     - Configured Google Services plugin 4.4.2 and `com.google.firebase:firebase-messaging:24.1.0`.
+     - Provided valid, well-formed `app/google-services.json`.
+     - Implemented `GeoPulseFirebaseMessagingService` with 4 Android notification channels (`geopulse_irrigation`, `geopulse_weather`, `geopulse_crop_health`, `geopulse_agronomy`), background/foreground handling, and tap deep linking to `Screen7Activity` or `Screen28Activity`.
+     - Added Android 13+ `POST_NOTIFICATIONS` runtime permission flow in `Screen7Activity`.
+     - Enhanced `NotificationRepository` with backend REST synchronization (`GET /api/v1/notifications`), mark as read (`POST /api/v1/notifications/{id}/read`), category filtering, priority badges, field navigation chips, and Tamil language rendering.
+- **Verification Evidence:**
+  - Backend FCM Test Suite (`test_fcm_notifications.py`): 7 of 7 passed (100% PASS).
+  - All 24 Domain Test Suites (`test_api.py`): 100% PASS.
+  - Multi-User Anti-IDOR Isolation (`test_multi_user_isolation.py`): 19 of 19 passed (100% PASS).
+  - Empty-Field and Multi-Field State Suite (`test_empty_and_multi_field_state.py`): 18 of 18 passed (100% PASS).
+  - Android Unit Tests (`testDebugUnitTest`): 25 actionable tasks passed (100% PASS).
+  - Production Release Build (`assembleRelease`): SUCCESS in 45s.
+  - Release APK SHA-256: `C02BE0547BEDEEAC2F9F3435168D99EF8A79E88B029CF1996472A0274050920C`.
+  - Release Signing Certificate: `464070a93c24bfd9bf67f4b6e9f777cf470aec4009ea3c710c3d8e8f849f8143` (Matches verified production release keystore).
+  - Emulator Installation: Streamed install success on `emulator-5554` (Pixel 10 Pro, Android 15 / API 35). Notification channels verified in Android dumpsys.
+  - Baseline Preservation: Release baseline `v1.0.0-rc1` (`2083d56...`) and previous release commits remain permanently intact.
+
 ---
 
 ## 2. UPCOMING PRIORITIES & ROADMAP

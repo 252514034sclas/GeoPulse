@@ -46,6 +46,11 @@ import com.geopulse.app.map.GeospatialMath
 import com.geopulse.app.network.*
 import com.geopulse.app.ui.premium.*
 import com.geopulse.app.ui.theme.*
+import com.geopulse.app.notifications.GeoPulseFirebaseMessagingService
+import com.google.firebase.messaging.FirebaseMessaging
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.coroutines.launch
 
 class Screen7Activity : ComponentActivity() {
@@ -55,6 +60,32 @@ class Screen7Activity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val initialTab = intent?.getIntExtra("TARGET_TAB", 0)?.coerceIn(0, 3) ?: 0
+
+        // Ensure notification channels are registered
+        GeoPulseFirebaseMessagingService.createNotificationChannels(this)
+
+        // Android 13+ POST_NOTIFICATIONS permission request
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
+
+        // Register FCM device push token with backend
+        try {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful && !task.result.isNullOrBlank()) {
+                    GeoPulseFirebaseMessagingService.registerDeviceWithBackend(this, task.result)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("Screen7Activity", "FCM token registration: ${e.message}")
+        }
+
+        // Sync notifications with backend
+        lifecycleScope.launch {
+            com.geopulse.app.notifications.NotificationRepository.syncWithBackend(this@Screen7Activity)
+        }
 
         setContent {
             GeoPulseTheme {

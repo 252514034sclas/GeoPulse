@@ -305,3 +305,110 @@ class DashboardSummaryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# -------------------------------------------------------------
+# Intelligent Farmer Notification Subsystem Schemas
+# -------------------------------------------------------------
+
+class DeviceRegisterRequest(BaseModel):
+    fcm_token: str
+    device_type: Optional[str] = "android"
+    device_name: Optional[str] = "Android Device"
+    app_version: Optional[str] = "1.0.0"
+
+
+class DeviceRegisterResponse(BaseModel):
+    id: int
+    fcm_token: str
+    is_active: bool
+    message: str
+
+    class Config:
+        from_attributes = True
+
+
+class DeviceUnregisterRequest(BaseModel):
+    fcm_token: str
+
+
+class NotificationPreferenceSchema(BaseModel):
+    quiet_hours_enabled: bool = True
+    quiet_hours_start: str = "22:00"
+    quiet_hours_end: str = "06:00"
+    language: str = "en"
+    irrigation_enabled: bool = True
+    weather_enabled: bool = True
+    spraying_enabled: bool = True
+    agronomy_enabled: bool = True
+    crop_health_enabled: bool = True
+    inspection_enabled: bool = True
+    min_priority: str = "LOW"
+
+    class Config:
+        from_attributes = True
+
+
+class NotificationPreferenceUpdate(BaseModel):
+    quiet_hours_enabled: Optional[bool] = None
+    quiet_hours_start: Optional[str] = None
+    quiet_hours_end: Optional[str] = None
+    language: Optional[str] = None
+    irrigation_enabled: Optional[bool] = None
+    weather_enabled: Optional[bool] = None
+    spraying_enabled: Optional[bool] = None
+    agronomy_enabled: Optional[bool] = None
+    crop_health_enabled: Optional[bool] = None
+    inspection_enabled: Optional[bool] = None
+    min_priority: Optional[str] = None
+
+
+class NotificationEventSchema(BaseModel):
+    id: int
+    user_id: int
+    field_id: Optional[int] = None
+    field_name: Optional[str] = None
+    category: str
+    priority: str
+    deduplication_key: str
+    title: str
+    message: str
+    title_en: str
+    title_ta: Optional[str] = None
+    message_en: str
+    message_ta: Optional[str] = None
+    action_needed: Optional[str] = None
+    recommended_datetime: Optional[str] = None
+    input_quantity: Optional[str] = None
+    reason: Optional[str] = None
+    source: Optional[str] = None
+    source_data_timestamp: Optional[str] = None
+    confidence: Optional[str] = None
+    created_at: datetime
+    expires_at: Optional[datetime] = None
+    is_read: bool = False
+    read_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class NotificationDeliverySchema(BaseModel):
+    id: int
+    event_id: int
+    device_id: Optional[int] = None
+    status: str
+    fcm_message_id: Optional[str] = None
+    error_message: Optional[str] = None
+    sent_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class NotificationEvaluationResponse(BaseModel):
+    evaluated_fields_count: int
+    notifications_generated_count: int
+    notifications_sent_count: int
+    notifications: List[NotificationEventSchema] = []
+    evaluation_summary: List[str] = []

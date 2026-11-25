@@ -165,3 +165,44 @@ Command: `& "c:\Users\SCAD LAB\AndroidStudioProjects\GeoPulse\backend\venv\Scrip
   - `backend/test_multi_user_isolation.py`: 19/19 anti-IDOR tests passed.
   - `backend/test_empty_and_multi_field_state.py`: 18/18 empty/multi-field tests passed.
 - **Final Verdict:** **READY FOR RELEASE HANDOVER AND DEMONSTRATION**.
+
+---
+
+## 8. INTELLIGENT FARMER NOTIFICATION SYSTEM & FCM SUBSYSTEM VERIFICATION (NOVEMBER 25, 2026 — FINAL DAY)
+
+- **Branch:** `feature/fcm-notifications`
+- **Scope:** Full-stack implementation of field-specific agricultural decision-support notifications using Firebase Cloud Messaging (FCM), PostgreSQL models, Alembic migrations, and Android Jetpack Compose client integration.
+- **FCM Test Suite Execution (`backend/test_fcm_notifications.py`):**
+  - Command: `.\backend\venv\Scripts\python.exe -m unittest test_fcm_notifications.py`
+  - Results: **7 of 7 Tests Passed (100% PASS)**
+    - `test_01_device_token_lifecycle`: Registered token, refreshed existing token, deactivated token, reactivated (**PASS**)
+    - `test_02_notification_preferences`: Verified quiet hours defaults (`22:00` - `06:00`), updated quiet hours & language preference (**PASS**)
+    - `test_03_decision_engine_evaluation_and_deduplication`: Verified 7 agricultural decision rules; confirmed second immediate evaluation generates 0 duplicates (**PASS**)
+    - `test_04_tamil_language_localization`: Verified authentic Tamil rendering (`title_ta`, `message_ta`) for Tamil-speaking farmer (**PASS**)
+    - `test_05_anti_idor_and_user_isolation`: Verified Farmer B strictly rejected (HTTP 403) from accessing or modifying Farmer A's notifications (**PASS**)
+    - `test_06_mark_as_read_and_history`: Verified individual mark as read, detail status reflection, mark all read, and unread filtering (**PASS**)
+    - `test_07_delivery_audit_log`: Verified PostgreSQL `notification_deliveries` records delivery attempts, message IDs, and status (**PASS**)
+- **Backend Full Regression Matrix (100% PASS):**
+  - `backend/test_api.py`: 24/24 domain suites passed (**100% PASS**)
+  - `backend/test_multi_user_isolation.py`: 19/19 anti-IDOR tests passed (**100% PASS**)
+  - `backend/test_empty_and_multi_field_state.py`: 18/18 empty/multi-field assertions passed (**100% PASS**)
+- **Android Build & Unit Test Verification:**
+  - `compileDebugKotlin`: SUCCESS (0 errors)
+  - `testDebugUnitTest`: 25/25 actionable tasks passed (**100% PASS**)
+  - `assembleRelease`: BUILD SUCCESSFUL in 45s
+- **Production Release APK Verification:**
+  - Release APK Path: `app/build/outputs/apk/release/app-release.apk`
+  - Archived Artifact: [app-release-fcm-intelligent-notifications.apk](file:///C:/Users/SCAD%20LAB/.gemini/antigravity/brain/6c5c0eea-ae91-4d92-be0b-8b3cc702481a/app-release-fcm-intelligent-notifications.apk)
+  - SHA-256 Digest: `C02BE0547BEDEEAC2F9F3435168D99EF8A79E88B029CF1996472A0274050920C`
+  - Signing Scheme: APK Signature Scheme v2 (`true`)
+  - Signer Certificate SHA-256: `464070a93c24bfd9bf67f4b6e9f777cf470aec4009ea3c710c3d8e8f849f8143` (Matches Verified Production Release Keystore)
+- **Live Device / Emulator Verification (`emulator-5554`, Pixel 10 Pro, Android 15 / API 35):**
+  - Streamed installation: `Success`
+  - Notification Channels Registered in Android Dumpsys:
+    - `geopulse_irrigation`: "Irrigation Advisories" (Importance 4, High, Vibration enabled)
+    - `geopulse_weather`: "Weather & Spray Warnings" (Importance 4, High, Vibration enabled)
+    - `geopulse_crop_health`: "Crop Health & Satellite Alerts" (Importance 3, Default)
+    - `geopulse_agronomy`: "Farm Management & Tasks" (Importance 3, Default)
+  - Runtime Permission: Handled Android 13+ `POST_NOTIFICATIONS` runtime permission flow.
+  - Verification Screenshot: [screen28_notifications_center.png](file:///C:/Users/SCAD%20LAB/.gemini/antigravity/brain/6c5c0eea-ae91-4d92-be0b-8b3cc702481a/screen28_notifications_center.png)
+- **Verdict:** **INTELLIGENT FARMER NOTIFICATION SYSTEM FULLY OPERATIONAL AND VERIFIED**.

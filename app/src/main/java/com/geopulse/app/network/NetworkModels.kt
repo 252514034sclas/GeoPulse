@@ -271,4 +271,67 @@ data class BudgetSummaryDto(
     @SerializedName("recent_expenses") val recentExpenses: List<FarmExpenseDto> = emptyList()
 )
 
+// -------------------------------------------------------------
+// FCM Push Device & Intelligent Notification Subsystem Models
+// -------------------------------------------------------------
+
+data class DeviceRegisterRequestDto(
+    @SerializedName("fcm_token") val fcmToken: String,
+    @SerializedName("device_type") val deviceType: String = "android",
+    @SerializedName("device_name") val deviceName: String? = "Android Device",
+    @SerializedName("app_version") val appVersion: String? = "1.0.0"
+)
+
+data class DeviceRegisterResponseDto(
+    val id: Int,
+    @SerializedName("fcm_token") val fcmToken: String,
+    @SerializedName("is_active") val isActive: Boolean,
+    val message: String
+)
+
+data class DeviceUnregisterRequestDto(
+    @SerializedName("fcm_token") val fcmToken: String
+)
+
+data class NotificationDto(
+    val id: Int,
+    @SerializedName("user_id") val userId: Int,
+    @SerializedName("field_id") val fieldId: Int? = null,
+    @SerializedName("field_name") val fieldName: String? = null,
+    val category: String,
+    val priority: String,
+    @SerializedName("deduplication_key") val deduplicationKey: String,
+    val title: String,
+    val message: String,
+    @SerializedName("title_en") val titleEn: String,
+    @SerializedName("title_ta") val titleTa: String? = null,
+    @SerializedName("message_en") val messageEn: String,
+    @SerializedName("message_ta") val messageTa: String? = null,
+    @SerializedName("action_needed") val actionNeeded: String? = null,
+    @SerializedName("recommended_datetime") val recommendedDatetime: String? = null,
+    @SerializedName("input_quantity") val inputQuantity: String? = null,
+    val reason: String? = null,
+    val source: String? = null,
+    @SerializedName("source_data_timestamp") val sourceDataTimestamp: String? = null,
+    val confidence: String? = null,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("expires_at") val expiresAt: String? = null,
+    @SerializedName("is_read") val isRead: Boolean = false,
+    @SerializedName("read_at") val readAt: String? = null
+)
+
+data class NotificationPreferenceDto(
+    @SerializedName("quiet_hours_enabled") val quietHoursEnabled: Boolean = true,
+    @SerializedName("quiet_hours_start") val quietHoursStart: String = "22:00",
+    @SerializedName("quiet_hours_end") val quietHoursEnd: String = "06:00",
+    val language: String = "en",
+    @SerializedName("irrigation_enabled") val irrigationEnabled: Boolean = true,
+    @SerializedName("weather_enabled") val weatherEnabled: Boolean = true,
+    @SerializedName("spraying_enabled") val sprayingEnabled: Boolean = true,
+    @SerializedName("agronomy_enabled") val agronomyEnabled: Boolean = true,
+    @SerializedName("crop_health_enabled") val cropHealthEnabled: Boolean = true,
+    @SerializedName("inspection_enabled") val inspectionEnabled: Boolean = true,
+    @SerializedName("min_priority") val minPriority: String = "LOW"
+)
+
 

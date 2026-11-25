@@ -83,4 +83,48 @@ interface GeoPulseApiService {
 
     @GET("api/v1/budget/summary")
     suspend fun getBudgetSummary(): Response<BudgetSummaryDto>
+
+    // -------------------------------------------------------------
+    // Intelligent Notification & Device Registration Endpoints
+    // -------------------------------------------------------------
+
+    @POST("api/v1/notifications/devices/register")
+    suspend fun registerDevice(
+        @Body request: DeviceRegisterRequestDto
+    ): Response<DeviceRegisterResponseDto>
+
+    @POST("api/v1/notifications/devices/unregister")
+    suspend fun unregisterDevice(
+        @Body request: DeviceUnregisterRequestDto
+    ): Response<Map<String, Any>>
+
+    @GET("api/v1/notifications")
+    suspend fun getNotifications(
+        @Query("category") category: String? = null,
+        @Query("field_id") fieldId: Int? = null,
+        @Query("unread_only") unreadOnly: Boolean = false,
+        @Query("limit") limit: Int = 50
+    ): Response<List<NotificationDto>>
+
+    @GET("api/v1/notifications/{id}")
+    suspend fun getNotificationDetail(
+        @Path("id") id: Int
+    ): Response<NotificationDto>
+
+    @POST("api/v1/notifications/{id}/read")
+    suspend fun markNotificationRead(
+        @Path("id") id: Int
+    ): Response<Map<String, Any>>
+
+    @POST("api/v1/notifications/read-all")
+    suspend fun markAllNotificationsRead(): Response<Map<String, Any>>
+
+    @GET("api/v1/notifications/preferences")
+    suspend fun getNotificationPreferences(): Response<NotificationPreferenceDto>
+
+    @POST("api/v1/notifications/evaluate")
+    suspend fun triggerNotificationEvaluation(
+        @Query("field_id") fieldId: Int? = null,
+        @Query("bypass_quiet_hours") bypassQuiet: Boolean = true
+    ): Response<Map<String, Any>>
 }
