@@ -367,6 +367,42 @@
   - Signing Cert SHA-256: `464070a93c24bfd9bf67f4b6e9f777cf470aec4009ea3c710c3d8e8f849f8143` (Matches Production Key)
   - Installed Status: Streamed Install Success on `emulator-5554`
 
+### Task 16: Final UI/UX Visual Polish Pass & Design System Refinement
+- **Date:** November 25, 2026 (Final Day)
+- **Branch:** `release/final-ui-polish`
+- **Scope:** Narrowly scoped visual alignment, responsive margin balancing, system inset contrast, and typography hierarchy polish across all 30 screens without altering backend APIs, PostgreSQL database, or navigation contracts.
+- **Key Visual Corrections Completed:**
+  1. **System Insets & Status Bar Contrast:**
+     - In `Theme.kt`, integrated `WindowCompat.getInsetsController(window, view)` with dynamic `isAppearanceLightStatusBars = !darkTheme` and `isAppearanceLightNavigationBars = !darkTheme`.
+     - Eliminated white-on-white invisible clock, battery, and signal indicators on daylight screens (`#F8F9F5`), ensuring dark charcoal system icons in light mode and bright white in dark mode.
+  2. **Auth & Welcome Screen Viewport Balancing:**
+     - `WelcomeActivity`: Added agricultural badge chip (`🌾 TAMIL NADU PRECISION AGRI-TECH`) anchoring the center card and balancing vertical viewport weight.
+     - `LoginActivity`, `CreateAccountActivity`, `ForgotPasswordActivity`: Embedded authoritative agricultural emblem + "GeoPulse" heading + "Precision Geospatial Farm Intelligence" tagline above the forms, eliminating the previous 35-40% top void.
+     - `OnboardingActivity`: Restructured to full-height `Arrangement.SpaceBetween` layout; pinned the TopBar with "GeoPulse" and "Skip" directly beneath status bar insets and anchored the "Next" button comfortably at the bottom with navigation bar clearance.
+  3. **Telemetry & Dashboard Header Truncation Fixes:**
+     - `PremiumComponents.kt`: Separated farmer welcome greeting and satellite status into distinct lines (`"Welcome, $farmerName 👋"` and `"🛰️ $selectedFieldSubtitle"`), preventing mid-word truncation (`"Live Sa..."`).
+     - `InteractiveSatelliteFarmMap.kt`: Formatted satellite data source display to fit cleanly on one line (`"🛰️ Pass: ${field.latestSatelliteDate} · $shortSource"`), removing raw ellipsis cuts.
+  4. **Component Truncation & Metric Alignment:**
+     - `MetricChip` in `GeoComponents.kt`: Added dynamic typography scaling (`11.5.sp` for length > 13) and 8.dp horizontal padding, eliminating ellipsis truncation on `"72% (Adequate)"` and `"Water Balance"`.
+     - `VegetationHealthModule`: Allowed 2-line graceful wrapping on Copernicus Sentinel-2C telemetry subhead, eliminating clipping.
+     - `CropCalendarModule`: Restored standard agricultural units (`24 - 28 Quintals`, `140 - 145 Days`) previously stripped by string splitting.
+     - `FullGisMapTab` in `Screen7Activity`: Shortened 4th filter chip to `"Trace Boundary"` and added `contentPadding = PaddingValues(end = 16.dp)` so all chips scroll without boundary clipping.
+  5. **Duplicate Header Removal & Empty State Handling:**
+     - Removed redundant headlines in `YieldEstimatorModule`, `FieldBoundaryModule`, `FieldOperationModule`, and `FertilizationPlanModule`, replacing them with descriptive agronomic subheadings.
+     - Added dedicated empty-state card in `NotificationCenterModule` (`"All Weather & Farm Conditions Normal"`) with reassuring icon and guidance when zero warnings are active.
+     - Restored primary and secondary navigation action buttons on `Screen26Activity` ("Return to Farm Dashboard", "View Farm Advisory Tasks") and `Screen29Activity` ("Return to Farm Dashboard", "Open Geospatial Field Map").
+  6. **Tamil Language & Internationalization Verification:**
+     - Tested Tamil locale switching via `Screen29Activity`; verified authentic Tamil script rendering (`தமிழ்`) without overflow or misalignments.
+- **Build & Verification Evidence:**
+  - Android Unit Tests: 24/24 tasks successful (100% PASS)
+  - Production Release Build: `assembleRelease` SUCCESSFUL in 1m 5s
+  - Polished Release APK: `app/build/outputs/apk/release/app-release.apk`
+  - APK SHA-256 Digest: `5459E4304B2307A31D3091F638BD593C4EF360572B296AECD47333A016CDB503`
+  - Signing Certificate SHA-256: `464070a93c24bfd9bf67f4b6e9f777cf470aec4009ea3c710c3d8e8f849f8143` (Verified unchanged production key)
+  - Device Installation: Streamed Install Success on `emulator-5554`
+  - Backend Regression Tests: 100% PASS (24 domain tests, 19 isolation tests, 18 empty/multi-field tests)
+  - Baseline Preservation: Original frozen RC-1 tag `v1.0.0-rc1` (`2083d56...`) and acceptance candidate commit `c0426aa...` remain permanently preserved.
+
 ---
 
 ## 2. UPCOMING PRIORITIES & ROADMAP

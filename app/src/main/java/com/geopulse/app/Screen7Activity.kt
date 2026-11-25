@@ -412,13 +412,14 @@ fun FullGisMapTab(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         LazyRow(
                             modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(end = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(listOf("Crop Health", "Soil Water", "Satellite View", "Interactive Boundary")) { layer ->
+                            items(listOf("Crop Health", "Soil Water", "Satellite View", "Trace Boundary")) { layer ->
                                 FilterChip(
-                                    selected = if (layer == "Interactive Boundary") isDrawingMode else (selectedLayer == layer && !isDrawingMode),
+                                    selected = if (layer == "Trace Boundary") isDrawingMode else (selectedLayer == layer && !isDrawingMode),
                                     onClick = {
-                                        if (layer == "Interactive Boundary") {
+                                        if (layer == "Trace Boundary") {
                                             isDrawingMode = !isDrawingMode
                                             if (isDrawingMode) {
                                                 statusNotice = "Tap 3 or more points on the map to enclose your farmland parcel."
@@ -433,7 +434,7 @@ fun FullGisMapTab(
                                         }
                                     },
                                     label = { Text(layer, fontWeight = FontWeight.SemiBold) },
-                                    leadingIcon = if (layer == "Interactive Boundary") {
+                                    leadingIcon = if (layer == "Trace Boundary") {
                                         { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp)) }
                                     } else null
                                 )

@@ -337,10 +337,18 @@ private fun HomeHeader(
                 )
             }
             Text(
-                text = "Welcome, $farmerName 👋 · $selectedFieldSubtitle",
+                text = "Welcome, $farmerName 👋",
                 color = colors.textSecondary,
                 fontSize = 11.5.sp,
                 fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "🛰️ $selectedFieldSubtitle",
+                color = colors.emerald,
+                fontSize = 10.5.sp,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

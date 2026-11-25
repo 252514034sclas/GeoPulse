@@ -17,8 +17,10 @@ class Screen29Activity : ComponentActivity() {
                     subtitle = "Select your theme (Dark, Light, or System default), language, and session preferences.",
                     icon = Icons.Default.Settings,
                     activity = this,
-                    nextActivityClass = null,
-                    nextButtonText = "Return to Dashboard"
+                    nextActivityClass = Screen7Activity::class.java,
+                    nextButtonText = "Return to Farm Dashboard",
+                    secondaryActionClass = Screen8Activity::class.java,
+                    secondaryActionText = "Open Geospatial Field Map"
                 )
             }
         }

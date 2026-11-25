@@ -653,8 +653,9 @@ fun InteractiveSatelliteFarmMap(
                                     color = Color(0xFFA5D6A7),
                                     fontSize = 10.sp
                                 )
+                                val shortSource = if (field.dataSource.contains("Copernicus", ignoreCase = true)) "ESA Sentinel-2" else field.dataSource
                                 Text(
-                                    text = "🛰️ Pass: ${field.latestSatelliteDate} · ${field.dataSource}",
+                                    text = "🛰️ Pass: ${field.latestSatelliteDate} · $shortSource",
                                     color = Color(0xFFB0BEC5),
                                     fontSize = 8.5.sp,
                                     maxLines = 1,

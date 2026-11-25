@@ -267,27 +267,19 @@ fun GeoTopBar(
 @Composable
 
 fun MetricChip(label: String, value: String, modifier: Modifier = Modifier) {
-
     Surface(
-
         modifier = modifier,
-
         shape = RoundedCornerShape(12.dp),
-
         color = MaterialTheme.colorScheme.surfaceVariant,
-
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
     ) {
-
-        Column(modifier = Modifier.padding(10.dp)) {
-            Text(label, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp)) {
+            Text(label, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(modifier = Modifier.height(3.dp))
-            Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            val fontSize = if (value.length > 13) 11.5.sp else if (value.length > 10) 12.5.sp else 13.5.sp
+            Text(value, fontSize = fontSize, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-
     }
-
 }
 
 
@@ -1159,7 +1151,7 @@ fun VegetationHealthModule() {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                         Text("Crop Health", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Copernicus Sentinel-2C (MSI 10m Surface Reflectance)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("Copernicus Sentinel-2C (MSI 10m Surface Reflectance)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                     Surface(
                         shape = RoundedCornerShape(8.dp),
@@ -1749,7 +1741,7 @@ fun YieldEstimatorModule() {
 
         Column(modifier = Modifier.padding(18.dp)) {
 
-            Text("Expected Harvest & Yield Estimator", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text("Seasonal Harvest & Production Forecast", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
 
             Spacer(modifier = Modifier.height(4.dp))
 
@@ -1823,7 +1815,7 @@ fun FieldBoundaryModule() {
 
         Column(modifier = Modifier.padding(18.dp)) {
 
-            Text("Field Boundary & Land Area", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text("Verified Land Parcel & GPS Perimeter", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
 
             Spacer(modifier = Modifier.height(4.dp))
 
@@ -2029,8 +2021,12 @@ fun CropCalendarModule() {
                 }
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MetricChip("Expected Yield", data?.expectedYieldRange?.split(" ")?.firstOrNull() ?: "28-34 Q", Modifier.weight(1f))
-                    MetricChip("Duration", data?.duration?.split(" ")?.firstOrNull() ?: "110 D", Modifier.weight(1f))
+                    val rawYield = data?.expectedYieldRange ?: "28-34 Q/ac"
+                    val formattedYield = if (rawYield.contains("Q", ignoreCase = true)) rawYield else "$rawYield Q/ac"
+                    val rawDuration = data?.duration ?: "110 Days"
+                    val formattedDuration = if (rawDuration.contains("D", ignoreCase = true)) rawDuration else "$rawDuration Days"
+                    MetricChip("Expected Yield", formattedYield, Modifier.weight(1f))
+                    MetricChip("Duration", formattedDuration, Modifier.weight(1f))
                     MetricChip("Water Need", "550 mm", Modifier.weight(1f))
                 }
             }
@@ -2048,7 +2044,7 @@ fun FieldOperationModule() {
 
         Column(modifier = Modifier.padding(18.dp)) {
 
-            Text("Field Operations & Plowing Planner", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text("Optimal Machinery Timing & Soil Workability", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
 
             Spacer(modifier = Modifier.height(4.dp))
 
@@ -2124,7 +2120,7 @@ fun FertilizationPlanModule() {
 
         Column(modifier = Modifier.padding(18.dp)) {
 
-            Text("Fertilizer & Nutrient Advisory", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text("Targeted Crop Nutrition & Split Dosing", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
 
             Spacer(modifier = Modifier.height(4.dp))
 
@@ -2903,15 +2899,50 @@ fun NotificationCenterModule() {
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                notificationList.forEach { notif ->
-                    com.geopulse.app.notifications.NotificationCardItem(
-                        notification = notif,
-                        onMarkRead = {
-                            NotificationRepository.markAsRead(context, notif.id)
-                            refreshList()
-                        }
-                    )
+            if (notificationList.isEmpty()) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "All Weather & Farm Conditions Normal",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "No severe weather alerts, pest outbreaks, or frost advisories for your registered field parcels.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    notificationList.forEach { notif ->
+                        com.geopulse.app.notifications.NotificationCardItem(
+                            notification = notif,
+                            onMarkRead = {
+                                NotificationRepository.markAsRead(context, notif.id)
+                                refreshList()
+                            }
+                        )
+                    }
                 }
             }
 
