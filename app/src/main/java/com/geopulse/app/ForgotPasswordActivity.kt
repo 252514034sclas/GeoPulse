@@ -68,9 +68,8 @@ class ForgotPasswordActivity : ComponentActivity() {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .widthIn(max = 440.dp)
-                                .glassSurface(cornerRadius = 24.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                                .glassSurface(cornerRadius = 16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
                             Column(
                                 modifier = Modifier

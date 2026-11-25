@@ -17,8 +17,10 @@ class Screen30Activity : ComponentActivity() {
                     subtitle = "Safely export crop history, soil reports, and expense logs as PDF or Excel spreadsheets.",
                     icon = Icons.Default.Description,
                     activity = this,
-                    nextActivityClass = null,
-                    nextButtonText = "Return to Dashboard"
+                    primaryActionClass = Screen7Activity::class.java,
+                    primaryActionText = "Return to Farm Dashboard",
+                    secondaryActionClass = Screen29Activity::class.java,
+                    secondaryActionText = "Manage App Settings & Sync"
                 )
             }
         }

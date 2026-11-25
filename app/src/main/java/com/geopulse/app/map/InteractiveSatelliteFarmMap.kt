@@ -288,9 +288,9 @@ fun InteractiveSatelliteFarmMap(
         modifier = modifier
             .fillMaxWidth()
             .height(390.dp),
-        shape = RoundedCornerShape(18.dp),
-        border = BorderStroke(1.2.dp, Color(0xFF233B2B)),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF09140D))
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
 

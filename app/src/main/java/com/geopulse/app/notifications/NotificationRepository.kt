@@ -237,9 +237,9 @@ fun NotificationCardItem(
         MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
     }
     val borderColor = if (isUnread) {
-        LimeAccent.copy(alpha = 0.6f)
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
     } else {
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
     }
 
     Surface(
@@ -332,9 +332,9 @@ fun NotificationCardItem(
                     ) {
                         Text(
                             text = "Mark as read",
-                            fontSize = 11.sp,
+                            fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = LimeAccent
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 } else {

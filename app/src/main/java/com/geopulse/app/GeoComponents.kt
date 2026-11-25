@@ -35,8 +35,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 
 import androidx.compose.foundation.border
-
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 
@@ -87,6 +88,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 
 import androidx.compose.ui.unit.Dp
 
@@ -113,38 +115,22 @@ import kotlin.math.roundToInt
 
 
 // Unified Professional Design Tokens
+val DarkBackground = Color(0xFF101510)       // Deep forest green #101510
+val DarkSurface = Color(0xFF182418)
+val DarkSurfaceElevated = Color(0xFF203020)
+val CardBorderColor = Color(0xFF283A28)
 
-val DarkBackground = Color(0xFF070D0A)
-
-val DarkSurface = Color(0xFF112217)
-
-val DarkSurfaceElevated = Color(0xFF193223)
-
-val CardBorderColor = Color(0xFF1E3F2B)
-
-
-
-val ForestDark = Color(0xFF0D1B12)
-
-val EmeraldPrimary = Color(0xFF1B4D3E)
-
+val ForestDark = Color(0xFF141F14)
+val EmeraldPrimary = Color(0xFF2E7D32)       // Primary agricultural green #2E7D32
 val LeafGreen = Color(0xFF2E7D32)
-
-val LimeAccent = Color(0xFF81C784)
-
-val GoldAccent = Color(0xFFFFCF55)
-
-val RedAccent = Color(0xFFFF795C)
-
-val CyanAccent = Color(0xFF6BD9F5)
-
-val PineDark = Color(0xFF070D0A)
-
-
+val LimeAccent = Color(0xFF4CAF50)
+val GoldAccent = Color(0xFFFFB300)
+val RedAccent = Color(0xFFD32F2F)
+val CyanAccent = Color(0xFF0288D1)
+val PineDark = Color(0xFF101510)
 
 val TextLight = Color(0xFFFFFFFF)
-
-val TextMuted = Color(0xFF94A3B8)
+val TextMuted = Color(0xFF9EAFA0)
 
 
 
@@ -295,13 +281,9 @@ fun MetricChip(label: String, value: String, modifier: Modifier = Modifier) {
     ) {
 
         Column(modifier = Modifier.padding(10.dp)) {
-
-            Text(label, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
+            Text(label, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(modifier = Modifier.height(3.dp))
-
-            Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-
+            Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
 
     }
@@ -697,12 +679,9 @@ fun DraggableBottomDock(
                 },
 
             shape = RoundedCornerShape(31.dp),
-
-            color = if (ThemePreferences.isDarkTheme) Color(0xFA0B160F) else MaterialTheme.colorScheme.surface,
-
-            shadowElevation = 10.dp,
-
-            border = BorderStroke(1.dp, if (ThemePreferences.isDarkTheme) Color(0xFF1E3F2B) else MaterialTheme.colorScheme.outline)
+            color = if (ThemePreferences.isDarkTheme) Color(0xFA101510) else MaterialTheme.colorScheme.surface,
+            shadowElevation = 4.dp,
+            border = BorderStroke(1.dp, if (ThemePreferences.isDarkTheme) Color(0xFF283A28) else MaterialTheme.colorScheme.outline)
 
         ) {
 
@@ -766,11 +745,11 @@ fun DraggableBottomDock(
 
                         val isCurrent = (indicatorFraction.value.roundToInt() == index)
 
-                        val unselectedTint = if (ThemePreferences.isDarkTheme) Color(0xFF94A3B8) else MaterialTheme.colorScheme.onSurfaceVariant
+                        val unselectedTint = if (ThemePreferences.isDarkTheme) Color(0xFF9EAFA0) else MaterialTheme.colorScheme.onSurfaceVariant
 
                         val textColor = if (isCurrent) Color.White else unselectedTint
 
-                        val iconTint = if (isCurrent) LimeAccent else unselectedTint
+                        val iconTint = if (isCurrent) Color.White else unselectedTint
 
 
 
@@ -963,22 +942,23 @@ fun EmptyFieldStateCard(
 
             Button(
                 onClick = onActionClick,
-                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
-                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = LeafGreen, contentColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.height(48.dp),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
-                    tint = DarkBackground,
-                    modifier = Modifier.size(16.dp)
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = actionLabel,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = DarkBackground
+                    fontSize = 14.sp,
+                    color = Color.White
                 )
             }
         }
@@ -1177,20 +1157,22 @@ fun VegetationHealthModule() {
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                         Text("Crop Health", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Copernicus Sentinel-2C (MSI 10m Surface Reflectance)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary)
+                        Text("Copernicus Sentinel-2C (MSI 10m Surface Reflectance)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = EmeraldPrimary.copy(alpha = 0.2f),
-                        border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.4f))
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
                         Text(
                             text = if (isLoadingTelemetry) "SYNCING" else "100% CLEAR",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = LimeAccent,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            softWrap = false,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
@@ -1345,20 +1327,22 @@ fun SoilMoistureModule() {
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                         Text("Crop Water Status & Soil Moisture", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Canopy NDMI (10m) & Soil Moisture Model", fontSize = 11.5.sp, color = CyanAccent)
+                        Text("Canopy NDMI (10m) & Soil Moisture Model", fontSize = 11.5.sp, color = CyanAccent, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = if (moistureVal < 40.0) RedAccent.copy(alpha = 0.2f) else EmeraldPrimary.copy(alpha = 0.2f),
-                        border = BorderStroke(1.dp, if (moistureVal < 40.0) RedAccent.copy(alpha = 0.5f) else EmeraldPrimary.copy(alpha = 0.5f))
+                        color = if (moistureVal < 40.0) RedAccent.copy(alpha = 0.15f) else MaterialTheme.colorScheme.primaryContainer,
+                        border = BorderStroke(1.dp, if (moistureVal < 40.0) RedAccent.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
                         Text(
                             text = if (isLoadingTelemetry) "SYNCING" else if (moistureVal < 40.0) "DEFICIT" else "ADEQUATE",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (moistureVal < 40.0) RedAccent else LimeAccent,
+                            color = if (moistureVal < 40.0) RedAccent else MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            softWrap = false,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
@@ -2902,17 +2886,17 @@ fun NotificationCenterModule() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Weather & Crop Warning Center", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                    Text("Active Alerts & Warnings", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text("Critical agricultural alerts and weather warnings.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Real-time telemetry and agronomist guidance notices.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (unreadCount > 0) {
                     TextButton(onClick = {
                         NotificationRepository.markAllAsRead(context)
                         refreshList()
                     }) {
-                        Text("Mark all read", fontSize = 11.5.sp, color = LimeAccent, fontWeight = FontWeight.Bold)
+                        Text("Mark all read", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -3220,34 +3204,32 @@ fun MapConfigurationModule() {
 
 
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 BasemapType.values().forEach { type ->
-
                     val isSel = activeBasemapType == type
-
                     FilterChip(
-
                         selected = isSel,
-
                         onClick = {
-
                             activeBasemapType = type
-
                             MapConfig.setSelectedBasemap(context, type)
-
                             mapStatusMsg = "Default basemap set to ${type.displayName}"
-
                         },
-
-                        modifier = Modifier.weight(1f),
-
-                        label = { Text("${type.badge} ${type.displayName.split(" ")[0]}", fontSize = 10.5.sp, fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal) }
-
+                        label = {
+                            Text(
+                                "${type.badge} ${type.displayName.split(" ")[0]}",
+                                fontSize = 11.5.sp,
+                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        }
                     )
-
                 }
-
             }
 
 
@@ -3350,46 +3332,48 @@ fun DataPrivacyDeletionModule() {
 
         Column(modifier = Modifier.padding(18.dp)) {
 
-            Text("Farm Records & Data Export", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text("Export Certified Farm Records", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            Text("Export your field boundaries, spray logs, and expense records.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Export verified GIS boundary parcels, spray diary, and soil hydration reports.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             Spacer(modifier = Modifier.height(14.dp))
 
-
-
-            OutlinedButton(
-
+            Button(
                 onClick = { exportCompleted = true },
-
                 modifier = Modifier.fillMaxWidth().height(48.dp),
-
-                shape = RoundedCornerShape(12.dp)
-
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.White)
             ) {
-
-                Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
-
+                Icon(Icons.Default.Download, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-
-                Text(if (exportCompleted) "Farm Records Exported Successfully" else "Export Field Records (.geojson)", fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
-
+                Text(if (exportCompleted) "Farm Records Exported Successfully" else "Export Field Records (.geojson)", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
             }
-
-
 
             Spacer(modifier = Modifier.height(14.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-
                 MetricChip("Format", "GeoJSON", Modifier.weight(1f))
-
                 MetricChip("Records", "Field 1 Diary", Modifier.weight(1f))
-
                 MetricChip("Privacy", "Encrypted", Modifier.weight(1f))
+            }
 
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                        Text("Farmer Data Sovereignty & Encryption", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                    }
+                    Text("All GPS boundaries, agronomy logs, and telemetry are isolated per authenticated farmer account and encrypted at rest in PostgreSQL. You can request full data purge at any time.", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 16.sp)
+                }
             }
 
         }
@@ -3553,9 +3537,7 @@ fun GeoDetailScreenContent(
                             end = horizontalPadding,
 
                             top = 12.dp,
-
-                            bottom = 96.dp
-
+                            bottom = 120.dp
                         ),
 
                         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -3645,61 +3627,38 @@ fun GeoDetailScreenContent(
                                     },
 
                                     modifier = Modifier
-
                                         .fillMaxWidth()
-
-                                        .height(50.dp),
-
+                                        .height(52.dp),
                                     shape = RoundedCornerShape(14.dp),
-
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = Color.White
+                                    )
                                 ) {
-
-                                    Text(effectivePrimaryText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-
+                                    Text(effectivePrimaryText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 }
-
                             }
-
                         }
 
-
-
                         // Contextual Secondary Action Button (Optional)
-
                         if (secondaryActionClass != null && secondaryActionText != null) {
-
                             item {
-
+                                val isDark = ThemePreferences.isDarkTheme
+                                val secColor = if (isDark) LimeAccent else LeafGreen
                                 OutlinedButton(
-
                                     onClick = {
-
                                         activity.startActivity(Intent(activity, secondaryActionClass))
-
                                     },
-
                                     modifier = Modifier
-
                                         .fillMaxWidth()
-
-                                        .height(50.dp),
-
+                                        .height(52.dp),
                                     shape = RoundedCornerShape(14.dp),
-
-                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = LimeAccent),
-
-                                    border = BorderStroke(1.dp, LimeAccent.copy(alpha = 0.6f))
-
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = secColor),
+                                    border = BorderStroke(1.5.dp, secColor.copy(alpha = 0.7f))
                                 ) {
-
-                                    Text(secondaryActionText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-
+                                    Text(secondaryActionText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 }
-
                             }
-
                         }
 
 

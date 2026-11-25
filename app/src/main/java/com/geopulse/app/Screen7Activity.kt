@@ -394,7 +394,7 @@ fun FullGisMapTab(
                 modifier = Modifier
                     .width(contentWidth)
                     .fillMaxHeight(),
-                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 16.dp, bottom = 100.dp),
+                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 16.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 if (showHeader) {
@@ -623,8 +623,8 @@ fun FullGisMapTab(
                             .fillMaxWidth()
                             .height(350.dp),
                         shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.5.dp, if (isDrawingMode) LimeAccent else CardBorderColor),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF09140D))
+                        border = BorderStroke(1.dp, if (isDrawingMode) LimeAccent else MaterialTheme.colorScheme.outline),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         MapLibreGisMap(
                             modifier = Modifier.fillMaxSize(),
@@ -871,18 +871,18 @@ fun FullGisMapTab(
                         // Clean Empty State Card
                         Card(
                             modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
                             Column(
                                 modifier = Modifier.padding(24.dp).fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Icon(Icons.Default.Landscape, contentDescription = null, tint = LimeAccent, modifier = Modifier.size(44.dp))
+                                Icon(Icons.Default.Landscape, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
                                 Text("No Farm Parcels Added Yet", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
                                 Text(
                                     "Tap 'Interactive Boundary' above or tap on the map to draw your field boundary and get live satellite intelligence.",
-                                    fontSize = 12.5.sp,
+                                    fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
@@ -891,9 +891,11 @@ fun FullGisMapTab(
                                         isDrawingMode = true
                                         statusNotice = "Tap 3 or more points on the map to enclose your farmland parcel."
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = LimeAccent, contentColor = PineDark)
+                                    modifier = Modifier.height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = LeafGreen, contentColor = Color.White)
                                 ) {
-                                    Text("Trace Field Boundary", fontWeight = FontWeight.Bold)
+                                    Text("Trace Field Boundary", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                 }
                             }
                         }
@@ -996,7 +998,7 @@ fun FullAdvisoryTab(
                 modifier = Modifier
                     .width(contentWidth)
                     .fillMaxHeight(),
-                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 104.dp),
+                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 if (showHeader) {
@@ -1165,7 +1167,7 @@ fun FullProfileSettingsTab(
                 modifier = Modifier
                     .width(contentWidth)
                     .fillMaxHeight(),
-                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 104.dp),
+                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

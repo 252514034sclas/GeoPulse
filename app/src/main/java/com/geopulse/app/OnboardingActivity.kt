@@ -125,8 +125,8 @@ class OnboardingActivity : ComponentActivity() {
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .glassSurface(cornerRadius = 24.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                                    .glassSurface(cornerRadius = 16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                             ) {
                                 Column(
                                     modifier = Modifier
