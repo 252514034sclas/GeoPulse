@@ -412,7 +412,7 @@ fun DraggableBottomDock(
 
     val totalTabs = 4
 
-    val tabs = remember { listOf("Home", "Map", "Activity", "Profile") }
+    val tabs = remember { listOf("Home", "Fields", "Activity", "Profile") }
 
     val icons = remember {
 
@@ -420,7 +420,7 @@ fun DraggableBottomDock(
 
             Icons.Default.Eco,
 
-            Icons.Default.Place,
+            Icons.Default.Landscape,
 
             Icons.Default.Assessment,
 

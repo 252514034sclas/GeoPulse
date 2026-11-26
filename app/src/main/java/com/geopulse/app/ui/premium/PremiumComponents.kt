@@ -123,6 +123,7 @@ fun PremiumHomeScreen(
     onCropHealthClick: () -> Unit = {},
     onFieldBoundaryClick: () -> Unit = {},
     onYieldClick: () -> Unit = {},
+    onActivityClick: () -> Unit = {},
     onNavigate: (Class<*>) -> Unit = {}
 ) {
     val colors = rememberPremiumColors(isDarkTheme)
@@ -166,7 +167,7 @@ fun PremiumHomeScreen(
                     )
                 }
 
-                // Tier 2: Farm Map (250dp, Satellite/Normal Map toggle, observation date, field area)
+                // Tier 2: Selected Field Summary & Map (Interactive Satellite Map, observation date, field area)
                 item {
                     FieldMapCard(
                         colors = colors,
@@ -175,7 +176,7 @@ fun PremiumHomeScreen(
                     )
                 }
 
-                // Tier 3: Farm Condition (4 simple cards: Crop Health, Soil Water, Weather, Farm Alerts)
+                // Tier 3: Farm Condition Summary (Weather, Crop Health NDVI, Soil Water, Alerts)
                 item {
                     FarmConditionSection(
                         colors = colors,
@@ -186,7 +187,7 @@ fun PremiumHomeScreen(
                     )
                 }
 
-                // Tier 4: Today's Advice (What is happening, What to do, When, Why + Action)
+                // Tier 4: Most Important Recommended Action (What is happening, What to do, When, Why + 1 Action)
                 item {
                     TodaysAdviceSection(
                         colors = colors,
@@ -194,11 +195,12 @@ fun PremiumHomeScreen(
                     )
                 }
 
-                // Tier 5: Quick Actions (6 primary cards + expandable "View All Tools" sheet)
+                // Tier 5: Upcoming Task or Important Warning (What matters today - contextual deep dive)
                 item {
-                    QuickActionsSection(
+                    UpcomingTaskOrWarningSection(
                         colors = colors,
-                        onNavigate = onNavigate
+                        onViewTaskClick = onActivityClick,
+                        onViewAdvisoryClick = onWeatherClick
                     )
                 }
             }
@@ -749,6 +751,136 @@ private fun AdviceRow(
             lineHeight = 16.5.sp,
             modifier = Modifier.weight(1f)
         )
+    }
+}
+
+// -------------------------------------------------------------------------
+// 5. Upcoming Task or Important Warning: Contextual Operational Banner
+// -------------------------------------------------------------------------
+@Composable
+private fun UpcomingTaskOrWarningSection(
+    colors: PremiumColors,
+    onViewTaskClick: () -> Unit,
+    onViewAdvisoryClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = colors.cardBg,
+        border = BorderStroke(1.dp, colors.cardBorder),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(colors.lime.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Assessment,
+                            contentDescription = null,
+                            tint = colors.lime,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "UPCOMING FARM ACTIVITY",
+                            color = colors.lime,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                        Text(
+                            text = "Priority task scheduled for your land",
+                            color = colors.textSecondary,
+                            fontSize = 10.5.sp
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = colors.emerald.copy(alpha = 0.2f)
+                ) {
+                    Text(
+                        text = "Due Today",
+                        color = colors.lime,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            HorizontalDivider(color = colors.cardBorder)
+
+            Text(
+                text = "Foliar Nutrient Spraying Window",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = colors.textPrimary
+            )
+
+            Text(
+                text = "Atmospheric conditions are optimal today (wind 8 km/h, temperature 28°C). Apply recommended nutrient spray before Friday's forecasted rainfall.",
+                fontSize = 12.sp,
+                color = colors.textSecondary,
+                lineHeight = 16.5.sp
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onViewAdvisoryClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.lime),
+                    border = BorderStroke(1.dp, colors.lime.copy(alpha = 0.6f))
+                ) {
+                    Text(
+                        text = "Weather Details",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.5.sp
+                    )
+                }
+
+                Button(
+                    onClick = onViewTaskClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.accentGreen,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "Open Activity >",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.5.sp
+                    )
+                }
+            }
+        }
     }
 }
 

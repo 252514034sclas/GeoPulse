@@ -213,6 +213,9 @@ class Screen7Activity : ComponentActivity() {
                                     onYieldClick = {
                                         startActivity(Intent(this@Screen7Activity, Screen16Activity::class.java))
                                     },
+                                    onActivityClick = {
+                                        coroutineScope.launch { pagerState.animateScrollToPage(2) }
+                                    },
                                     onNavigate = { targetClass ->
                                         startActivity(Intent(this@Screen7Activity, targetClass))
                                     }
@@ -431,10 +434,81 @@ fun FullGisMapTab(
                 if (showHeader) {
                     item {
                         GeoTopBar(
-                            title = "Geospatial Field Map",
-                            subtitle = "Satellite Pass: Oct 29, 2026 · GPS: 13.06° N, 80.21° E · ${zones.size} Parcels",
+                            title = "Agricultural Fields & Land Parcels",
+                            subtitle = "Field Selection · Sentinel-2 observation & live GPS boundaries · ${zones.size} Parcels",
                             actionIcon = Icons.Default.MyLocation
                         )
+                    }
+                }
+
+                // Flow Step 1: Field Selection (Fields -> Field Selection -> Selected Field Overview)
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Field Selection",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.5.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "${zones.size} Registered",
+                                fontSize = 11.5.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(zones) { zone ->
+                                val isSelected = selectedZone?.id == zone.id
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        selectedZone = zone
+                                        zone.id.toIntOrNull()?.let { fId ->
+                                            com.geopulse.app.network.UserSession.setSelectedFieldId(context, fId)
+                                        }
+                                    },
+                                    label = {
+                                        Text(
+                                            text = "${zone.name} (${zone.crop})",
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Landscape,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp),
+                                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                )
+                            }
+                            item {
+                                FilterChip(
+                                    selected = isDrawingMode,
+                                    onClick = {
+                                        isDrawingMode = !isDrawingMode
+                                        if (isDrawingMode) {
+                                            statusNotice = "Tap 3 or more points on the map to enclose your farmland parcel."
+                                        }
+                                    },
+                                    label = { Text("+ Add Parcel", fontWeight = FontWeight.Bold) },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -871,6 +945,86 @@ fun FullGisMapTab(
                                     }
                                 }
 
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+
+                                Text(
+                                    text = "Field Navigation & Analytical Capabilities",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+
+                                // Structured Access to 6 Field Domains
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    // 1. Field Map & Boundaries
+                                    FieldFeatureRow(
+                                        title = "Field Map & Boundaries",
+                                        subtitle = "Interactive Sentinel-2 map, GPS boundary & parcel area",
+                                        icon = Icons.Default.Place,
+                                        iconTint = LimeAccent,
+                                        badge = currentZone.acreage,
+                                        onClick = onBoundaryClick
+                                    )
+
+                                    // 2. Satellite Crop Health
+                                    FieldFeatureRow(
+                                        title = "Satellite Crop Health & Vigor",
+                                        subtitle = "NDVI vegetative index: ${currentZone.cropHealth} · Canopy health",
+                                        icon = Icons.Default.Eco,
+                                        iconTint = EmeraldPrimary,
+                                        badge = "Live Sentinel-2",
+                                        onClick = onVegetationClick
+                                    )
+
+                                    // 3. Soil Moisture
+                                    FieldFeatureRow(
+                                        title = "Soil Moisture & Hydration",
+                                        subtitle = "Root-zone moisture: ${currentZone.moisture} · Topsoil hydration report",
+                                        icon = Icons.Default.WaterDrop,
+                                        iconTint = CyanAccent,
+                                        badge = currentZone.moisture,
+                                        onClick = {
+                                            onNavigate?.invoke(Screen12Activity::class.java)
+                                        }
+                                    )
+
+                                    // 4. Irrigation Recommendations
+                                    FieldFeatureRow(
+                                        title = "Irrigation Recommendations",
+                                        subtitle = "FAO-56 water balance: ${currentZone.irrigationVerdict} (${currentZone.irrigationDepthMm} mm)",
+                                        icon = Icons.Default.Water,
+                                        iconTint = StatusBlue,
+                                        badge = "${String.format(java.util.Locale.US, "%,d", currentZone.irrigationVolumeLitres)} L",
+                                        onClick = {
+                                            onNavigate?.invoke(Screen13Activity::class.java)
+                                        }
+                                    )
+
+                                    // 5. Crop and Sowing Information
+                                    FieldFeatureRow(
+                                        title = "Crop & Sowing Information",
+                                        subtitle = "Variety: ${currentZone.seedVariety} · Sowing schedule & geometry",
+                                        icon = Icons.Default.Spa,
+                                        iconTint = LimeAccent,
+                                        badge = "${currentZone.totalSeedKg} kg Seed",
+                                        onClick = {
+                                            onNavigate?.invoke(Screen18Activity::class.java)
+                                        }
+                                    )
+
+                                    // 6. Field-Specific History
+                                    FieldFeatureRow(
+                                        title = "Field History & Yield Forecast",
+                                        subtitle = "Seasonal bi-weekly growth trends & harvest yield estimator",
+                                        icon = Icons.Default.Assessment,
+                                        iconTint = GoldAccent,
+                                        badge = "Yield Forecast",
+                                        onClick = {
+                                            onNavigate?.invoke(Screen16Activity::class.java)
+                                        }
+                                    )
+                                }
+
                                 // Quick Action Navigation Buttons
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -939,15 +1093,85 @@ fun FullGisMapTab(
 }
 
 // -------------------------------------------------------------
-// Tab 2: Farm Advisory & Daily Action Planner (Practical Layperson Guidance)
+// Reusable Field Domain Feature Row
 // -------------------------------------------------------------
-data class FarmerAdvisoryItem(
+@Composable
+fun FieldFeatureRow(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconTint: Color,
+    badge: String? = null,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(iconTint.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(18.dp))
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                    if (badge != null) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = iconTint.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = badge,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = iconTint,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+                Text(subtitle, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            }
+
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+        }
+    }
+}
+
+// -------------------------------------------------------------
+// Tab 2: Farm Activities & Task Planner (Operational Workflows)
+// -------------------------------------------------------------
+data class FarmActionItem(
+    val id: String,
     val title: String,
     val subtitle: String,
     val timeBadge: String,
     val iconColor: Color,
     val icon: ImageVector,
-    val targetClass: Class<*>
+    val targetClass: Class<*>,
+    val details: String = ""
 )
 
 @Composable
@@ -955,47 +1179,64 @@ fun FullAdvisoryTab(
     onTaskClick: (Class<*>) -> Unit,
     showHeader: Boolean = true
 ) {
-    val tasks = remember {
+    val completedTasks = remember { mutableStateMapOf<String, Boolean>() }
+
+    val todayTasks = remember {
         listOf(
-            FarmerAdvisoryItem(
+            FarmActionItem(
+                id = "spray_window",
                 title = "Safe Spraying Window Open Today",
-                subtitle = "Wind is calm at 8 km/h and humidity 58%. Safe to spray foliar nutrients before Friday rains.",
-                timeBadge = "Today",
+                subtitle = "Wind calm at 8 km/h, humidity 58%. Safe to spray foliar nutrients before Friday rains.",
+                timeBadge = "Optimal Today",
                 iconColor = LimeAccent,
                 icon = Icons.Default.WbSunny,
-                targetClass = Screen14Activity::class.java
+                targetClass = Screen14Activity::class.java,
+                details = "Optimal foliar nutrient & neem oil spray conditions"
             ),
-            FarmerAdvisoryItem(
-                title = "Topsoil Moisture Dropping",
-                subtitle = "Satellite water index indicates moisture at 54% in Field 1. Schedule watering tomorrow morning.",
+            FarmActionItem(
+                id = "irrigation_today",
+                title = "Schedule Morning Root-Zone Irrigation",
+                subtitle = "Soil water index indicates 54% moisture in Field 1. Apply 15 mm irrigation before 10:00 AM.",
                 timeBadge = "Next 24h",
                 iconColor = CyanAccent,
                 icon = Icons.Default.WaterDrop,
-                targetClass = Screen12Activity::class.java
-            ),
-            FarmerAdvisoryItem(
+                targetClass = Screen13Activity::class.java,
+                details = "FAO-56 water deficit: 15 mm (150,000 L volume)"
+            )
+        )
+    }
+
+    val upcomingActivities = remember {
+        listOf(
+            FarmActionItem(
+                id = "nitrogen_topdress",
                 title = "Nitrogen Fertilizer Top-Dressing",
-                subtitle = "Satellite crop health shows moderate vigor. Apply split Urea dose (45 kg/acre) before rains.",
-                timeBadge = "This Week",
+                subtitle = "Vegetative tasseling phase. Apply split Urea dose (45 kg/acre) prior to forecasted rain.",
+                timeBadge = "In 2 Days",
                 iconColor = EmeraldPrimary,
                 icon = Icons.Default.Spa,
-                targetClass = Screen20Activity::class.java
+                targetClass = Screen20Activity::class.java,
+                details = "Target: Field 1 · Urea (46% N)"
             ),
-            FarmerAdvisoryItem(
-                title = "Pest & Leaf Blight Watch",
-                subtitle = "Warm temperatures favor caterpillar emergence. Inspect under-leaf canopy in Field 2.",
+            FarmActionItem(
+                id = "cultivation_weeding",
+                title = "Field Cultivation & Inter-Row Weeding",
+                subtitle = "Shallow plowing and aeration to suppress weed growth while soil moisture is workable.",
+                timeBadge = "In 4 Days",
+                iconColor = GoldAccent,
+                icon = Icons.Default.Agriculture,
+                targetClass = Screen19Activity::class.java,
+                details = "Target: Field 1 & 2 · Inter-row cultivator"
+            ),
+            FarmActionItem(
+                id = "pest_scouting",
+                title = "Under-Canopy Pest & Disease Scouting",
+                subtitle = "Warm temperatures favor caterpillar emergence. Inspect lower leaf surfaces for early fall armyworm.",
                 timeBadge = "Advisory",
                 iconColor = RedAccent,
                 icon = Icons.Default.BugReport,
-                targetClass = Screen15Activity::class.java
-            ),
-            FarmerAdvisoryItem(
-                title = "Local Mandi Prices Trending Up",
-                subtitle = "Corn wholesale prices rose +3.2% in regional agricultural markets.",
-                timeBadge = "Market",
-                iconColor = GoldAccent,
-                icon = Icons.AutoMirrored.Filled.TrendingUp,
-                targetClass = Screen27Activity::class.java
+                targetClass = Screen15Activity::class.java,
+                details = "Biological check: Neem oil or pheromone traps"
             )
         )
     }
@@ -1036,8 +1277,8 @@ fun FullAdvisoryTab(
                 if (showHeader) {
                     item {
                         GeoTopBar(
-                            title = "Farm Advisory & Action Plan",
-                            subtitle = "Satellite-derived daily farming recommendations"
+                            title = "Farm Activities & Task Planner",
+                            subtitle = "Operational schedules, spray windows & fieldwork planner"
                         )
                     }
                 }
@@ -1081,23 +1322,30 @@ fun FullAdvisoryTab(
                     }
                 }
 
-                // Practical KPI Chips
+                // 1. Today's Tasks
+                val pendingTodayTasks = todayTasks.filter { completedTasks[it.id] != true }
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        MetricChip("Crop Vigor", "84% (Optimal)", Modifier.weight(1f))
-                        MetricChip("Soil Moisture", "72% (Adequate)", Modifier.weight(1f))
-                        MetricChip("Spraying", "Safe Today", Modifier.weight(1f))
+                        Text(
+                            text = "Today's Tasks (${pendingTodayTasks.size} Pending)",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Tap to Complete / Open",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
 
-                item {
-                    Text("Today's Actionable Tasks (" + tasks.size + ")", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                }
-
-                items(tasks) { task ->
+                items(todayTasks) { task ->
+                    val isDone = completedTasks[task.id] == true
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1105,16 +1353,27 @@ fun FullAdvisoryTab(
                             .clickable { onTaskClick(task.targetClass) },
                         shape = RoundedCornerShape(16.dp),
                         color = MaterialTheme.colorScheme.surface,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                        border = BorderStroke(1.dp, if (isDone) EmeraldPrimary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            Checkbox(
+                                checked = isDone,
+                                onCheckedChange = { checked ->
+                                    completedTasks[task.id] = checked
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = EmeraldPrimary,
+                                    checkmarkColor = Color.White
+                                )
+                            )
+
                             Box(
                                 modifier = Modifier
-                                    .size(38.dp)
+                                    .size(36.dp)
                                     .clip(CircleShape)
                                     .background(task.iconColor.copy(alpha = 0.16f)),
                                 contentAlignment = Alignment.Center
@@ -1128,25 +1387,210 @@ fun FullAdvisoryTab(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(task.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    Text(
+                                        text = task.title,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.5.sp,
+                                        color = if (isDone) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface
+                                    )
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
-                                        color = task.iconColor.copy(alpha = 0.15f)
+                                        color = if (isDone) EmeraldPrimary.copy(alpha = 0.15f) else task.iconColor.copy(alpha = 0.15f)
                                     ) {
                                         Text(
-                                            task.timeBadge,
+                                            text = if (isDone) "Done" else task.timeBadge,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = task.iconColor,
+                                            color = if (isDone) EmeraldPrimary else task.iconColor,
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(3.dp))
-                                Text(task.subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 16.sp)
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = task.subtitle,
+                                    fontSize = 11.5.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    lineHeight = 15.sp
+                                )
                             }
 
                             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+
+                // 2. Upcoming Agricultural Activities
+                item {
+                    Text(
+                        text = "Upcoming Agricultural Activities (${upcomingActivities.size})",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                items(upcomingActivities) { activity ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { onTaskClick(activity.targetClass) },
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(activity.iconColor.copy(alpha = 0.16f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(activity.icon, contentDescription = null, tint = activity.iconColor, modifier = Modifier.size(18.dp))
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = activity.title,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.5.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = activity.iconColor.copy(alpha = 0.15f)
+                                    ) {
+                                        Text(
+                                            text = activity.timeBadge,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = activity.iconColor,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = activity.subtitle,
+                                    fontSize = 11.5.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    lineHeight = 15.sp
+                                )
+                            }
+
+                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+
+                // 3. Irrigation Schedule Card
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, StatusBlue.copy(alpha = 0.5f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(Icons.Default.Water, contentDescription = null, tint = StatusBlue, modifier = Modifier.size(20.dp))
+                                    Text("Irrigation Schedule", fontWeight = FontWeight.Bold, fontSize = 14.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                                }
+                                Surface(shape = RoundedCornerShape(6.dp), color = StatusBlue.copy(alpha = 0.15f)) {
+                                    Text("FAO-56 Cycle", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = StatusBlue, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                }
+                            }
+                            Text("Next Window: Tomorrow 6:00 AM - 8:30 AM · Required Depth: 15.0 mm (150,000 Litres)", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Button(
+                                onClick = { onTaskClick(Screen13Activity::class.java) },
+                                modifier = Modifier.fillMaxWidth().height(42.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = StatusBlue)
+                            ) {
+                                Text("View Irrigation Timing Guide >", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                            }
+                        }
+                    }
+                }
+
+                // 4. Sowing Schedule Card
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.5f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(Icons.Default.Spa, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(20.dp))
+                                    Text("Sowing Schedule", fontWeight = FontWeight.Bold, fontSize = 14.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                                }
+                                Surface(shape = RoundedCornerShape(6.dp), color = EmeraldPrimary.copy(alpha = 0.15f)) {
+                                    Text("Kharif Season", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = EmeraldPrimary, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                }
+                            }
+                            Text("Target Window: June 15 - July 15 · Variety: DKC 9108 (Bio-Seed) · Seed Rate: 20 kg/ha", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Button(
+                                onClick = { onTaskClick(Screen18Activity::class.java) },
+                                modifier = Modifier.fillMaxWidth().height(42.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                            ) {
+                                Text("View Crop Growth Calendar >", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                            }
+                        }
+                    }
+                }
+
+                // 5. Important Advisory Actions Notice
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = BorderStroke(1.dp, GoldAccent.copy(alpha = 0.7f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(Icons.Default.Warning, contentDescription = null, tint = GoldAccent, modifier = Modifier.size(20.dp))
+                                Text("Important Weather Advisory Action", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = GoldAccent)
+                            }
+                            Text(
+                                "Rain arriving Friday (12 mm expected). Postpone heavy irrigation to prevent nutrient runoff and save electricity/fuel pumping costs.",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                lineHeight = 16.sp
+                            )
+                            OutlinedButton(
+                                onClick = { onTaskClick(Screen14Activity::class.java) },
+                                modifier = Modifier.fillMaxWidth().height(42.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(1.dp, GoldAccent)
+                            ) {
+                                Text("View Weather & Spraying Forecast >", fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = GoldAccent)
+                            }
                         }
                     }
                 }
@@ -1156,7 +1600,7 @@ fun FullAdvisoryTab(
 }
 
 // -------------------------------------------------------------
-// Tab 3: Farm Profile & Settings (3-Way Theme Switcher & Practical Tools)
+// Tab 3: Farm Profile & Settings (Preferences, Language & Tools)
 // -------------------------------------------------------------
 @Composable
 fun FullProfileSettingsTab(
@@ -1166,8 +1610,11 @@ fun FullProfileSettingsTab(
     onSignOut: () -> Unit,
     showHeader: Boolean = true
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var notificationsEnabled by remember { mutableStateOf(true) }
-    var offlineCaching by remember { mutableStateOf(true) }
+    var selectedLanguage by remember { mutableStateOf("English") }
+    var selectedAreaUnit by remember { mutableStateOf("Acres") }
+    var selectedTempUnit by remember { mutableStateOf("°C") }
 
     val isDark = ThemePreferences.isDarkTheme
     val gisBgBrush = if (isDark) {
@@ -1205,11 +1652,14 @@ fun FullProfileSettingsTab(
             ) {
                 if (showHeader) {
                     item {
-                        GeoTopBar(title = "Profile & Settings")
+                        GeoTopBar(
+                            title = "Farmer Profile & Preferences",
+                            subtitle = "Account settings, regional units, language & notification controls"
+                        )
                     }
                 }
 
-                // Farmer Profile Header Card
+                // 1. Farmer Details Header Card
                 item {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
@@ -1222,7 +1672,6 @@ fun FullProfileSettingsTab(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            val context = androidx.compose.ui.platform.LocalContext.current
                             val fullName = remember { com.geopulse.app.network.UserSession.getFullName(context).ifBlank { "Registered Farmer" } }
                             val farmName = remember { com.geopulse.app.network.UserSession.getFarmName(context).ifBlank { "GeoPulse Farmland" } }
                             val initial = fullName.take(1).uppercase()
@@ -1245,7 +1694,47 @@ fun FullProfileSettingsTab(
                     }
                 }
 
-                // Appearance & Theme Mode Selector (3-way: Dark, Light, System)
+                // 2. Language Selection Card
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Language / மொழி", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
+                                TextButton(onClick = { onNavigate(Screen29Activity::class.java) }) {
+                                    Text("Settings >", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                listOf("English", "தமிழ் (Tamil)").forEach { lang ->
+                                    val isSelected = selectedLanguage == lang
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { selectedLanguage = lang },
+                                        modifier = Modifier.weight(1f),
+                                        label = {
+                                            Text(
+                                                lang,
+                                                fontSize = 12.5.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 3. Notification Preferences Card
                 item {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
@@ -1254,9 +1743,75 @@ fun FullProfileSettingsTab(
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("Theme & Appearance", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
-                            Text("Choose your preferred display theme", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Notification Preferences", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
+                                TextButton(onClick = { onNavigate(Screen28Activity::class.java) }) {
+                                    Text("Alert Center >", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
 
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                    Text("In-App Weather & Spray Alerts", fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    Text("Real-time warnings for severe weather, rain & spray windows", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Switch(checked = notificationsEnabled, onCheckedChange = { notificationsEnabled = it })
+                            }
+
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                    Text("Quiet Hours (10:00 PM - 06:00 AM)", fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    Text("Non-critical agricultural advisories silenced during night", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Surface(shape = RoundedCornerShape(6.dp), color = EmeraldPrimary.copy(alpha = 0.15f)) {
+                                    Text("Active", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = EmeraldPrimary, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 4. Units & Regional Settings Card
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("Units & Regional Display", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
+
+                            // Area Units
+                            Text("Land Area Unit", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                listOf("Acres", "Hectares", "Cents").forEach { unit ->
+                                    val isSelected = selectedAreaUnit == unit
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { selectedAreaUnit = unit },
+                                        modifier = Modifier.weight(1f),
+                                        label = { Text(unit, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) }
+                                    )
+                                }
+                            }
+
+                            // Theme Mode
+                            Text("Theme & Appearance", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1284,39 +1839,11 @@ fun FullProfileSettingsTab(
                                     )
                                 }
                             }
-
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                                    Text("In-App Weather & Spray Alerts", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-                                    Text("In-app alert banners for rain, wind drift, and disease risks", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                                Switch(checked = notificationsEnabled, onCheckedChange = { notificationsEnabled = it })
-                            }
-
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                                    Text("Durable Offline Storage (Coming Soon)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-                                    Text("Multi-parcel offline persistence requires local Room DB integration (in development)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
-                                }
-                                Switch(checked = false, enabled = false, onCheckedChange = { })
-                            }
                         }
                     }
                 }
 
-                // Practical Farm Operations & Layperson Tools
+                // 5. Account Security & Farm Records
                 item {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
@@ -1325,32 +1852,45 @@ fun FullProfileSettingsTab(
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Practical Farm Tools", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
+                            Text("Account Security & Data", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                             Spacer(modifier = Modifier.height(2.dp))
 
-                            ProfileItemRow("Local Mandi Market Rates", "Wholesale selling prices for your crops", Icons.AutoMirrored.Filled.TrendingUp) {
-                                onNavigate(Screen27Activity::class.java)
-                            }
-                            ProfileItemRow("Farm Budget & Profit Calculator", "Track seed, fertilizer, and harvest net margin", Icons.Default.MonetizationOn) {
-                                onNavigate(Screen22Activity::class.java)
-                            }
-                            ProfileItemRow("Crop Growth Calendar", "Growth stage milestones and harvest timeline", Icons.Default.CalendarMonth) {
-                                onNavigate(Screen18Activity::class.java)
-                            }
-                            ProfileItemRow("My Land Parcels & Fields", "Switch and manage your registered fields", Icons.Default.Landscape) {
-                                onNavigate(Screen23Activity::class.java)
-                            }
-                            ProfileItemRow("Kisan Advisory & Helpline", "Direct chat with agricultural specialists", Icons.Default.Chat) {
-                                onNavigate(Screen26Activity::class.java)
-                            }
-                            ProfileItemRow("Data Privacy & Farm Records Export", "Download field archive or clear records", Icons.Default.Security) {
+                            ProfileItemRow("Farm Records & Data Export", "Download field archive, reports or backup data", Icons.Default.Security) {
                                 onNavigate(Screen30Activity::class.java)
+                            }
+                            ProfileItemRow("Password & Account Security", "Update farmer PIN, password & credential recovery", Icons.Default.Lock) {
+                                onNavigate(ForgotPasswordActivity::class.java)
                             }
                         }
                     }
                 }
 
-                // Sign Out Button
+                // 6. Farm Business & Support Tools
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Farm Business & Support", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
+                            Spacer(modifier = Modifier.height(2.dp))
+
+                            ProfileItemRow("Kisan Advisory Helpline (1800-180-1551)", "Direct chat with agricultural specialists", Icons.Default.Phone) {
+                                onNavigate(Screen26Activity::class.java)
+                            }
+                            ProfileItemRow("Local Mandi Market Rates", "Daily wholesale commodity prices for Wheat, Rice, Corn", Icons.AutoMirrored.Filled.TrendingUp) {
+                                onNavigate(Screen27Activity::class.java)
+                            }
+                            ProfileItemRow("Farm Budget & Expense Tracker", "Track seeds, fertilizers, labor, and crop profits", Icons.Default.MonetizationOn) {
+                                onNavigate(Screen22Activity::class.java)
+                            }
+                        }
+                    }
+                }
+
+                // 7. Sign Out Button
                 item {
                     Button(
                         onClick = onSignOut,
@@ -1397,4 +1937,3 @@ fun ProfileItemRow(title: String, subtitle: String, icon: ImageVector, onClick: 
         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
     }
 }
-
