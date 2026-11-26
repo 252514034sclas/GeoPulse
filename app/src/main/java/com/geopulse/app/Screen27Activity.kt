@@ -14,13 +14,13 @@ class Screen27Activity : ComponentActivity() {
             GeoPulseTheme {
                 GeoDetailScreenContent(
                     title = "Local Mandi Market Rates",
-                    subtitle = "Daily wholesale mandi prices for Wheat, Cotton, Paddy, Mustard, and Soybeans.",
+                    subtitle = "Official AGMARKNET APMC wholesale modal price bulletin (Historical benchmark reference; not live futures market).",
                     icon = Icons.AutoMirrored.Filled.TrendingUp,
                     activity = this,
-                    primaryActionClass = Screen22Activity::class.java,
-                    primaryActionText = "Apply to Farm Budget Tracker",
-                    secondaryActionClass = Screen21Activity::class.java,
-                    secondaryActionText = "Harvest Preparation & Storage"
+                    primaryActionClass = Screen21Activity::class.java,
+                    primaryActionText = "Harvest Preparation & Storage",
+                    secondaryActionClass = Screen7Activity::class.java,
+                    secondaryActionText = "Return to Farm Dashboard"
                 )
             }
         }

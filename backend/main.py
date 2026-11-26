@@ -34,6 +34,12 @@ from services.multi_source_satellite_service import MultiSourceSatelliteService
 from services.agri_knowledge_service import AgriculturalKnowledgeService
 from services.provider_registry import ProviderRegistry
 from services.provider_health_monitor import ProviderHealthMonitor
+from services.fcm_service import send_fcm_notification, is_simulation_mode
+from services.notification_scheduler import (
+    evaluate_user_fields,
+    evaluate_all_active_users,
+    get_or_create_user_preferences
+)
 
 # Create all database tables
 models.Base.metadata.create_all(bind=engine)
@@ -213,8 +219,8 @@ def get_field_with_ownership(field_id: int, user: models.UserModel, db: Session)
     field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
     if not field:
         raise HTTPException(status_code=404, detail="Field parcel not found")
-    if field.user_id is not None and field.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Forbidden: You do not own this field parcel")
+    if field.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden: You do not own this field parcel (anti-IDOR)")
     return field
 
 
@@ -288,8 +294,8 @@ def get_dashboard(
         "average_soil_moisture": round(avg_moisture, 1),
         "average_crop_vigor": round(avg_vigor, 2),
         "spraying_safe_today": spray_safe,
-        "system_status": "Operational (Live Multi-Source Satellite & GPS Mode)",
-        "data_disclaimer": "Metrics dynamically retrieved from live Open-Meteo NWP and Copernicus Sentinel-2 STAC APIs.",
+        "system_status": "Operational (Multi-Source Satellite & GPS Tracking)",
+        "data_disclaimer": "Metrics retrieved from Open-Meteo NWP forecasts and latest Copernicus Sentinel-2 STAC observations.",
         "fields": fields,
         "recent_alerts": all_alerts,
         "todays_tasks": tasks,
@@ -733,6 +739,9 @@ def create_advisory_task(
     user: models.UserModel = Depends(get_current_user_strict), 
     db: Session = Depends(get_db)
 ):
+    if task_in.field_id is not None:
+        get_field_with_ownership(task_in.field_id, user, db)
+
     task = models.AdvisoryTaskModel(
         user_id=user.id,
         field_id=task_in.field_id,
@@ -844,6 +853,9 @@ def add_expense(
     user: models.UserModel = Depends(get_current_user_strict), 
     db: Session = Depends(get_db)
 ):
+    if expense_in.field_id is not None:
+        get_field_with_ownership(expense_in.field_id, user, db)
+
     new_expense = models.FarmExpenseModel(
         user_id=user.id,
         field_id=expense_in.field_id,
@@ -1248,3 +1260,345 @@ def get_providers_registry():
     Bhoonidhi, Copernicus, Open-Meteo, IMD, TNAU, ICAR, AGMARKNET, Kisan Call Center.
     """
     return ProviderRegistry.get_all_providers_status()
+
+
+# ==============================================================================
+# 16. Intelligent Farmer Notification & FCM Messaging Subsystem
+# ==============================================================================
+
+@app.post("/api/v1/notifications/devices/register", response_model=schemas.DeviceRegisterResponse)
+def register_device_token(
+    request: schemas.DeviceRegisterRequest,
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    """
+    Register or refresh a device's Firebase Cloud Messaging (FCM) push token.
+    Enforces strict user ownership, binds the device to the authenticated farmer,
+    and handles token re-assignment if the device was transferred or re-registered.
+    """
+    token_str = request.fcm_token.strip()
+    if not token_str:
+        raise HTTPException(status_code=400, detail="FCM registration token cannot be empty.")
+
+    # Check if token is already registered
+    existing_device = db.query(models.DeviceTokenModel).filter(
+        models.DeviceTokenModel.fcm_token == token_str
+    ).first()
+
+    if existing_device:
+        existing_device.user_id = user.id
+        existing_device.device_type = request.device_type or "android"
+        existing_device.device_name = request.device_name or existing_device.device_name
+        existing_device.app_version = request.app_version or existing_device.app_version
+        existing_device.is_active = True
+        existing_device.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(existing_device)
+        return schemas.DeviceRegisterResponse(
+            id=existing_device.id,
+            fcm_token=existing_device.fcm_token,
+            is_active=existing_device.is_active,
+            message="Device push token refreshed and associated with authenticated farmer."
+        )
+
+    # Register new device
+    new_device = models.DeviceTokenModel(
+        user_id=user.id,
+        fcm_token=token_str,
+        device_type=request.device_type or "android",
+        device_name=request.device_name or "Android Device",
+        app_version=request.app_version or "1.0.0",
+        is_active=True,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+    db.add(new_device)
+    db.commit()
+    db.refresh(new_device)
+
+    return schemas.DeviceRegisterResponse(
+        id=new_device.id,
+        fcm_token=new_device.fcm_token,
+        is_active=new_device.is_active,
+        message="Device push token registered successfully."
+    )
+
+
+@app.post("/api/v1/notifications/devices/unregister")
+def unregister_device_token(
+    request: schemas.DeviceUnregisterRequest,
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    """
+    Deactivate a device's FCM token upon logout or uninstallation.
+    """
+    token_str = request.fcm_token.strip()
+    device = db.query(models.DeviceTokenModel).filter(
+        models.DeviceTokenModel.user_id == user.id,
+        models.DeviceTokenModel.fcm_token == token_str
+    ).first()
+
+    if not device:
+        return {"status": "not_found", "message": "Device token not associated with current user."}
+
+    device.is_active = False
+    device.updated_at = datetime.utcnow()
+    db.commit()
+
+    return {"status": "deactivated", "message": "Device token deactivated successfully."}
+
+
+@app.get("/api/v1/notifications/preferences", response_model=schemas.NotificationPreferenceSchema)
+def get_notification_preferences(
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve the farmer's notification preferences (quiet hours, language, categories, min priority).
+    """
+    pref = get_or_create_user_preferences(user.id, db)
+    return pref
+
+
+@app.put("/api/v1/notifications/preferences", response_model=schemas.NotificationPreferenceSchema)
+def update_notification_preferences(
+    update_data: schemas.NotificationPreferenceUpdate,
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    """
+    Update farmer notification preferences.
+    """
+    pref = get_or_create_user_preferences(user.id, db)
+
+    for field, value in update_data.dict(exclude_unset=True).items():
+        if value is not None:
+            setattr(pref, field, value)
+
+    pref.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(pref)
+    return pref
+
+
+@app.get("/api/v1/notifications/deliveries", response_model=List[schemas.NotificationDeliverySchema])
+def get_notification_deliveries(
+    limit: int = Query(50, ge=1, le=100),
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    """
+    Audit log: Retrieve push delivery attempts and status records for current farmer.
+    """
+    user_event_ids = [e.id for e in db.query(models.NotificationEventModel.id).filter(
+        models.NotificationEventModel.user_id == user.id
+    ).all()]
+
+    if not user_event_ids:
+        return []
+
+    deliveries = db.query(models.NotificationDeliveryModel).filter(
+        models.NotificationDeliveryModel.event_id.in_(user_event_ids)
+    ).order_by(models.NotificationDeliveryModel.sent_at.desc()).limit(limit).all()
+
+    return deliveries
+
+
+@app.post("/api/v1/notifications/evaluate", response_model=schemas.NotificationEvaluationResponse)
+def trigger_notification_evaluation(
+    field_id: Optional[int] = Query(None, description="Optional target field ID"),
+    bypass_quiet_hours: bool = Query(True, description="Bypass quiet hours for on-demand testing"),
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    """
+    On-Demand & Scheduled Notification Engine Evaluation.
+    Evaluates all 7 agricultural decision rules for the farmer's fields,
+    enforces deduplication and quiet-hour rules, creates notification records,
+    and dispatches FCM push alerts to all active registered devices.
+    """
+    if field_id is not None:
+        target_field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
+        if not target_field:
+            raise HTTPException(status_code=404, detail="Field not found.")
+        if target_field.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Access denied: Field does not belong to authenticated farmer.")
+
+    res = evaluate_user_fields(
+        user_id=user.id,
+        db=db,
+        target_field_id=field_id,
+        bypass_quiet_hours=bypass_quiet_hours
+    )
+    return res
+
+
+@app.post("/api/v1/notifications/read-all")
+def mark_all_notifications_as_read(
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    """
+    Mark all unread notifications for current farmer as read.
+    """
+    now = datetime.utcnow()
+    updated_count = db.query(models.NotificationEventModel).filter(
+        models.NotificationEventModel.user_id == user.id,
+        models.NotificationEventModel.is_read == False
+    ).update({"is_read": True, "read_at": now})
+
+    db.commit()
+    return {"status": "success", "marked_read_count": updated_count}
+
+
+@app.get("/api/v1/notifications", response_model=List[schemas.NotificationEventSchema])
+def get_user_notifications(
+    category: Optional[str] = Query(None, description="Irrigation, Weather, Spraying, Agronomy, CropHealth, Inspection"),
+    field_id: Optional[int] = Query(None, description="Filter by specific field ID"),
+    unread_only: bool = Query(False, description="Filter unread notifications only"),
+    limit: int = Query(50, ge=1, le=100),
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve historical and active intelligent notifications for the authenticated farmer.
+    Enforces user isolation (anti-IDOR): a farmer only receives their own parcel advisories.
+    Supports English and Tamil dynamic message rendering based on farmer preference.
+    """
+    if field_id is not None:
+        target_field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
+        if not target_field:
+            raise HTTPException(status_code=404, detail="Field not found.")
+        if target_field.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Access denied: Field does not belong to authenticated farmer.")
+
+    pref = get_or_create_user_preferences(user.id, db)
+    farmer_lang = pref.language or user.preferred_language or "en"
+
+    query = db.query(models.NotificationEventModel).filter(
+        models.NotificationEventModel.user_id == user.id
+    )
+
+    if category:
+        query = query.filter(models.NotificationEventModel.category == category)
+    if field_id is not None:
+        query = query.filter(models.NotificationEventModel.field_id == field_id)
+    if unread_only:
+        query = query.filter(models.NotificationEventModel.is_read == False)
+
+    events = query.order_by(models.NotificationEventModel.created_at.desc()).limit(limit).all()
+
+    # Format localized response schema
+    results = []
+    for ev in events:
+        field_obj = db.query(models.FieldModel).filter(models.FieldModel.id == ev.field_id).first() if ev.field_id else None
+        loc_title = ev.title_ta if farmer_lang == "ta" and ev.title_ta else ev.title_en
+        loc_msg = ev.message_ta if farmer_lang == "ta" and ev.message_ta else ev.message_en
+
+        results.append(schemas.NotificationEventSchema(
+            id=ev.id,
+            user_id=ev.user_id,
+            field_id=ev.field_id,
+            field_name=field_obj.name if field_obj else None,
+            category=ev.category,
+            priority=ev.priority,
+            deduplication_key=ev.deduplication_key,
+            title=loc_title,
+            message=loc_msg,
+            title_en=ev.title_en,
+            title_ta=ev.title_ta,
+            message_en=ev.message_en,
+            message_ta=ev.message_ta,
+            action_needed=ev.action_needed,
+            recommended_datetime=ev.recommended_datetime,
+            input_quantity=ev.input_quantity,
+            reason=ev.reason,
+            source=ev.source,
+            source_data_timestamp=ev.source_data_timestamp,
+            confidence=ev.confidence,
+            created_at=ev.created_at,
+            expires_at=ev.expires_at,
+            is_read=ev.is_read,
+            read_at=ev.read_at
+        ))
+
+    return results
+
+
+@app.get("/api/v1/notifications/{notification_id}", response_model=schemas.NotificationEventSchema)
+def get_notification_detail(
+    notification_id: int,
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve single notification with strict anti-IDOR isolation.
+    """
+    ev = db.query(models.NotificationEventModel).filter(
+        models.NotificationEventModel.id == notification_id
+    ).first()
+
+    if not ev:
+        raise HTTPException(status_code=404, detail="Notification not found.")
+    if ev.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Access denied: Cannot access notifications belonging to another farmer.")
+
+    pref = get_or_create_user_preferences(user.id, db)
+    farmer_lang = pref.language or user.preferred_language or "en"
+    field_obj = db.query(models.FieldModel).filter(models.FieldModel.id == ev.field_id).first() if ev.field_id else None
+    loc_title = ev.title_ta if farmer_lang == "ta" and ev.title_ta else ev.title_en
+    loc_msg = ev.message_ta if farmer_lang == "ta" and ev.message_ta else ev.message_en
+
+    return schemas.NotificationEventSchema(
+        id=ev.id,
+        user_id=ev.user_id,
+        field_id=ev.field_id,
+        field_name=field_obj.name if field_obj else None,
+        category=ev.category,
+        priority=ev.priority,
+        deduplication_key=ev.deduplication_key,
+        title=loc_title,
+        message=loc_msg,
+        title_en=ev.title_en,
+        title_ta=ev.title_ta,
+        message_en=ev.message_en,
+        message_ta=ev.message_ta,
+        action_needed=ev.action_needed,
+        recommended_datetime=ev.recommended_datetime,
+        input_quantity=ev.input_quantity,
+        reason=ev.reason,
+        source=ev.source,
+        source_data_timestamp=ev.source_data_timestamp,
+        confidence=ev.confidence,
+        created_at=ev.created_at,
+        expires_at=ev.expires_at,
+        is_read=ev.is_read,
+        read_at=ev.read_at
+    )
+
+
+@app.post("/api/v1/notifications/{notification_id}/read")
+def mark_notification_as_read(
+    notification_id: int,
+    user: models.UserModel = Depends(get_current_user_strict),
+    db: Session = Depends(get_db)
+):
+    """
+    Mark an individual notification as read.
+    """
+    ev = db.query(models.NotificationEventModel).filter(
+        models.NotificationEventModel.id == notification_id
+    ).first()
+
+    if not ev:
+        raise HTTPException(status_code=404, detail="Notification not found.")
+    if ev.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Access denied: Cannot update another farmer's notification.")
+
+    ev.is_read = True
+    ev.read_at = datetime.utcnow()
+    db.commit()
+
+    return {"status": "success", "id": ev.id, "is_read": True}

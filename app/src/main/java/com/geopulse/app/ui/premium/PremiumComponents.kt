@@ -44,29 +44,29 @@ import com.geopulse.app.notifications.NotificationRepository
 // Design System Tokens (Farmer-First Palette with High-Contrast Readability)
 // -------------------------------------------------------------------------
 data class PremiumColors(
-    val bg: Color = Color(0xFF0A130C),
-    val bgGradEnd: Color = Color(0xFF0F1E14),
-    val cardBg: Color = Color(0xFF112318),
-    val cardBgElevated: Color = Color(0xFF162E20),
-    val cardBorder: Color = Color(0xFF1E3F2B),
+    val bg: Color = Color(0xFF101510),          // Deep forest green #101510
+    val bgGradEnd: Color = Color(0xFF141F14),
+    val cardBg: Color = Color(0xFF182418),
+    val cardBgElevated: Color = Color(0xFF203020),
+    val cardBorder: Color = Color(0xFF283A28),
     val glassBorder: Color = Color(0x22FFFFFF),
-    val emerald: Color = Color(0xFF22A06B),
-    val lime: Color = Color(0xFF86EFAC),
+    val emerald: Color = Color(0xFF2E7D32),     // Primary agricultural green #2E7D32
+    val lime: Color = Color(0xFF4CAF50),
     val accentGreen: Color = Color(0xFF2E7D32),
     val textPrimary: Color = Color(0xFFFFFFFF),
-    val textSecondary: Color = Color(0xFF8FA396),
-    val textMuted: Color = Color(0xFF5E7366),
-    val amber: Color = Color(0xFFFFB74D),
-    val blue: Color = Color(0xFF38BDF8),
-    val coral: Color = Color(0xFFFF6B6B),
+    val textSecondary: Color = Color(0xFF9EAFA0),
+    val textMuted: Color = Color(0xFF6E8070),
+    val amber: Color = Color(0xFFFFB300),
+    val blue: Color = Color(0xFF0288D1),
+    val coral: Color = Color(0xFFD32F2F),
     // Compatibility aliases:
-    val pine: Color = Color(0xFF0A130C),
-    val forest: Color = Color(0xFF0F1E14),
-    val evergreen: Color = Color(0xFF162E20),
+    val pine: Color = Color(0xFF101510),
+    val forest: Color = Color(0xFF141F14),
+    val evergreen: Color = Color(0xFF203020),
     val mist: Color = Color(0xFFC2D9C8),
-    val muted: Color = Color(0xFF8FA396),
-    val glass: Color = Color(0x99112318),
-    val cardBg2: Color = Color(0xFF162E20),
+    val muted: Color = Color(0xFF9EAFA0),
+    val glass: Color = Color(0x99182418),
+    val cardBg2: Color = Color(0xFF203020),
     val textColor: Color = Color(0xFFFFFFFF)
 )
 
@@ -77,26 +77,26 @@ fun rememberPremiumColors(isDarkTheme: Boolean = true): PremiumColors {
             PremiumColors()
         } else {
             PremiumColors(
-                bg = Color(0xFFF4F7F4),
-                bgGradEnd = Color(0xFFE8EFE8),
-                cardBg = Color(0xFFFFFFFF),
-                cardBgElevated = Color(0xFFF7FAF7),
-                cardBorder = Color(0xFFD6E3D6),
-                glassBorder = Color(0x33000000),
-                emerald = Color(0xFF2E7D32),
-                lime = Color(0xFF1B5E20),
+                bg = Color(0xFFF8F9F5),          // Light background #F8F9F5
+                bgGradEnd = Color(0xFFEFF3EB),
+                cardBg = Color(0xFFFFFFFF),      // White surface cards #FFFFFF
+                cardBgElevated = Color(0xFFF4F7F1),
+                cardBorder = Color(0xFFE2E7DF),
+                glassBorder = Color(0x1F000000),
+                emerald = Color(0xFF2E7D32),     // Primary agricultural green #2E7D32
+                lime = Color(0xFF2E7D32),
                 accentGreen = Color(0xFF2E7D32),
-                textPrimary = Color(0xFF111811),
-                textSecondary = Color(0xFF5A665A),
-                textMuted = Color(0xFF8A998A),
-                pine = Color(0xFFF4F7F4),
-                forest = Color(0xFFE8EFE8),
-                evergreen = Color(0xFFD6E3D6),
-                mist = Color(0xFF111811),
-                muted = Color(0xFF5A665A),
+                textPrimary = Color(0xFF101510), // Deep forest green text
+                textSecondary = Color(0xFF606860),// Secondary text #606860
+                textMuted = Color(0xFF889488),
+                pine = Color(0xFFF8F9F5),
+                forest = Color(0xFFEFF3EB),
+                evergreen = Color(0xFFE2E7DF),
+                mist = Color(0xFF101510),
+                muted = Color(0xFF606860),
                 glass = Color(0xEEFFFFFF),
-                cardBg2 = Color(0xFFF7FAF7),
-                textColor = Color(0xFF111811)
+                cardBg2 = Color(0xFFF4F7F1),
+                textColor = Color(0xFF101510)
             )
         }
     }
@@ -123,6 +123,7 @@ fun PremiumHomeScreen(
     onCropHealthClick: () -> Unit = {},
     onFieldBoundaryClick: () -> Unit = {},
     onYieldClick: () -> Unit = {},
+    onActivityClick: () -> Unit = {},
     onNavigate: (Class<*>) -> Unit = {}
 ) {
     val colors = rememberPremiumColors(isDarkTheme)
@@ -153,7 +154,7 @@ fun PremiumHomeScreen(
                     start = horizontalPadding,
                     end = horizontalPadding,
                     top = 10.dp,
-                    bottom = 108.dp // Space for floating bottom dock
+                    bottom = 120.dp // Ample breathing room so floating bottom dock never overlaps content
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -166,7 +167,7 @@ fun PremiumHomeScreen(
                     )
                 }
 
-                // Tier 2: Farm Map (250dp, Satellite/Normal Map toggle, observation date, field area)
+                // Tier 2: Selected Field Summary & Map (Interactive Satellite Map, observation date, field area)
                 item {
                     FieldMapCard(
                         colors = colors,
@@ -175,7 +176,7 @@ fun PremiumHomeScreen(
                     )
                 }
 
-                // Tier 3: Farm Condition (4 simple cards: Crop Health, Soil Water, Weather, Farm Alerts)
+                // Tier 3: Farm Condition Summary (Weather, Crop Health NDVI, Soil Water, Alerts)
                 item {
                     FarmConditionSection(
                         colors = colors,
@@ -186,7 +187,7 @@ fun PremiumHomeScreen(
                     )
                 }
 
-                // Tier 4: Today's Advice (What is happening, What to do, When, Why + Action)
+                // Tier 4: Most Important Recommended Action (What is happening, What to do, When, Why + 1 Action)
                 item {
                     TodaysAdviceSection(
                         colors = colors,
@@ -194,11 +195,12 @@ fun PremiumHomeScreen(
                     )
                 }
 
-                // Tier 5: Quick Actions (6 primary cards + expandable "View All Tools" sheet)
+                // Tier 5: Upcoming Task or Important Warning (What matters today - contextual deep dive)
                 item {
-                    QuickActionsSection(
+                    UpcomingTaskOrWarningSection(
                         colors = colors,
-                        onNavigate = onNavigate
+                        onViewTaskClick = onActivityClick,
+                        onViewAdvisoryClick = onWeatherClick
                     )
                 }
             }
@@ -337,10 +339,18 @@ private fun HomeHeader(
                 )
             }
             Text(
-                text = "Welcome, $farmerName 👋 · $selectedFieldSubtitle",
+                text = "Welcome, $farmerName 👋",
                 color = colors.textSecondary,
                 fontSize = 11.5.sp,
                 fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "🛰️ $selectedFieldSubtitle",
+                color = colors.emerald,
+                fontSize = 10.5.sp,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -468,7 +478,7 @@ private fun FarmConditionSection(
                 modifier = Modifier.weight(1f),
                 title = "Soil Water",
                 value = "72% · Moist",
-                subtitle = "NDMI: 0.08 ? Water needed",
+                subtitle = "NDMI: 0.08 · Water needed",
                 icon = Icons.Default.WaterDrop,
                 tint = colors.blue,
                 colors = colors,
@@ -667,17 +677,17 @@ private fun TodaysAdviceSection(
                 onClick = onActionClick,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(44.dp),
+                    .height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.lime,
-                    contentColor = Color(0xFF07140B)
+                    containerColor = colors.accentGreen,
+                    contentColor = Color.White
                 )
             ) {
                 Text(
                     text = "View Fertilizer Recommendation >",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 13.5.sp
+                    fontSize = 14.sp
                 )
             }
 
@@ -741,6 +751,136 @@ private fun AdviceRow(
             lineHeight = 16.5.sp,
             modifier = Modifier.weight(1f)
         )
+    }
+}
+
+// -------------------------------------------------------------------------
+// 5. Upcoming Task or Important Warning: Contextual Operational Banner
+// -------------------------------------------------------------------------
+@Composable
+private fun UpcomingTaskOrWarningSection(
+    colors: PremiumColors,
+    onViewTaskClick: () -> Unit,
+    onViewAdvisoryClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = colors.cardBg,
+        border = BorderStroke(1.dp, colors.cardBorder),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(colors.lime.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Assessment,
+                            contentDescription = null,
+                            tint = colors.lime,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "UPCOMING FARM ACTIVITY",
+                            color = colors.lime,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                        Text(
+                            text = "Priority task scheduled for your land",
+                            color = colors.textSecondary,
+                            fontSize = 10.5.sp
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = colors.emerald.copy(alpha = 0.2f)
+                ) {
+                    Text(
+                        text = "Due Today",
+                        color = colors.lime,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            HorizontalDivider(color = colors.cardBorder)
+
+            Text(
+                text = "Foliar Nutrient Spraying Window",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = colors.textPrimary
+            )
+
+            Text(
+                text = "Atmospheric conditions are optimal today (wind 8 km/h, temperature 28°C). Apply recommended nutrient spray before Friday's forecasted rainfall.",
+                fontSize = 12.sp,
+                color = colors.textSecondary,
+                lineHeight = 16.5.sp
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onViewAdvisoryClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.lime),
+                    border = BorderStroke(1.dp, colors.lime.copy(alpha = 0.6f))
+                ) {
+                    Text(
+                        text = "Weather Details",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.5.sp
+                    )
+                }
+
+                Button(
+                    onClick = onViewTaskClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.accentGreen,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "Open Activity >",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.5.sp
+                    )
+                }
+            }
+        }
     }
 }
 

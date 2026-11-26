@@ -13,14 +13,14 @@ class Screen24Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Satellite Growth History",
-                    subtitle = "Review bi-weekly satellite crop greenness images to see how your crops improved over time.",
+                    title = "Satellite Growth History & Trends",
+                    subtitle = "Review bi-weekly Sentinel-2 optical satellite crop greenness trajectories. (Optical NDVI measures canopy vigor, not soil nutrients. Soil chemical laboratory data is user-entered from Soil Health Card).",
                     icon = Icons.Default.History,
                     activity = this,
-                    primaryActionClass = Screen11Activity::class.java,
-                    primaryActionText = "View Current Crop Vigor",
-                    secondaryActionClass = Screen18Activity::class.java,
-                    secondaryActionText = "View Crop Growth Calendar"
+                    primaryActionClass = Screen18Activity::class.java,
+                    primaryActionText = "View Crop Growth Calendar",
+                    secondaryActionClass = Screen7Activity::class.java,
+                    secondaryActionText = "Return to Farm Dashboard"
                 )
             }
         }

@@ -53,12 +53,12 @@ object ThemePreferences {
 private val LightColorScheme = lightColorScheme(
     primary = LeafGreen,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD6F5D6),
-    onPrimaryContainer = Color(0xFF0D3814),
+    primaryContainer = Color(0xFFE8F5E9),
+    onPrimaryContainer = Color(0xFF1B5E20),
     secondary = EvergreenDark,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFBCEBE0),
-    onSecondaryContainer = Color(0xFF063328),
+    secondaryContainer = Color(0xFFEFF7F0),
+    onSecondaryContainer = Color(0xFF1B3A22),
     tertiary = EmeraldPrimary,
     onTertiary = Color.White,
     background = LightBackground,
@@ -66,23 +66,24 @@ private val LightColorScheme = lightColorScheme(
     surface = LightSurface,
     onSurface = TextDark,
     surfaceVariant = LightSurfaceElevated,
-    onSurfaceVariant = TextDarkMuted,
+    onSurfaceVariant = TextSecondary,
     outline = CardBorderLight,
+    outlineVariant = Color(0xFFD6DDD2),
     error = Color(0xFFBA1A1A),
     onError = Color.White
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = LimeAccent,
-    onPrimary = PineDark,
+    primary = LeafGreen,
+    onPrimary = Color.White,
     primaryContainer = EvergreenDark,
-    onPrimaryContainer = MistGreen,
+    onPrimaryContainer = Color(0xFFC8E6C9),
     secondary = EmeraldPrimary,
-    onSecondary = PineDark,
+    onSecondary = Color.White,
     secondaryContainer = ForestDark,
-    onSecondaryContainer = MistGreen,
-    tertiary = LeafGreen,
-    onTertiary = Color.White,
+    onSecondaryContainer = Color(0xFFA5D6A7),
+    tertiary = LimeAccent,
+    onTertiary = DarkBackground,
     background = DarkBackground,
     onBackground = TextLight,
     surface = DarkSurface,
@@ -90,8 +91,9 @@ private val DarkColorScheme = darkColorScheme(
     surfaceVariant = DarkSurfaceElevated,
     onSurfaceVariant = TextMuted,
     outline = CardBorderDark,
+    outlineVariant = Color(0xFF354835),
     error = RedAccent,
-    onError = Color.Black
+    onError = Color.White
 )
 
 @Composable
@@ -100,9 +102,23 @@ fun GeoPulseTheme(
     content: @Composable () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val view = androidx.compose.ui.platform.LocalView.current
+
     androidx.compose.runtime.LaunchedEffect(Unit) {
         ThemePreferences.init(context)
     }
+
+    if (!view.isInEditMode) {
+        androidx.compose.runtime.SideEffect {
+            val window = (context as? android.app.Activity)?.window
+            if (window != null) {
+                val insetsController = androidx.core.view.WindowCompat.getInsetsController(window, view)
+                insetsController.isAppearanceLightStatusBars = !darkTheme
+                insetsController.isAppearanceLightNavigationBars = !darkTheme
+            }
+        }
+    }
+
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(

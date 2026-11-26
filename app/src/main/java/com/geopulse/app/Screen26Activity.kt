@@ -17,8 +17,8 @@ class Screen26Activity : ComponentActivity() {
                     subtitle = "Direct connection to Kisan Call Center (1800-180-1551) and certified agriculture experts.",
                     icon = Icons.Default.Phone,
                     activity = this,
-                    nextActivityClass = null,
-                    nextButtonText = "Return to Dashboard"
+                    nextActivityClass = Screen7Activity::class.java,
+                    nextButtonText = "Return to Farm Dashboard"
                 )
             }
         }

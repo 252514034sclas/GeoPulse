@@ -21,6 +21,9 @@ class UserModel(Base):
     fields = relationship("FieldModel", back_populates="owner", cascade="all, delete-orphan")
     tasks = relationship("AdvisoryTaskModel", back_populates="user", cascade="all, delete-orphan")
     expenses = relationship("FarmExpenseModel", back_populates="user", cascade="all, delete-orphan")
+    devices = relationship("DeviceTokenModel", back_populates="user", cascade="all, delete-orphan")
+    notification_preferences = relationship("NotificationPreferenceModel", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    notifications = relationship("NotificationEventModel", back_populates="user", cascade="all, delete-orphan")
 
 
 class FieldModel(Base):
@@ -45,6 +48,7 @@ class FieldModel(Base):
     owner = relationship("UserModel", back_populates="fields")
     satellite_records = relationship("SatelliteRecordModel", back_populates="field", cascade="all, delete-orphan")
     alerts = relationship("AlertModel", back_populates="field", cascade="all, delete-orphan")
+    notifications = relationship("NotificationEventModel", back_populates="field")
 
 
 class SatelliteRecordModel(Base):
@@ -169,3 +173,98 @@ class FertilizerGuideModel(Base):
     mop_kg_per_acre = Column(Float, default=20.0)
     stage_timing = Column(String, default="Tillering / Vegetative Stage (Day 35-50)")
     tips = Column(String, default="Apply split dosage before expected rainfall for maximum root uptake.")
+
+
+# ==============================================================================
+# INTELLIGENT FARMER NOTIFICATION & FCM SUBSYSTEM MODELS
+# ==============================================================================
+
+class DeviceTokenModel(Base):
+    __tablename__ = "registered_devices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    fcm_token = Column(String(512), unique=True, index=True, nullable=False)
+    device_type = Column(String(32), default="android")  # "android", "ios", "web"
+    device_name = Column(String(128), nullable=True)  # e.g., "Pixel 10 Pro"
+    app_version = Column(String(32), nullable=True)
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("UserModel", back_populates="devices")
+    deliveries = relationship("NotificationDeliveryModel", back_populates="device")
+
+
+class NotificationPreferenceModel(Base):
+    __tablename__ = "notification_preferences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    quiet_hours_enabled = Column(Boolean, default=True)
+    quiet_hours_start = Column(String(8), default="22:00")  # HH:MM (24-hour)
+    quiet_hours_end = Column(String(8), default="06:00")    # HH:MM (24-hour)
+    language = Column(String(8), default="en")             # "en", "ta"
+    irrigation_enabled = Column(Boolean, default=True)
+    weather_enabled = Column(Boolean, default=True)
+    spraying_enabled = Column(Boolean, default=True)
+    agronomy_enabled = Column(Boolean, default=True)
+    crop_health_enabled = Column(Boolean, default=True)
+    inspection_enabled = Column(Boolean, default=True)
+    min_priority = Column(String(16), default="LOW")       # "LOW", "MEDIUM", "HIGH", "CRITICAL"
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("UserModel", back_populates="notification_preferences")
+
+
+class NotificationEventModel(Base):
+    __tablename__ = "notification_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    field_id = Column(Integer, ForeignKey("fields.id", ondelete="SET NULL"), nullable=True, index=True)
+    category = Column(String(32), nullable=False, index=True)  # Irrigation, Weather, Spraying, Agronomy, CropHealth, Inspection
+    priority = Column(String(16), default="MEDIUM", index=True)  # LOW, MEDIUM, HIGH, CRITICAL
+    deduplication_key = Column(String(255), nullable=False, index=True)
+
+    title_en = Column(String(255), nullable=False)
+    title_ta = Column(String(255), nullable=True)
+    message_en = Column(Text, nullable=False)
+    message_ta = Column(Text, nullable=True)
+
+    action_needed = Column(String(255), nullable=True)
+    recommended_datetime = Column(String(64), nullable=True)
+    input_quantity = Column(String(128), nullable=True)  # e.g., "18 mm (72,840 L/ac)"
+    reason = Column(Text, nullable=True)
+    source = Column(String(128), default="GeoPulse Agronomic Intelligence")
+    source_data_timestamp = Column(String(64), nullable=True)
+    confidence = Column(String(32), default="High (90%)")
+
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    expires_at = Column(DateTime, nullable=True, index=True)
+    is_read = Column(Boolean, default=False, index=True)
+    read_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    user = relationship("UserModel", back_populates="notifications")
+    field = relationship("FieldModel", back_populates="notifications")
+    deliveries = relationship("NotificationDeliveryModel", back_populates="event", cascade="all, delete-orphan")
+
+
+class NotificationDeliveryModel(Base):
+    __tablename__ = "notification_deliveries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(Integer, ForeignKey("notification_events.id", ondelete="CASCADE"), nullable=False, index=True)
+    device_id = Column(Integer, ForeignKey("registered_devices.id", ondelete="SET NULL"), nullable=True, index=True)
+    status = Column(String(32), default="sent", index=True)  # "sent", "simulated", "failed", "unregistered"
+    fcm_message_id = Column(String(255), nullable=True)
+    error_message = Column(Text, nullable=True)
+    sent_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    event = relationship("NotificationEventModel", back_populates="deliveries")
+    device = relationship("DeviceTokenModel", back_populates="deliveries")

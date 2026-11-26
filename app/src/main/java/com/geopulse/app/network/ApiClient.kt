@@ -20,13 +20,20 @@ object ApiClient {
             apiServiceInstance = null
         }
 
+    @Volatile
+    private var appContext: android.content.Context? = null
+
     fun initFromContext(context: android.content.Context) {
+        appContext = context.applicationContext
         try {
             val prefs = context.getSharedPreferences(PREFS_NETWORK, android.content.Context.MODE_PRIVATE)
             val saved = prefs.getString(KEY_BASE_URL, null)
             if (!saved.isNullOrBlank()) {
                 baseUrl = saved
             }
+        } catch (_: Exception) {}
+        try {
+            UserSession.initSession(context)
         } catch (_: Exception) {}
     }
 
@@ -54,8 +61,9 @@ object ApiClient {
             .addInterceptor { chain ->
                 val original = chain.request()
                 val requestBuilder = original.newBuilder()
-                authToken?.let { token ->
-                    requestBuilder.header("Authorization", "Bearer $token")
+                val token = authToken ?: appContext?.let { UserSession.getToken(it) }
+                token?.let {
+                    requestBuilder.header("Authorization", "Bearer $it")
                 }
                 chain.proceed(requestBuilder.build())
             }

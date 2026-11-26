@@ -13,12 +13,12 @@ class Screen29Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "App Settings & Appearance",
-                    subtitle = "Select your theme (Dark, Light, or System default), language, and session preferences.",
+                    title = "System Settings & Offline Cache",
+                    subtitle = "Manage offline satellite cache, rural data saver mode, and advanced display preferences.",
                     icon = Icons.Default.Settings,
                     activity = this,
-                    nextActivityClass = null,
-                    nextButtonText = "Return to Dashboard"
+                    nextActivityClass = Screen7Activity::class.java,
+                    nextButtonText = "Return to Farm Dashboard"
                 )
             }
         }

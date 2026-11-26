@@ -6,8 +6,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:name=".GeoPulseApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -62,6 +64,15 @@
         <activity android:name=".Screen28Activity" android:exported="false" />
         <activity android:name=".Screen29Activity" android:exported="false" />
         <activity android:name=".Screen30Activity" android:exported="false" />
+
+        <!-- Firebase Cloud Messaging (FCM) Service -->
+        <service
+            android:name=".notifications.GeoPulseFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
     </application>
 

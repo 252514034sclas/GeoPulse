@@ -74,22 +74,15 @@ class OnboardingActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .navigationBarsPadding()
                             .statusBarsPadding()
-                            .padding(20.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(horizontal = 24.dp, vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .widthIn(max = 500.dp)
-                                .verticalScroll(rememberScrollState()),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
                         // Header with Skip action
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -125,8 +118,8 @@ class OnboardingActivity : ComponentActivity() {
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .glassSurface(cornerRadius = 24.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                                    .glassSurface(cornerRadius = 16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                             ) {
                                 Column(
                                     modifier = Modifier
@@ -177,61 +170,54 @@ class OnboardingActivity : ComponentActivity() {
                             }
                         }
 
-                        // Bottom Actions: Dots & Next Button
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(20.dp)
+                        // Page Indicator Dots
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Page Indicator Dots
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                slides.indices.forEach { index ->
-                                    val isSelected = index == currentSlideIndex
-                                    Box(
-                                        modifier = Modifier
-                                            .size(
-                                                width = if (isSelected) 24.dp else 8.dp,
-                                                height = 8.dp
-                                            )
-                                            .clip(CircleShape)
-                                            .background(
-                                                if (isSelected) MaterialTheme.colorScheme.primary
-                                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-                                            )
-                                    )
-                                }
-                            }
-
-                            // Next / Get Started Button
-                            Button(
-                                onClick = {
-                                    if (currentSlideIndex < slides.size - 1) {
-                                        currentSlideIndex++
-                                    } else {
-                                        startActivity(Intent(this@OnboardingActivity, LoginActivity::class.java))
-                                        finish()
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(52.dp),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                            ) {
-                                Text(
-                                    text = if (currentSlideIndex == slides.size - 1) "Get Started" else "Next",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimary
+                            slides.indices.forEach { index ->
+                                val isSelected = index == currentSlideIndex
+                                Box(
+                                    modifier = Modifier
+                                        .size(
+                                            width = if (isSelected) 24.dp else 8.dp,
+                                            height = 8.dp
+                                        )
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (isSelected) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                                        )
                                 )
                             }
                         }
+
+                        // Next / Get Started Button
+                        Button(
+                            onClick = {
+                                if (currentSlideIndex < slides.size - 1) {
+                                    currentSlideIndex++
+                                } else {
+                                    startActivity(Intent(this@OnboardingActivity, LoginActivity::class.java))
+                                    finish()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = 500.dp)
+                                .height(52.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text(
+                                text = if (currentSlideIndex == slides.size - 1) "Get Started" else "Next",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
                     }
                 }
-            }
             }
         }
     }

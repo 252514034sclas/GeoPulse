@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1049285029481",
+    "project_id": "geopulse-app-2026",
+    "storage_bucket": "geopulse-app-2026.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1049285029481:android:e8a3b592c01f49e0a12b34",
+        "android_client_info": {
+          "package_name": "com.geopulse.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3geopulseDummyKey2026SecureLocalDevOnly"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

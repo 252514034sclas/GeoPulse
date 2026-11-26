@@ -50,7 +50,7 @@ class GeoPulseRepository(
         return@withContext null
     }
 
-    suspend fun getSatelliteHealth(fieldId: Int = 1): SatelliteRecordDto = withContext(Dispatchers.IO) {
+    suspend fun getSatelliteHealth(fieldId: Int): SatelliteRecordDto = withContext(Dispatchers.IO) {
         try {
             val response = api.getSatelliteHealth(fieldId)
             if (response.isSuccessful && response.body() != null) {
@@ -72,7 +72,7 @@ class GeoPulseRepository(
         )
     }
 
-    suspend fun getSatelliteMoisture(fieldId: Int = 1): SoilMoistureDto = withContext(Dispatchers.IO) {
+    suspend fun getSatelliteMoisture(fieldId: Int): SoilMoistureDto = withContext(Dispatchers.IO) {
         try {
             val response = api.getSatelliteMoisture(fieldId)
             if (response.isSuccessful && response.body() != null) {

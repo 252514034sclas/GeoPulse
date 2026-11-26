@@ -233,9 +233,13 @@ fun InteractiveSatelliteFarmMap(
             }
 
             fieldsList = parsedFields
-            val initial = parsedFields.firstOrNull { it.id == initialSelectedFieldId } ?: parsedFields.firstOrNull()
+            val savedFieldId = com.geopulse.app.network.UserSession.getSelectedFieldId(context)
+            val initial = parsedFields.firstOrNull { it.id == savedFieldId }
+                ?: parsedFields.firstOrNull { it.id == initialSelectedFieldId }
+                ?: parsedFields.firstOrNull()
             selectedField = initial
             if (initial != null) {
+                com.geopulse.app.network.UserSession.setSelectedFieldId(context, initial.id)
                 onFieldSelected(initial)
             }
         } catch (_: Exception) {
@@ -284,9 +288,9 @@ fun InteractiveSatelliteFarmMap(
         modifier = modifier
             .fillMaxWidth()
             .height(390.dp),
-        shape = RoundedCornerShape(18.dp),
-        border = BorderStroke(1.2.dp, Color(0xFF233B2B)),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF09140D))
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
 
@@ -351,6 +355,7 @@ fun InteractiveSatelliteFarmMap(
                                 }
                                 if (clicked != null) {
                                     selectedField = clicked
+                                    com.geopulse.app.network.UserSession.setSelectedFieldId(context, clicked.id)
                                     onFieldSelected(clicked)
                                     focusField(map, clicked)
                                     true
@@ -456,6 +461,7 @@ fun InteractiveSatelliteFarmMap(
                                 },
                                 onClick = {
                                     selectedField = field
+                                    com.geopulse.app.network.UserSession.setSelectedFieldId(context, field.id)
                                     onFieldSelected(field)
                                     showFieldDropdown = false
                                     mapLibreInstance?.let { focusField(it, field) }
@@ -647,8 +653,9 @@ fun InteractiveSatelliteFarmMap(
                                     color = Color(0xFFA5D6A7),
                                     fontSize = 10.sp
                                 )
+                                val shortSource = if (field.dataSource.contains("Copernicus", ignoreCase = true)) "ESA Sentinel-2" else field.dataSource
                                 Text(
-                                    text = "🛰️ Pass: ${field.latestSatelliteDate} · ${field.dataSource}",
+                                    text = "🛰️ Pass: ${field.latestSatelliteDate} · $shortSource",
                                     color = Color(0xFFB0BEC5),
                                     fontSize = 8.5.sp,
                                     maxLines = 1,

@@ -18,9 +18,7 @@ class Screen19Activity : ComponentActivity() {
                     icon = Icons.Default.Agriculture,
                     activity = this,
                     primaryActionClass = Screen14Activity::class.java,
-                    primaryActionText = "Check Weather & Spray Forecast",
-                    secondaryActionClass = Screen18Activity::class.java,
-                    secondaryActionText = "View Crop Growth Calendar"
+                    primaryActionText = "Check Weather & Spray Forecast"
                 )
             }
         }

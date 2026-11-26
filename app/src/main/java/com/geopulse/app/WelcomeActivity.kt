@@ -60,53 +60,72 @@ class WelcomeActivity : ComponentActivity() {
                                 .widthIn(max = 480.dp)
                                 .verticalScroll(rememberScrollState()),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                            verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text("🌾", fontSize = 12.sp)
+                                    Text(
+                                        text = "TAMIL NADU PRECISION AGRI-TECH",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        letterSpacing = 0.8.sp
+                                    )
+                                }
+                            }
 
                             // Glassmorphic Center Hero Card
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .glassSurface(cornerRadius = 28.dp),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                                    .glassSurface(cornerRadius = 16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                             ) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(28.dp),
+                                        .padding(24.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Surface(
-                                        shape = RoundedCornerShape(24.dp),
-                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                        modifier = Modifier.size(88.dp)
+                                        shape = RoundedCornerShape(16.dp),
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                        modifier = Modifier.size(80.dp),
+                                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
                                             Icon(
                                                 imageVector = Icons.Default.Agriculture,
                                                 contentDescription = "Welcome Icon",
                                                 tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(48.dp)
+                                                modifier = Modifier.size(44.dp)
                                             )
                                         }
                                     }
-                                    Spacer(modifier = Modifier.height(24.dp))
+                                    Spacer(modifier = Modifier.height(20.dp))
                                     Text(
                                         text = "Welcome to GeoPulse",
-                                        fontSize = 26.sp,
+                                        fontSize = 24.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface,
                                         textAlign = TextAlign.Center
                                     )
-                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Spacer(modifier = Modifier.height(10.dp))
                                     Text(
                                         text = "Monitor crop health, analyze soil moisture, track field activity, and optimize farm yields with real-time geospatial intelligence.",
-                                        fontSize = 15.sp,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                                        fontSize = 14.5.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center,
-                                        lineHeight = 22.sp
+                                        lineHeight = 21.sp
                                     )
                                 }
                             }
