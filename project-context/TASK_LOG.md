@@ -492,6 +492,52 @@
 
 ---
 
+### Task 19: Android Application Launcher Icon Alignment with Splash Screen Branding
+- **Date:** 2026-11-26
+- **Status:** COMPLETED
+- **Branch:** `feature/farmer-workflow-navigation`
+- **Objective:**
+  - Establish the exact GeoPulse branding displayed on the splash screen as the official Android application launcher icon.
+  - Implement full adaptive icon architecture (108dp viewport, 72dp safe zone, foreground, background, monochrome layers) and legacy raster resources across all 5 standard Android mipmap densities (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`).
+  - Ensure the launcher icon displays flawlessly on the Android Home Screen, in the App Drawer, in Android Settings → Apps, and in the Recent Apps overview identity.
+  - Preserve the frozen RC-1 tag (`v1.0.0-rc1` at `2083d56`) and the previously preserved authoritative APK (`app-release-integrity-verified.apk` with SHA-256 `49198BAC698DB4650AB06F45944F82E4165F2280C0EA480D9413C0F6A1440998`).
+- **Brand Analysis & Technical Specification:**
+  - **Splash Screen Source Reference:**
+    - Inspected `SplashActivity.kt` (lines 77–93) and `PremiumComponents.kt`: GeoPulse brand identity consists of a circular badge with a diagonal linear gradient from `LimeAccent` (`#4CAF50`) at top-left to `EmeraldPrimary` (`#2E7D32`) at bottom-right, containing a centered `Icons.Default.Eco` leaf icon tinted `PineDark` (`#101510`) scaled to ~56.25% of the circle diameter.
+    - Surface/Canvas: Dark brand background `PineDark` (`#101510`), matching the dark theme surface and splash screen.
+  - **Android Adaptive Icon Implementation:**
+    - `app/src/main/res/drawable/ic_launcher_foreground.xml`: 108dp x 108dp viewport. Circular badge with radius 32dp (diameter 64dp, comfortably within the 72dp safe zone) centered at (54, 54), rendered with linear gradient from `#4CAF50` (31.37, 31.37) to `#2E7D32` (76.63, 76.63). Centered `Eco` leaf vector path scaled by 1.5x and translated to (36, 36) so its visual center (12, 12) aligns with (54, 54), tinted `#101510`.
+    - `app/src/main/res/drawable/ic_launcher_background.xml`: 108dp x 108dp viewport filled with brand `#101510` (`PineDark`).
+    - `app/src/main/res/drawable/ic_launcher_monochrome.xml`: 108dp x 108dp viewport with centered white (`#FFFFFF`) `Eco` leaf silhouette for Android 13+ themed icon support.
+    - `app/src/main/res/mipmap-anydpi/ic_launcher.xml` & `ic_launcher_round.xml`: Adaptive icon definition linking background, foreground, and monochrome drawables.
+  - **Legacy Raster Mipmap Generation:**
+    - Generated super-sampled, Lanczos-filtered 32-bit PNG resources replacing template webp placeholders across all 5 mipmap densities:
+      - `mipmap-mdpi`: 48 x 48 px (`ic_launcher.png`, `ic_launcher_round.png`)
+      - `mipmap-hdpi`: 72 x 72 px (`ic_launcher.png`, `ic_launcher_round.png`)
+      - `mipmap-xhdpi`: 96 x 96 px (`ic_launcher.png`, `ic_launcher_round.png`)
+      - `mipmap-xxhdpi`: 144 x 144 px (`ic_launcher.png`, `ic_launcher_round.png`)
+      - `mipmap-xxxhdpi`: 192 x 192 px (`ic_launcher.png`, `ic_launcher_round.png`)
+- **Verification Evidence:**
+  - **Android Unit Tests:** `cmd.exe /c run_gradle.bat testDebugUnitTest` passed 23 of 23 unit tests (100% PASS, 0 failures, 0 errors).
+  - **Backend Domain & Security Audits:**
+    - `backend/test_api.py`: 24 of 24 domain suites passed (100% PASS).
+    - `backend/test_scientific_rigor.py`: 12 of 12 tests passed (100% PASS).
+    - `backend/test_multi_user_isolation.py`: All multi-user isolation and anti-IDOR tests passed (100% PASS).
+  - **Release APK Build & Signature Verification:**
+    - APK Artifact: `app-release-launcher-icon.apk` (71,523,732 bytes).
+    - SHA-256 Checksum: `0D7C21986BB2C8EBE4C7BD56E0303464AC9453966B38C2D0D1E07C48BB7E1850`.
+    - Apksigner: `Verified using v2 scheme: true`, Signer `#1` Certificate SHA-256: `464070a93c24bfd9bf67f4b6e9f777cf470aec4009ea3c710c3d8e8f849f8143` (GeoPulse Production Release).
+    - Preserved Authoritative APK Checksum: `49198BAC698DB4650AB06F45944F82E4165F2280C0EA480D9413C0F6A1440998` strictly preserved and untouched.
+  - **Live Emulator Verification (`emulator-5554`, Pixel 10 Pro, Android 15 API 35):**
+    - **Home Screen:** GeoPulse launcher icon verified at bounds `[994, 2289][1192, 2512]`, displaying crisp circular green gradient badge with centered PineDark leaf icon on dark background.
+    - **App Drawer:** Verified at bounds `[943, 1267][1245, 1604]` in the alphabetical launcher grid.
+    - **Settings → Apps:** Verified at bounds `[532, 372][748, 588]` (216x216 px) above the `GeoPulse` app title.
+    - **Recent Apps Overview:** Verified at bounds `[348, 405][606, 454]` task header.
+    - **App Execution:** Cold-launched cleanly through `MainActivity` → `SplashActivity` → `Screen7Activity` (0 crashes, 0 ANRs, 0 layout defects).
+  - **Baseline Preservation:** Release baseline tag `v1.0.0-rc1` dereferenced at `2083d56afe126cc6d5182013f7c388b1cd5599ac` strictly preserved.
+
+---
+
 ## 2. UPCOMING PRIORITIES & ROADMAP
 
 1. **Distributed Rate Limiting (Post-RC-1 Cloud Deployment):**

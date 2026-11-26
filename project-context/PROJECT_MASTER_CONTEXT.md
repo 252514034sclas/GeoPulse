@@ -1,9 +1,9 @@
 # GEOPULSE — PROJECT MASTER CONTEXT
-**Last Updated:** November 24, 2026  
+**Last Updated:** November 26, 2026  
 **Repository:** `252514034sclas/GeoPulse`  
 **Package:** `com.geopulse.app`  
 **Target Platform:** Native Android (Kotlin + Jetpack Compose) + Python (FastAPI) Geospatial Backend  
-**Current Git Branch:** `release/rc1-device-acceptance`  
+**Current Git Branch:** `feature/farmer-workflow-navigation`  
 **Frozen Release Tag:** `v1.0.0-rc1` (commit `2083d56afe126cc6d5182013f7c388b1cd5599ac`)  
 **Approved Acceptance Commit:** `773fbaddd133bf0f051fe17d20f88693a68be384`  
 
