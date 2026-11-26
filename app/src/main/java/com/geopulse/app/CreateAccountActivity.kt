@@ -254,20 +254,7 @@ class CreateAccountActivity : ComponentActivity() {
                                                                 errorMessage = "Registration failed: Email may already be registered."
                                                             }
                                                         } catch (e: Exception) {
-                                                            // Local Demo Account Fallback if server is unreachable
-                                                            val fallbackUser = UserDto(
-                                                                id = 999,
-                                                                email = email.trim().ifEmpty { "farmer@geopulse.app" },
-                                                                fullName = fullName.trim().ifEmpty { "Farmer John" },
-                                                                phone = null,
-                                                                farmName = farmName.trim().ifEmpty { "Green Farm" },
-                                                                totalAreaHa = 12.5,
-                                                                preferredLanguage = "en",
-                                                                themePreference = "SYSTEM"
-                                                            )
-                                                            UserSession.saveSession(this@CreateAccountActivity, "demo_token_local", fallbackUser)
-                                                            startActivity(Intent(this@CreateAccountActivity, Screen7Activity::class.java))
-                                                            finish()
+                                                            errorMessage = "Server unreachable. Check connection and retry."
                                                         } finally {
                                                             isLoading = false
                                                         }
@@ -293,36 +280,6 @@ class CreateAccountActivity : ComponentActivity() {
                                                     color = MaterialTheme.colorScheme.onPrimary
                                                 )
                                             }
-                                        }
-                                        Spacer(modifier = Modifier.height(12.dp))
-
-                                        // Fallback Demo Account Button
-                                        OutlinedButton(
-                                            onClick = {
-                                                val demoUser = UserDto(
-                                                    id = 101,
-                                                    email = "farmer.john@geopulse.app",
-                                                    fullName = "Farmer John",
-                                                    phone = "9876543210",
-                                                    farmName = "Central Valley Farm",
-                                                    totalAreaHa = 25.0,
-                                                    preferredLanguage = "en",
-                                                    themePreference = "SYSTEM"
-                                                )
-                                                UserSession.saveSession(this@CreateAccountActivity, "demo_token_101", demoUser)
-                                                startActivity(Intent(this@CreateAccountActivity, Screen7Activity::class.java))
-                                                finish()
-                                            },
-                                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                                            shape = RoundedCornerShape(12.dp),
-                                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
-                                        ) {
-                                            Text(
-                                                text = "Continue with Demo Account",
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
                                         }
 
                                         Spacer(modifier = Modifier.height(16.dp))
