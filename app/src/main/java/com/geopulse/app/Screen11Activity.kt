@@ -14,7 +14,7 @@ class Screen11Activity : ComponentActivity() {
             GeoPulseTheme {
                 GeoDetailScreenContent(
                     title = "Satellite Crop Health & Vigor",
-                    subtitle = "Live Copernicus Sentinel-2 NDVI spectral greenness, canopy health, and active stress zones.",
+                    subtitle = "Latest available Copernicus Sentinel-2 optical observation (5-day revisit cycle; not a continuous live feed).",
                     icon = Icons.Default.Eco,
                     activity = this,
                     primaryActionClass = Screen24Activity::class.java,

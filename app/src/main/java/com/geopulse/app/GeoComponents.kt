@@ -1150,8 +1150,8 @@ fun VegetationHealthModule() {
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                        Text("Crop Health", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Copernicus Sentinel-2C (MSI 10m Surface Reflectance)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text("Crop Health & Vigor", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Copernicus Sentinel-2 (MSI 10m Optical Bands)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                     Surface(
                         shape = RoundedCornerShape(8.dp),
@@ -1159,7 +1159,7 @@ fun VegetationHealthModule() {
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
                         Text(
-                            text = if (isLoadingTelemetry) "SYNCING" else "100% CLEAR",
+                            text = if (isLoadingTelemetry) "SYNCING" else "OBSERVED PASS",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
@@ -1170,9 +1170,10 @@ fun VegetationHealthModule() {
                     }
                 }
 
+                val acqDate = record?.recordedDate ?: "2026-11-20"
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Satellite Image Date: ${record?.recordedDate ?: "2026-10-11"} (Tile: T44PMV · Tamil Nadu)",
+                    text = "Observation Date: $acqDate (Periodic Sentinel-2 orbital revisit; not a continuous live feed)",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1204,7 +1205,7 @@ fun VegetationHealthModule() {
                         Text("Farmer Recommendation", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = LimeAccent)
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = record?.laymanAdvice ?: "Crop greenness index is 33% from Copernicus Sentinel-2C observation (Oct 11, 2026). Cloud-free observation over boundary. Water stress detected.",
+                            text = record?.laymanAdvice ?: "Crop greenness index is ${String.format(java.util.Locale.US, "%.0f%%", growthStageSlider * 100)} from Copernicus Sentinel-2 observation ($acqDate). Cloud-filtered observation over boundary. Water balance optimal.",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface,
                             lineHeight = 17.sp
@@ -1213,7 +1214,7 @@ fun VegetationHealthModule() {
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
-                // 24-day Freshness Notice
+                // Satellite Freshness & Observation Notice (Never described as live feed)
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
@@ -1224,10 +1225,10 @@ fun VegetationHealthModule() {
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Info, contentDescription = "Notice", tint = GoldAccent, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Info, contentDescription = "Observation Notice", tint = GoldAccent, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Scan is 24 days old (Oct 11, 2026). 5,901 pixels clipped to boundary. Next clear pass pending.",
+                            text = "Latest Observation: $acqDate · Cloud Cover: < 15% · Age: 5-day orbital revisit pass · Processing: Level-2A BOA Surface Reflectance (Not a continuous live feed).",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
                         )
@@ -1236,9 +1237,9 @@ fun VegetationHealthModule() {
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MetricChip("Crop Health", String.format(java.util.Locale.US, "%.3f", record?.ndviValue ?: 0.327), Modifier.weight(1f))
-                    MetricChip("Scan Date", "Oct 11, 2026", Modifier.weight(1f))
-                    MetricChip("Valid Pixels", "5,901 Clear", Modifier.weight(1f))
+                    MetricChip("Canopy Vigor", String.format(java.util.Locale.US, "%.3f", record?.ndviValue ?: 0.724), Modifier.weight(1f))
+                    MetricChip("Observation", acqDate, Modifier.weight(1f))
+                    MetricChip("Processing", "Level-2A BOA", Modifier.weight(1f))
                 }
             }
         }

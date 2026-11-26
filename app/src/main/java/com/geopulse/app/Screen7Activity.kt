@@ -1067,7 +1067,7 @@ fun FullGisMapTab(
                                 Icon(Icons.Default.Landscape, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
                                 Text("No Farm Parcels Added Yet", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
                                 Text(
-                                    "Tap 'Interactive Boundary' above or tap on the map to draw your field boundary and get live satellite intelligence.",
+                                    "Tap 'Interactive Boundary' above or tap on the map to draw your field boundary and get satellite crop intelligence.",
                                     fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
