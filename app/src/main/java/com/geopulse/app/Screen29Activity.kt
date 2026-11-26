@@ -18,9 +18,7 @@ class Screen29Activity : ComponentActivity() {
                     icon = Icons.Default.Settings,
                     activity = this,
                     nextActivityClass = Screen7Activity::class.java,
-                    nextButtonText = "Return to Farm Dashboard",
-                    secondaryActionClass = Screen8Activity::class.java,
-                    secondaryActionText = "Open Geospatial Field Map"
+                    nextButtonText = "Return to Farm Dashboard"
                 )
             }
         }

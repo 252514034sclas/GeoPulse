@@ -189,17 +189,30 @@ class GeoPulseFirebaseMessagingService : FirebaseMessagingService() {
     ) {
         val channelId = when (category) {
             "Irrigation" -> CHANNEL_IRRIGATION
-            "Weather", "Spraying" -> CHANNEL_WEATHER
+            "Weather", "Spraying", "SevereWeather", "HeatWave", "WindAlert" -> CHANNEL_WEATHER
             "CropHealth" -> CHANNEL_CROP_HEALTH
             else -> CHANNEL_AGRONOMY
+        }
+
+        // Explicit notification destination mapping per Task 2
+        val targetScreen = when (category.lowercase()) {
+            "irrigation" -> "Screen13Activity"
+            "rain", "rain_forecast", "rainforecast" -> "Screen14Activity"
+            "crophealth", "crop_health", "vegetation" -> "Screen11Activity"
+            "soilmoisture", "soil_moisture" -> "Screen12Activity"
+            "spraying", "spray_safety" -> "Screen14Activity"
+            "sowing", "cropstage", "crop_stage", "agronomy" -> "Screen18Activity"
+            "severeweather", "severe_weather", "heatwave", "wind", "windalert", "warning", "weather" -> "Screen28Activity"
+            else -> if (fieldId != null) "Screen13Activity" else "Screen28Activity"
         }
 
         // Tap deep link intent
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("TARGET_SCREEN", if (fieldId != null) "Screen7Activity" else "Screen28Activity")
+            putExtra("TARGET_SCREEN", targetScreen)
             putExtra("FIELD_ID", fieldId ?: -1)
             putExtra("NOTIFICATION_ID", notificationId)
+            putExtra("NOTIFICATION_CATEGORY", category)
         }
 
         val pendingIntent = PendingIntent.getActivity(

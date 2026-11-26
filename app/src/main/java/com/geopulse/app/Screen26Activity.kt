@@ -18,9 +18,7 @@ class Screen26Activity : ComponentActivity() {
                     icon = Icons.Default.Phone,
                     activity = this,
                     nextActivityClass = Screen7Activity::class.java,
-                    nextButtonText = "Return to Farm Dashboard",
-                    secondaryActionClass = Screen9Activity::class.java,
-                    secondaryActionText = "View Farm Advisory Tasks"
+                    nextButtonText = "Return to Farm Dashboard"
                 )
             }
         }

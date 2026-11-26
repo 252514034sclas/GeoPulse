@@ -32,6 +32,10 @@ class MainActivity : ComponentActivity() {
 
         val target = intent?.getStringExtra("TARGET_SCREEN")
         if (!target.isNullOrEmpty()) {
+            val fieldId = intent?.getIntExtra("FIELD_ID", -1) ?: -1
+            if (fieldId > 0) {
+                com.geopulse.app.network.UserSession.setSelectedFieldId(this, fieldId)
+            }
             try {
                 val clazz = Class.forName("com.geopulse.app.$target")
                 startActivity(Intent(this, clazz).apply {

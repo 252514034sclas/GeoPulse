@@ -83,54 +83,64 @@ class AgriculturalDecisionEngine:
         # RULE 1: FAO-56 Soil-Water Balance Irrigation Need & Recommended Timing
         # ----------------------------------------------------------------------
         if not rain_postponement_needed:
-            try:
-                area_ha = max(area_acres * 0.404686, 0.1)
-                irr_calc = IrrigationEngine.calculate_irrigation(
-                    crop_type=crop_type,
-                    area_hectares=area_ha,
-                    current_moisture_pct=current_moisture_pct,
-                    et0_evapotranspiration_mm=4.8,
-                    forecast_rain_next_48h_mm=rain_forecast_mm,
-                    growth_stage="mid_development",
-                    soil_type=soil_type,
-                    irrigation_method="drip"
-                )
+            # Check soil moisture data freshness (observations older than 7 days cannot trigger automated watering)
+            soil_date_val = getattr(soil_moisture, "recorded_at", None) or getattr(soil_moisture, "recorded_date", None)
+            is_soil_stale = False
+            if soil_date_val:
+                try:
+                    s_dt = datetime.strptime(str(soil_date_val)[:10], "%Y-%m-%d")
+                    if (now - s_dt).days > 7:
+                        is_soil_stale = True
+                except Exception:
+                    pass
 
-                if irr_calc.get("irrigation_needed", False):
-                    depth_mm = irr_calc.get("net_irrigation_depth_mm", 18.0)
-                    vol_litres = irr_calc.get("gross_water_volume_litres", depth_mm * area_acres * 4046.86)
-                    water_volume_fmt = f"{vol_litres:,.0f} Litres ({depth_mm:.1f} mm)"
+            if not is_soil_stale:
+                try:
+                    area_ha = max(area_acres * 0.404686, 0.1)
+                    irr_calc = IrrigationEngine.calculate_irrigation(
+                        crop_type=crop_type,
+                        area_hectares=area_ha,
+                        current_moisture_pct=current_moisture_pct,
+                        et0_evapotranspiration_mm=4.8,
+                        forecast_rain_next_48h_mm=rain_forecast_mm,
+                        growth_stage="mid_development",
+                        soil_type=soil_type,
+                        irrigation_method="drip"
+                    )
 
-                    candidate_alerts.append({
-                        "category": "Irrigation",
-                        "priority": "HIGH",
-                        "deduplication_key": f"field_{field.id}:irrigation:{today_str}",
-                        "title_en": f"Irrigation Needed: {field_name}",
-                        "title_ta": f"நீர்ப்பாசனம் தேவை: {field_name}",
-                        "message_en": (
-                            f"Your {crop_type} field may need irrigation tomorrow morning. "
-                            f"Estimated requirement: {depth_mm:.0f} mm ({water_volume_fmt}). "
-                            f"Check field moisture before watering."
-                        ),
-                        "message_ta": (
-                            f"உங்கள் {crop_type} வயலுக்கு நாளை காலை நீர்ப்பாசனம் தேவைப்படலாம். "
-                            f"கணக்கிடப்பட்ட நீர் அளவு: {depth_mm:.0f} மி.மீ ({water_volume_fmt}). "
-                            f"நீர் பாய்ச்சுவதற்கு முன் வயல் ஈரப்பதத்தை சரிபார்க்கவும்."
-                        ),
-                        "action_needed": f"Apply {depth_mm:.0f} mm Irrigation",
-                        "recommended_datetime": (now + timedelta(days=1)).strftime("%Y-%m-%d 06:30 AM"),
-                        "input_quantity": water_volume_fmt,
-                        "reason": (
-                            f"FAO-56 Soil Water Balance indicates root-zone depletion has reached "
-                            f"{irr_calc.get('depletion_percentage', 60):.1f}%, exceeding the allowable depletion threshold."
-                        ),
-                        "source": "FAO-56 Penman-Monteith Evapotranspiration Model",
-                        "source_data_timestamp": getattr(soil_moisture, "recorded_at", today_str) if soil_moisture else today_str,
-                        "confidence": "High (92%)",
-                        "expires_at": now + timedelta(hours=28)
-                    })
-            except Exception as e:
-                logger.error(f"[DecisionEngine] Irrigation calculation failed for field {field.id}: {e}")
+                    if irr_calc.get("irrigation_needed", False):
+                        depth_mm = irr_calc.get("net_irrigation_depth_mm", 18.0)
+                        vol_litres = irr_calc.get("gross_water_volume_litres", depth_mm * area_acres * 4046.86)
+                        water_volume_fmt = f"{vol_litres:,.0f} Litres (~{depth_mm:.1f} mm model estimate)"
+
+                        candidate_alerts.append({
+                            "category": "Irrigation",
+                            "priority": "HIGH",
+                            "deduplication_key": f"field_{field.id}:irrigation:{today_str}",
+                            "title_en": f"Irrigation Needed: {field_name}",
+                            "title_ta": f"நீர்ப்பாசனம் தேவை: {field_name}",
+                            "message_en": (
+                                f"Estimated FAO-56 irrigation requirement for {crop_type}: ~{depth_mm:.0f} mm ({water_volume_fmt}). "
+                                f"Measured root-zone moisture: {current_moisture_pct:.0f}%. Verify soil surface before watering."
+                            ),
+                            "message_ta": (
+                                f"உங்கள் {crop_type} வயலுக்கு கணக்கிடப்பட்ட மாதிரி நீர் அளவு: ~{depth_mm:.0f} மி.மீ ({water_volume_fmt}). "
+                                f"அளவிடப்பட்ட ஈரப்பதம்: {current_moisture_pct:.0f}%. நீர் பாய்ச்சுவதற்கு முன் வயல் ஈரப்பதத்தை சரிபார்க்கவும்."
+                            ),
+                            "action_needed": f"Apply ~{depth_mm:.0f} mm Estimated Irrigation",
+                            "recommended_datetime": (now + timedelta(days=1)).strftime("%Y-%m-%d 06:30 AM"),
+                            "input_quantity": water_volume_fmt,
+                            "reason": (
+                                f"FAO-56 Soil Water Balance indicates root-zone depletion has reached "
+                                f"{irr_calc.get('depletion_percentage', 60):.1f}%, exceeding the allowable depletion threshold. Measured moisture: {current_moisture_pct:.0f}%."
+                            ),
+                            "source": "FAO-56 Penman-Monteith Evapotranspiration Model",
+                            "source_data_timestamp": str(soil_date_val or today_str),
+                            "confidence": "High (92%)",
+                            "expires_at": now + timedelta(hours=28)
+                        })
+                except Exception as e:
+                    logger.error(f"[DecisionEngine] Irrigation calculation failed for field {field.id}: {e}")
 
         # ----------------------------------------------------------------------
         # RULE 3: Unsafe Spraying Conditions (Wind, Rainfall & Extreme Temp)
@@ -335,17 +345,17 @@ class AgriculturalDecisionEngine:
                     "title_en": f"Active Tillering Stage Advisory: {field_name}",
                     "title_ta": f"தூர்கட்டும் பருவம் வழிகாட்டல்: {field_name}",
                     "message_en": (
-                        f"Your paddy is at active tillering (Day {das}). Apply first top-dressing split of Urea (25 kg/ac) "
-                        f"and Zinc Sulphate. Maintain 2-3 cm shallow water."
+                        f"Your paddy is at active tillering (Day {das}). Estimated guideline dose: ~20-25 kg/ac Urea "
+                        f"(adjust for local soil test values) and Zinc Sulphate. Maintain 2-3 cm shallow water."
                     ),
                     "message_ta": (
-                        f"உங்கள் நெல் பயிர் தீவிர தூர்கட்டும் பருவத்தில் உள்ளது (நாள் {das}). முதல் மேலுரமாக யூரியா (25 கிலோ/ஏக்கர்) "
-                        f"மற்றும் ஜிங்க் சல்பேட் இடவும். 2-3 செ.மீ நீர் நிறுத்தவும்."
+                        f"உங்கள் நெல் பயிர் தீவிர தூர்கட்டும் பருவத்தில் உள்ளது (நாள் {das}). பரிந்துரைக்கப்படும் மாதிரி அளவு: ~20-25 கிலோ/ஏக்கர் "
+                        f"யூரியா (மண் பரிசோதனைக்கு ஏற்ப மாற்றவும்) மற்றும் ஜிங்க் சல்பேட். 2-3 செ.மீ நீர் நிறுத்தவும்."
                     ),
-                    "action_needed": "Apply 1st Top Dressing Split (Urea 25 kg/ac)",
+                    "action_needed": "Apply 1st Top Dressing Split (~20-25 kg/ac Urea guideline)",
                     "recommended_datetime": now.strftime("%Y-%m-%d Morning"),
-                    "input_quantity": "25 kg Urea / acre",
-                    "reason": "Tillering stage requires nitrogen spike to maximize effective panicle count per hill.",
+                    "input_quantity": "~20-25 kg Urea / acre (guideline estimate)",
+                    "reason": "Tillering stage requires nitrogen spike to maximize effective panicle count per hill. Adjust dose based on soil health card & baseline soil test.",
                     "source": "TNAU Agronomic Crop Production Guide",
                     "source_data_timestamp": today_str,
                     "confidence": "High (95%)",
@@ -359,17 +369,17 @@ class AgriculturalDecisionEngine:
                     "title_en": f"Panicle Initiation Stage Advisory: {field_name}",
                     "title_ta": f"கதிர் உருவாகும் பருவம் வழிகாட்டல்: {field_name}",
                     "message_en": (
-                        f"Panicle initiation phase reached (Day {das}). Apply second top-dressing of MOP (Potash 15 kg/ac) "
-                        f"to boost grain weight and stem strength against lodging."
+                        f"Panicle initiation phase reached (Day {das}). Estimated guideline dose: ~15 kg/ac MOP (Potash) "
+                        f"to boost grain weight and stem strength against lodging. Adjust based on soil test status."
                     ),
                     "message_ta": (
                         f"கதிர் உருவாகும் பருவம் வந்துள்ளது (நாள் {das}). தானிய எடை கூடவும் பயிர் சாயாமல் இருக்கவும் பொட்டாஷ் "
-                        f"(15 கிலோ/ஏக்கர்) மேலுரமாக இடவும்."
+                        f"(மாதிரி அளவு: ~15 கிலோ/ஏக்கர்) மேலுரமாக இடவும். மண் பரிசோதனைக்கு ஏற்ப மாற்றவும்."
                     ),
-                    "action_needed": "Apply Potash Top Dressing (MOP 15 kg/ac)",
+                    "action_needed": "Apply Potash Top Dressing (~15 kg/ac MOP guideline)",
                     "recommended_datetime": now.strftime("%Y-%m-%d Morning"),
-                    "input_quantity": "15 kg MOP / acre",
-                    "reason": "Potassium fertilization is critical at panicle differentiation for starch accumulation.",
+                    "input_quantity": "~15 kg MOP / acre (guideline estimate)",
+                    "reason": "Potassium fertilization is critical at panicle differentiation for starch accumulation. Adjust dose based on soil health card & baseline soil test.",
                     "source": "TNAU Agronomic Crop Production Guide",
                     "source_data_timestamp": today_str,
                     "confidence": "High (95%)",
@@ -385,15 +395,16 @@ class AgriculturalDecisionEngine:
                     "title_ta": f"பருத்தி மொட்டு உருவாகும் பருவம்: {field_name}",
                     "message_en": (
                         f"Cotton parcel is entering square formation (Day {das}). Inspect squares for spotted bollworm "
-                        f"and apply balanced NPK split."
+                        f"and apply balanced NPK split (~15-20 kg Urea/ac guideline, subject to soil test)."
                     ),
                     "message_ta": (
-                        f"பருத்தி பயிரில் மொட்டு உருவாகும் பருவம் (நாள் {das}). புழு தாக்குதலைக் கண்காணிக்கவும்."
+                        f"பருத்தி பயிரில் மொட்டு உருவாகும் பருவம் (நாள் {das}). புழு தாக்குதலைக் கண்காணிக்கவும். "
+                        f"மண் பரிசோதனை பரிந்துரைப்படி சமச்சீர் உரம் இடவும்."
                     ),
                     "action_needed": "Scout for Bollworm & Apply NPK Split",
                     "recommended_datetime": now.strftime("%Y-%m-%d Morning"),
-                    "input_quantity": "Scouting + 20 kg Urea/ac",
-                    "reason": "Square formation determines overall boll retention and yield potential.",
+                    "input_quantity": "Scouting + ~15-20 kg Urea/ac (guideline estimate)",
+                    "reason": "Square formation determines overall boll retention and yield potential. Adjust dose based on soil health card.",
                     "source": "CICR Nagpur Cotton Advisory",
                     "source_data_timestamp": today_str,
                     "confidence": "High (92%)",
