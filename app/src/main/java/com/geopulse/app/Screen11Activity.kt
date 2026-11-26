@@ -14,11 +14,11 @@ class Screen11Activity : ComponentActivity() {
             GeoPulseTheme {
                 GeoDetailScreenContent(
                     title = "Satellite Crop Health & Vigor",
-                    subtitle = "Satellite crop health and greenness monitoring in clear terms. Learn which parts of your field need care.",
+                    subtitle = "Live Copernicus Sentinel-2 NDVI spectral greenness, canopy health, and active stress zones.",
                     icon = Icons.Default.Eco,
                     activity = this,
-                    primaryActionClass = Screen20Activity::class.java,
-                    primaryActionText = "Calculate Fertilizer Dosing",
+                    primaryActionClass = Screen24Activity::class.java,
+                    primaryActionText = "View Historical Growth Trends",
                     secondaryActionClass = Screen12Activity::class.java,
                     secondaryActionText = "Check Soil Hydration Status"
                 )

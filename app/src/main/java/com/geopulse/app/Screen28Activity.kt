@@ -14,13 +14,13 @@ class Screen28Activity : ComponentActivity() {
             GeoPulseTheme {
                 GeoDetailScreenContent(
                     title = "Weather & Crop Warning Center",
-                    subtitle = "Immediate alerts for severe thunderstorms, heatwaves, frost, and unseasonal rainfall.",
+                    subtitle = "Active emergency alerts for thunderstorms, heatwaves, high winds, and heavy deluge. (Manage alert tones & quiet hours in Profile Settings).",
                     icon = Icons.Default.Warning,
                     activity = this,
                     primaryActionClass = Screen14Activity::class.java,
                     primaryActionText = "View 7-Day Weather & Spray Forecast",
-                    secondaryActionClass = Screen13Activity::class.java,
-                    secondaryActionText = "Safe Watering Timing Guide"
+                    secondaryActionClass = Screen10Activity::class.java,
+                    secondaryActionText = "Manage Notification Preferences"
                 )
             }
         }

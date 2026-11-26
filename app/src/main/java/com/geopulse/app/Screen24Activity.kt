@@ -13,12 +13,12 @@ class Screen24Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Satellite Growth History",
+                    title = "Satellite Growth History & Trends",
                     subtitle = "Review bi-weekly satellite crop greenness images to see how your crops improved over time.",
                     icon = Icons.Default.History,
                     activity = this,
                     primaryActionClass = Screen11Activity::class.java,
-                    primaryActionText = "View Current Crop Vigor",
+                    primaryActionText = "View Current Live Crop Vigor",
                     secondaryActionClass = Screen18Activity::class.java,
                     secondaryActionText = "View Crop Growth Calendar"
                 )

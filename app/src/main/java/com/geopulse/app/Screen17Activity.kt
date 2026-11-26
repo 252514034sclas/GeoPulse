@@ -13,14 +13,12 @@ class Screen17Activity : ComponentActivity() {
         setContent {
             GeoPulseTheme {
                 GeoDetailScreenContent(
-                    title = "Field Boundary & Land Area",
-                    subtitle = "Satellite GPS mapping of your farm parcels, boundaries, and estimated acreage.",
+                    title = "Field Boundary & GPS Polygon Survey",
+                    subtitle = "Survey parcel GPS vertices, walk boundaries, and calculate parcel acreage.",
                     icon = Icons.Default.Map,
                     activity = this,
                     primaryActionClass = Screen23Activity::class.java,
-                    primaryActionText = "View All Farm Parcels",
-                    secondaryActionClass = Screen8Activity::class.java,
-                    secondaryActionText = "Open Interactive GIS Map"
+                    primaryActionText = "View All Farm Parcels"
                 )
             }
         }

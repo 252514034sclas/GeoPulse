@@ -18,9 +18,7 @@ class Screen23Activity : ComponentActivity() {
                     icon = Icons.Default.Domain,
                     activity = this,
                     primaryActionClass = Screen17Activity::class.java,
-                    primaryActionText = "Edit Field Boundaries & Area",
-                    secondaryActionClass = Screen8Activity::class.java,
-                    secondaryActionText = "Open Interactive GIS Map"
+                    primaryActionText = "Survey New Field Boundary"
                 )
             }
         }
