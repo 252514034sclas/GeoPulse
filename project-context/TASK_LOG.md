@@ -453,6 +453,43 @@
   - Emulator Installation: Streamed install success on `emulator-5554` (Pixel 10 Pro, Android 15 / API 35). Notification channels verified in Android dumpsys.
   - Baseline Preservation: Release baseline `v1.0.0-rc1` (`2083d56...`) and previous release commits remain permanently intact.
 
+### Task 18: Map Fullscreen Expansion & Edge-to-Edge Navigation Resolution
+- **Date:** November 26, 2026
+- **Branch:** `feature/farmer-workflow-navigation`
+- **Objective:** Fix non-working map fullscreen button, enabling seamless edge-to-edge full-screen expansion without MapView recreation or OpenGL surface destruction, preserving selected field, camera position, zoom, map style, markers, and boundaries with visible Exit controls and Android system Back handling.
+- **Root Cause Identified:**
+  - `MapLibreGisMap.kt` camera controls column lacked a dedicated fullscreen toggle button.
+  - In `InteractiveSatelliteFarmMap.kt`, the floating button with `Icons.Default.CropFree` only executed `focusField()` without expanding the map.
+  - `FullGisMapTab` in `Screen7Activity.kt` and `Screen8Activity.kt` constrained the map to a fixed 350dp Card inside a scrolling LazyColumn with DraggableBottomDock and dashboard headers covering the viewport.
+- **Key Actions & Architectural Implementations:**
+  1. **Zero-Recreation Fullscreen Layout Architecture:**
+     - Avoided unmounting or detaching `MapView` across composition branches (preventing `KNOWN_ISSUES.md:42` OpenGL surface destruction and EGL recreation crashes).
+     - Hoisted `isExternalFullscreen` and `onFullscreenChange` state into `FullGisMapTab`.
+     - In fullscreen mode, `LazyColumn` dynamically adapts: `contentPadding = PaddingValues(0.dp)`, `verticalArrangement = Arrangement.spacedBy(0.dp)`, `userScrollEnabled = false`.
+     - Dashboard cards, TopBar, chips, and `DraggableBottomDock` are hidden cleanly in fullscreen mode.
+     - Map Card dynamically resizes via layout pass to `Modifier.fillParentMaxSize()`, `shape = RoundedCornerShape(0.dp)`, giving true edge-to-edge full screen.
+  2. **Overlay Controls & System Bar Safety:**
+     - TopStart: Added a prominent floating pill button `[ ← Exit ]` and Basemap switcher, safeguarded with `.statusBarsPadding()`.
+     - TopEnd: Added Fullscreen toggle button (`Icons.Default.Fullscreen` / `Icons.Default.FullscreenExit`) alongside Zoom In, Zoom Out, and Recenter, safeguarded with `.statusBarsPadding()`.
+     - BottomStart: Added floating field indicator pill showing selected field name, acreage, and crop, safeguarded with `.navigationBarsPadding()`.
+     - BottomEnd: Attribution strip safeguarded with `.navigationBarsPadding()`.
+  3. **Navigation & Back Integration:**
+     - Integrated `androidx.activity.compose.BackHandler(enabled = isFullscreen)` in `MapLibreGisMap`, `FullGisMapTab`, `Screen7Activity`, and `Screen8Activity`.
+     - Android system Back and floating Exit controls smoothly collapse fullscreen back to standard card layout with identical camera coordinates and field selection.
+     - On Home dashboard, tapping `Full GIS >` or `CropFree` expands directly into fullscreen map view and returns seamlessly to Home on exit.
+- **Verification Evidence:**
+  - Android Unit Tests (`cmd.exe /c run_gradle.bat testDebugUnitTest`): 23 of 23 unit tests passed (100% PASS, 0 failures, 0 errors).
+  - Production Release Build (`assembleRelease`): SUCCESS in 48s.
+  - Signed Release APK: `app-release.apk` (71,487,405 bytes, SHA-256: `771CAEC3FE9A41BC9A015D79861B85745D0210459526F4CBB882E01009237012`).
+  - Signature Verification: `apksigner verify --verbose --print-certs` confirms APK Signature Scheme v2 valid, signed with production key `464070a93c24bfd9bf67f4b6e9f777cf470aec4009ea3c710c3d8e8f849f8143`.
+  - Emulator Verification on `emulator-5554` (Pixel 10 Pro):
+    - Cold install: Streamed install success.
+    - Verified bounds `[0,0][1280,2856]` edge-to-edge full-screen expansion in Tab 1 and Screen 8.
+    - Verified zoom in, zoom out, pan, recenter, and basemap switcher.
+    - Verified floating `Exit` button and system Back key restore standard 350dp layout and dashboard navigation without surface flicker or reload delay.
+    - Logcat clean: 0 MapLibre or EGL surface exceptions.
+  - Baseline Preservation: Release baseline tag `v1.0.0-rc1` dereferenced at `2083d56afe126cc6d5182013f7c388b1cd5599ac` strictly preserved.
+
 ---
 
 ## 2. UPCOMING PRIORITIES & ROADMAP

@@ -3,14 +3,21 @@ package com.geopulse.app
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.geopulse.app.ui.theme.GeoPulseTheme
 
 class Screen8Activity : ComponentActivity() {
@@ -18,18 +25,34 @@ class Screen8Activity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             GeoPulseTheme {
-                Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+                var isFullscreen by remember { mutableStateOf(false) }
+
+                BackHandler(enabled = isFullscreen) {
+                    isFullscreen = false
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(if (!isFullscreen) Modifier.statusBarsPadding() else Modifier)
+                ) {
                     Scaffold(
                         topBar = {
-                            GeoTopBar(
-                                title = "Geospatial Field Map",
-                                subtitle = "Sentinel-2 satellite observation & live GPS boundaries",
-                                onBackClick = { finish() }
-                            )
+                            if (!isFullscreen) {
+                                GeoTopBar(
+                                    title = "Geospatial Field Map",
+                                    subtitle = "Sentinel-2 satellite observation & live GPS boundaries",
+                                    onBackClick = { finish() }
+                                )
+                            }
                         },
                         containerColor = MaterialTheme.colorScheme.background
                     ) { padding ->
-                        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(if (isFullscreen) PaddingValues(0.dp) else padding)
+                        ) {
                             FullGisMapTab(
                                 onVegetationClick = {
                                     startActivity(Intent(this@Screen8Activity, Screen11Activity::class.java))
@@ -40,7 +63,9 @@ class Screen8Activity : ComponentActivity() {
                                 onNavigate = { targetClass ->
                                     startActivity(Intent(this@Screen8Activity, targetClass))
                                 },
-                                showHeader = false
+                                showHeader = false,
+                                isExternalFullscreen = isFullscreen,
+                                onFullscreenChange = { isFullscreen = it }
                             )
                         }
                     }

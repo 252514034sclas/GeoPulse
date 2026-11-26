@@ -3,6 +3,7 @@ package com.geopulse.app
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -94,6 +95,16 @@ class Screen7Activity : ComponentActivity() {
                 var showLogoutDialog by remember { mutableStateOf(false) }
                 var showNotificationDialog by remember { mutableStateOf(false) }
                 val isDark = ThemePreferences.isDarkTheme
+                var isMapFullscreen by remember { mutableStateOf(false) }
+                var returnToHomeOnExit by remember { mutableStateOf(false) }
+
+                BackHandler(enabled = isMapFullscreen) {
+                    isMapFullscreen = false
+                    if (returnToHomeOnExit) {
+                        returnToHomeOnExit = false
+                        coroutineScope.launch { pagerState.animateScrollToPage(0) }
+                    }
+                }
 
                 LaunchedEffect(selectedTargetTab.intValue) {
                     if (selectedTargetTab.intValue in 0..3 && pagerState.currentPage != selectedTargetTab.intValue) {
@@ -171,19 +182,21 @@ class Screen7Activity : ComponentActivity() {
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background)
-                        .statusBarsPadding()
+                        .then(if (!isMapFullscreen) Modifier.statusBarsPadding() else Modifier)
                 ) {
                     // Connected screen content transitions in sync with dragging
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier.fillMaxSize(),
-                        userScrollEnabled = pagerState.currentPage != 1
+                        userScrollEnabled = pagerState.currentPage != 1 && !isMapFullscreen
                     ) { page ->
                         when (page) {
                             0 -> {
                                 PremiumHomeScreen(
                                     isDarkTheme = isDark,
                                     onFieldMapClick = {
+                                        isMapFullscreen = true
+                                        returnToHomeOnExit = true
                                         coroutineScope.launch { pagerState.animateScrollToPage(1) }
                                     },
                                     onVegetationHealthClick = {
@@ -231,6 +244,14 @@ class Screen7Activity : ComponentActivity() {
                                     },
                                     onNavigate = { targetClass ->
                                         startActivity(Intent(this@Screen7Activity, targetClass))
+                                    },
+                                    isExternalFullscreen = isMapFullscreen,
+                                    onFullscreenChange = { active ->
+                                        isMapFullscreen = active
+                                        if (!active && returnToHomeOnExit) {
+                                            returnToHomeOnExit = false
+                                            coroutineScope.launch { pagerState.animateScrollToPage(0) }
+                                        }
                                     }
                                 )
                             }
@@ -259,12 +280,14 @@ class Screen7Activity : ComponentActivity() {
                     }
 
                     // Physical Finger-Dragged Bottom Navigation Dock (No Tapping)
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                    ) {
-                        DraggableBottomDock(pagerState = pagerState, coroutineScope = coroutineScope)
+                    if (!isMapFullscreen) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                        ) {
+                            DraggableBottomDock(pagerState = pagerState, coroutineScope = coroutineScope)
+                        }
                     }
                 }
             }
@@ -327,9 +350,21 @@ fun FullGisMapTab(
     onVegetationClick: () -> Unit,
     onBoundaryClick: () -> Unit,
     onNavigate: ((Class<*>) -> Unit)? = null,
-    showHeader: Boolean = true
+    showHeader: Boolean = true,
+    isExternalFullscreen: Boolean = false,
+    onFullscreenChange: ((Boolean) -> Unit)? = null
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    var internalFullscreen by remember { mutableStateOf(false) }
+    val isFullscreen = isExternalFullscreen || internalFullscreen
+    val setFullscreen: (Boolean) -> Unit = { active ->
+        internalFullscreen = active
+        onFullscreenChange?.invoke(active)
+    }
+
+    BackHandler(enabled = isFullscreen) {
+        setFullscreen(false)
+    }
     val zones = remember { mutableStateListOf(*initialGisZones.toTypedArray()) }
     var selectedZone by remember { mutableStateOf<GisZone?>(zones.firstOrNull()) }
     var selectedLayer by remember { mutableStateOf("Crop Health") }
@@ -421,27 +456,29 @@ fun FullGisMapTab(
             contentAlignment = Alignment.TopCenter
         ) {
             val isTablet = maxWidth > 600.dp
-            val contentWidth = if (isTablet) 640.dp else maxWidth
+            val contentWidth = if (isFullscreen) maxWidth else (if (isTablet) 640.dp else maxWidth)
             val horizontalPadding = if (maxWidth < 360.dp) 12.dp else 16.dp
 
             LazyColumn(
                 modifier = Modifier
                     .width(contentWidth)
                     .fillMaxHeight(),
-                contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 16.dp, bottom = 120.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                contentPadding = if (isFullscreen) PaddingValues(0.dp) else PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 16.dp, bottom = 120.dp),
+                verticalArrangement = if (isFullscreen) Arrangement.spacedBy(0.dp) else Arrangement.spacedBy(14.dp),
+                userScrollEnabled = !isFullscreen
             ) {
-                if (showHeader) {
-                    item {
-                        GeoTopBar(
-                            title = "Agricultural Fields & Land Parcels",
-                            subtitle = "Field Selection · Sentinel-2 observation & live GPS boundaries · ${zones.size} Parcels",
-                            actionIcon = Icons.Default.MyLocation
-                        )
+                if (!isFullscreen) {
+                    if (showHeader) {
+                        item {
+                            GeoTopBar(
+                                title = "Agricultural Fields & Land Parcels",
+                                subtitle = "Field Selection · Sentinel-2 observation & live GPS boundaries · ${zones.size} Parcels",
+                                actionIcon = Icons.Default.MyLocation
+                            )
+                        }
                     }
-                }
 
-                // Flow Step 1: Field Selection (Fields -> Field Selection -> Selected Field Overview)
+                    // Flow Step 1: Field Selection (Fields -> Field Selection -> Selected Field Overview)
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(
@@ -721,15 +758,20 @@ fun FullGisMapTab(
                         }
                     }
                 }
+                }
 
                 // Interactive Real MapLibre Native GIS Map
                 item {
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(350.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, if (isDrawingMode) LimeAccent else MaterialTheme.colorScheme.outline),
+                        modifier = if (isFullscreen) {
+                            Modifier.fillParentMaxSize()
+                        } else {
+                            Modifier
+                                .fillMaxWidth()
+                                .height(350.dp)
+                        },
+                        shape = if (isFullscreen) RoundedCornerShape(0.dp) else RoundedCornerShape(16.dp),
+                        border = if (isFullscreen) null else BorderStroke(1.dp, if (isDrawingMode) LimeAccent else MaterialTheme.colorScheme.outline),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         MapLibreGisMap(
@@ -748,14 +790,20 @@ fun FullGisMapTab(
                             onBasemapChange = { newType ->
                                 activeBasemap = newType
                                 MapConfig.setSelectedBasemap(context, newType)
+                            },
+                            isFullscreen = isFullscreen,
+                            onToggleFullscreen = {
+                                setFullscreen(!isFullscreen)
                             }
                         )
                     }
                 }
-                // Status Notification Banner
-                if (statusNotice != null) {
-                    item {
-                        Surface(
+
+                if (!isFullscreen) {
+                    // Status Notification Banner
+                    if (statusNotice != null) {
+                        item {
+                            Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
@@ -1087,6 +1135,7 @@ fun FullGisMapTab(
                         }
                     }
                 }
+            }
             }
         }
     }

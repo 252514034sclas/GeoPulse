@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,13 +92,19 @@ fun MapLibreGisMap(
     drawnPoints: List<LatLng>,
     onMapTappedInDrawingMode: (LatLng) -> Unit,
     activeBasemap: BasemapType = BasemapType.SATELLITE,
-    onBasemapChange: (BasemapType) -> Unit = {}
+    onBasemapChange: (BasemapType) -> Unit = {},
+    isFullscreen: Boolean = false,
+    onToggleFullscreen: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val mapView = rememberMapLibreViewWithLifecycle()
     var mapLibreMapInstance by remember { mutableStateOf<MapLibreMap?>(null) }
     var currentStyleType by remember { mutableStateOf(activeBasemap) }
     var showBasemapDropdown by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = isFullscreen) {
+        onToggleFullscreen()
+    }
 
     // Use rememberUpdatedState so long-lived MapLibre listeners always access the freshest Compose state
     val currentDrawingMode by rememberUpdatedState(isDrawingMode)
@@ -311,64 +319,97 @@ fun MapLibreGisMap(
             modifier = Modifier.fillMaxSize()
         )
 
-        // 2. Basemap Switcher Floating Pill (Top-Start)
-        Box(
+        // 2. Basemap Switcher & Exit Fullscreen Button (Top-Start)
+        Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(10.dp)
+                .then(if (isFullscreen) Modifier.statusBarsPadding() else Modifier)
+                .padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = PineDark.copy(alpha = 0.88f),
-                border = androidx.compose.foundation.BorderStroke(1.dp, LimeAccent),
-                modifier = Modifier.clickable { showBasemapDropdown = true }
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+            if (isFullscreen) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = PineDark.copy(alpha = 0.90f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, LimeAccent),
+                    modifier = Modifier.clickable { onToggleFullscreen() }
                 ) {
-                    Text(activeBasemap.badge, fontSize = 14.sp)
-                    Text(
-                        text = activeBasemap.displayName,
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Icon(
-                        Icons.Default.ArrowDropDown,
-                        contentDescription = "Switch Basemap",
-                        tint = LimeAccent,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Exit Fullscreen",
+                            tint = LimeAccent,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "Exit",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
             }
 
-            DropdownMenu(
-                expanded = showBasemapDropdown,
-                onDismissRequest = { showBasemapDropdown = false },
-                modifier = Modifier.background(PineDark)
-            ) {
-                BasemapType.values().forEach { type ->
-                    DropdownMenuItem(
-                        text = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(type.badge, fontSize = 14.sp)
-                                Text(
-                                    type.displayName,
-                                    color = if (type == activeBasemap) LimeAccent else Color.White,
-                                    fontWeight = if (type == activeBasemap) FontWeight.Bold else FontWeight.Normal
-                                )
+            Box {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = PineDark.copy(alpha = 0.88f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, LimeAccent),
+                    modifier = Modifier.clickable { showBasemapDropdown = true }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(activeBasemap.badge, fontSize = 14.sp)
+                        Text(
+                            text = activeBasemap.displayName,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Icon(
+                            Icons.Default.ArrowDropDown,
+                            contentDescription = "Switch Basemap",
+                            tint = LimeAccent,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                DropdownMenu(
+                    expanded = showBasemapDropdown,
+                    onDismissRequest = { showBasemapDropdown = false },
+                    modifier = Modifier.background(PineDark)
+                ) {
+                    BasemapType.values().forEach { type ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(type.badge, fontSize = 14.sp)
+                                    Text(
+                                        type.displayName,
+                                        color = if (type == activeBasemap) LimeAccent else Color.White,
+                                        fontWeight = if (type == activeBasemap) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
+                            },
+                            onClick = {
+                                onBasemapChange(type)
+                                showBasemapDropdown = false
                             }
-                        },
-                        onClick = {
-                            onBasemapChange(type)
-                            showBasemapDropdown = false
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -377,9 +418,26 @@ fun MapLibreGisMap(
         Column(
             modifier = Modifier
                 .align(Alignment.TopEnd)
+                .then(if (isFullscreen) Modifier.statusBarsPadding() else Modifier)
                 .padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            // Fullscreen Toggle
+            FilledTonalIconButton(
+                onClick = onToggleFullscreen,
+                modifier = Modifier.size(34.dp),
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = PineDark.copy(alpha = 0.85f),
+                    contentColor = LimeAccent
+                )
+            ) {
+                Icon(
+                    if (isFullscreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                    contentDescription = if (isFullscreen) "Exit Fullscreen" else "Fullscreen Map",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
             // Zoom In (+)
             FilledTonalIconButton(
                 onClick = {
@@ -432,11 +490,38 @@ fun MapLibreGisMap(
             }
         }
 
-        // 4. Map Attribution Badge (Bottom-End)
+        // 4. Selected Field Info Pill (Bottom-Start, Fullscreen only)
+        if (isFullscreen && selectedZone != null) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = PineDark.copy(alpha = 0.90f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, LimeAccent.copy(alpha = 0.5f)),
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .navigationBarsPadding()
+                    .padding(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(Icons.Default.Landscape, contentDescription = null, tint = LimeAccent, modifier = Modifier.size(16.dp))
+                    Column {
+                        Text(selectedZone.name, color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                        Text("${selectedZone.acreage} · ${selectedZone.crop}", color = Color(0xFFA5D6A7), fontSize = 10.sp)
+                    }
+                }
+            }
+        }
+
+        // 5. Map Attribution Badge (Bottom-End)
         Surface(
             shape = RoundedCornerShape(topStart = 8.dp),
             color = Color.Black.copy(alpha = 0.65f),
-            modifier = Modifier.align(Alignment.BottomEnd)
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .then(if (isFullscreen) Modifier.navigationBarsPadding() else Modifier)
         ) {
             Text(
                 text = MapConfig.ATTRIBUTION_TEXT,

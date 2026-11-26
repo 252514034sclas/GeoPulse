@@ -576,7 +576,7 @@ fun InteractiveSatelliteFarmMap(
 
                 // Center Selected Field
                 MapFloatingButton(
-                    icon = Icons.Default.CropFree,
+                    icon = Icons.Default.FilterCenterFocus,
                     contentDescription = "Fit Field Boundary",
                     tint = LimeAccent,
                     onClick = {
@@ -585,6 +585,16 @@ fun InteractiveSatelliteFarmMap(
                         if (sel != null && map != null) {
                             focusField(map, sel)
                         }
+                    }
+                )
+
+                // Expand Fullscreen Map View
+                MapFloatingButton(
+                    icon = Icons.Default.CropFree,
+                    contentDescription = "Fullscreen Map",
+                    tint = LimeAccent,
+                    onClick = {
+                        onOpenFullGisMap()
                     }
                 )
             }
