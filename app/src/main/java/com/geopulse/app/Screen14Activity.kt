@@ -18,9 +18,7 @@ class Screen14Activity : ComponentActivity() {
                     icon = Icons.Default.WbSunny,
                     activity = this,
                     primaryActionClass = Screen15Activity::class.java,
-                    primaryActionText = "Check Pest & Disease Risks",
-                    secondaryActionClass = Screen13Activity::class.java,
-                    secondaryActionText = "View Safe Watering Schedule"
+                    primaryActionText = "Check Pest & Disease Risks"
                 )
             }
         }

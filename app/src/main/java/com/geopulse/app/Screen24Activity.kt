@@ -17,10 +17,10 @@ class Screen24Activity : ComponentActivity() {
                     subtitle = "Review bi-weekly Sentinel-2 satellite crop greenness trajectories. (Soil chemical laboratory data is user-entered; no real-time lab probe).",
                     icon = Icons.Default.History,
                     activity = this,
-                    primaryActionClass = Screen11Activity::class.java,
-                    primaryActionText = "View Current Live Crop Vigor",
-                    secondaryActionClass = Screen18Activity::class.java,
-                    secondaryActionText = "View Crop Growth Calendar"
+                    primaryActionClass = Screen18Activity::class.java,
+                    primaryActionText = "View Crop Growth Calendar",
+                    secondaryActionClass = Screen7Activity::class.java,
+                    secondaryActionText = "Return to Farm Dashboard"
                 )
             }
         }

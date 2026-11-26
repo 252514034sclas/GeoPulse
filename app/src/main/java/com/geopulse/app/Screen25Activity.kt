@@ -17,10 +17,10 @@ class Screen25Activity : ComponentActivity() {
                     subtitle = "Improve long-term soil fertility naturally using compost, green manure, and mulching.",
                     icon = Icons.Default.Nature,
                     activity = this,
-                    primaryActionClass = Screen20Activity::class.java,
-                    primaryActionText = "View Chemical Fertilizer Guide",
-                    secondaryActionClass = Screen12Activity::class.java,
-                    secondaryActionText = "Check Soil Moisture Status"
+                    primaryActionClass = Screen12Activity::class.java,
+                    primaryActionText = "Check Soil Moisture Status",
+                    secondaryActionClass = Screen7Activity::class.java,
+                    secondaryActionText = "Return to Farm Dashboard"
                 )
             }
         }

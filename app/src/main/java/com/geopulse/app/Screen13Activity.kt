@@ -18,9 +18,7 @@ class Screen13Activity : ComponentActivity() {
                     icon = Icons.Default.Water,
                     activity = this,
                     primaryActionClass = Screen14Activity::class.java,
-                    primaryActionText = "View Rain & Spray Forecast",
-                    secondaryActionClass = Screen12Activity::class.java,
-                    secondaryActionText = "Check Soil Moisture Report"
+                    primaryActionText = "View Rain & Spray Forecast"
                 )
             }
         }

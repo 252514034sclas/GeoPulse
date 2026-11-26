@@ -18,9 +18,7 @@ class Screen21Activity : ComponentActivity() {
                     icon = Icons.Default.Inventory,
                     activity = this,
                     primaryActionClass = Screen27Activity::class.java,
-                    primaryActionText = "View Mandi Selling Prices",
-                    secondaryActionClass = Screen16Activity::class.java,
-                    secondaryActionText = "Harvest & Yield Estimator"
+                    primaryActionText = "View Mandi Selling Prices"
                 )
             }
         }

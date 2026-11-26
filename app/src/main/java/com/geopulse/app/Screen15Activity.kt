@@ -17,10 +17,10 @@ class Screen15Activity : ComponentActivity() {
                     subtitle = "Early seasonal risk warnings, biological controls, and practical prevention steps for common regional crop pests.",
                     icon = Icons.Default.Warning,
                     activity = this,
-                    primaryActionClass = Screen11Activity::class.java,
-                    primaryActionText = "View Satellite Crop Health",
-                    secondaryActionClass = Screen26Activity::class.java,
-                    secondaryActionText = "Consult Kisan Helpline (1800-180-1551)"
+                    primaryActionClass = Screen26Activity::class.java,
+                    primaryActionText = "Consult Kisan Helpline (1800-180-1551)",
+                    secondaryActionClass = Screen7Activity::class.java,
+                    secondaryActionText = "Return to Farm Dashboard"
                 )
             }
         }

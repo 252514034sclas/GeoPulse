@@ -17,8 +17,8 @@ class Screen17Activity : ComponentActivity() {
                     subtitle = "Survey parcel GPS vertices, walk boundaries, and calculate parcel acreage.",
                     icon = Icons.Default.Map,
                     activity = this,
-                    primaryActionClass = Screen23Activity::class.java,
-                    primaryActionText = "View All Farm Parcels"
+                    primaryActionClass = Screen7Activity::class.java,
+                    primaryActionText = "Return to Farm Dashboard"
                 )
             }
         }
