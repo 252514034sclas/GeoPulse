@@ -13,6 +13,7 @@ object UserSession {
     private const val KEY_TOTAL_AREA_HA = "total_area_ha"
     private const val KEY_LANGUAGE = "preferred_language"
     private const val KEY_SELECTED_FIELD_ID = "selected_field_id"
+    private const val KEY_OWNED_FIELD_IDS = "owned_field_ids"
 
     private fun getPrefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -58,6 +59,61 @@ object UserSession {
         getPrefs(context).edit().putString(KEY_LANGUAGE, lang).apply()
     }
 
+    fun saveOwnedFieldIds(context: Context, fieldIds: Collection<Int>) {
+        val stringSet = fieldIds.map { it.toString() }.toSet()
+        getPrefs(context).edit().putStringSet(KEY_OWNED_FIELD_IDS, stringSet).apply()
+    }
+
+    fun getOwnedFieldIds(context: Context): Set<Int> {
+        val stringSet = getPrefs(context).getStringSet(KEY_OWNED_FIELD_IDS, null) ?: return emptySet()
+        return stringSet.mapNotNull { it.toIntOrNull() }.toSet()
+    }
+
+    fun isFieldOwned(context: Context, fieldId: Int): Boolean {
+        if (fieldId <= 0) return false
+        val owned = getOwnedFieldIds(context)
+        return validateFieldOwnership(fieldId, owned)
+    }
+
+    /**
+     * Pure validation logic for field ownership.
+     * Ensures arbitrary or cross-account field IDs are rejected.
+     */
+    fun validateFieldOwnership(fieldId: Int, ownedIds: Set<Int>): Boolean {
+        if (fieldId <= 0) return false
+        return ownedIds.contains(fieldId)
+    }
+
+    /**
+     * Sanitizes requested field ID against owned IDs and current selection.
+     * Prevents invalid or unauthorized IDs from replacing valid selected fields.
+     */
+    fun sanitizeSelectedFieldId(requestedId: Int?, ownedIds: Set<Int>, currentSelectedId: Int?): Int? {
+        if (requestedId == null || requestedId <= 0) return null
+        if (validateFieldOwnership(requestedId, ownedIds)) {
+            return requestedId
+        }
+        // Refuse to overwrite valid selection with untrusted ID
+        return if (currentSelectedId != null && validateFieldOwnership(currentSelectedId, ownedIds)) {
+            currentSelectedId
+        } else {
+            ownedIds.minOrNull()
+        }
+    }
+
+    fun setSelectedFieldIdIfOwned(context: Context, fieldId: Int?): Boolean {
+        if (fieldId == null || fieldId <= 0) {
+            setSelectedFieldId(context, null)
+            return true
+        }
+        val owned = getOwnedFieldIds(context)
+        if (owned.isNotEmpty() && validateFieldOwnership(fieldId, owned)) {
+            setSelectedFieldId(context, fieldId)
+            return true
+        }
+        return false
+    }
+
     fun getSelectedFieldId(context: Context): Int? {
         val id = getPrefs(context).getInt(KEY_SELECTED_FIELD_ID, -1)
         return if (id != -1) id else null
@@ -74,6 +130,7 @@ object UserSession {
     }
 
     fun resolveSelectedField(context: Context, availableFields: List<FieldDto>): FieldDto? {
+        saveOwnedFieldIds(context, availableFields.map { it.id })
         if (availableFields.isEmpty()) {
             setSelectedFieldId(context, null)
             return null

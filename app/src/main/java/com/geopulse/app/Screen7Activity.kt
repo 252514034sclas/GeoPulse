@@ -1880,7 +1880,7 @@ fun FullProfileSettingsTab(
                             ProfileItemRow("Kisan Advisory Helpline (1800-180-1551)", "Direct chat with agricultural specialists", Icons.Default.Phone) {
                                 onNavigate(Screen26Activity::class.java)
                             }
-                            ProfileItemRow("Local Mandi Market Rates", "Daily wholesale commodity prices for Wheat, Rice, Corn", Icons.AutoMirrored.Filled.TrendingUp) {
+                            ProfileItemRow("Local Mandi Market Rates", "AGMARKNET wholesale commodity price bulletin for Wheat, Rice, Corn", Icons.AutoMirrored.Filled.TrendingUp) {
                                 onNavigate(Screen27Activity::class.java)
                             }
                             ProfileItemRow("Farm Budget & Expense Tracker", "Track seeds, fertilizers, labor, and crop profits", Icons.Default.MonetizationOn) {

@@ -219,8 +219,8 @@ def get_field_with_ownership(field_id: int, user: models.UserModel, db: Session)
     field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
     if not field:
         raise HTTPException(status_code=404, detail="Field parcel not found")
-    if field.user_id is not None and field.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Forbidden: You do not own this field parcel")
+    if field.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden: You do not own this field parcel (anti-IDOR)")
     return field
 
 
@@ -739,6 +739,9 @@ def create_advisory_task(
     user: models.UserModel = Depends(get_current_user_strict), 
     db: Session = Depends(get_db)
 ):
+    if task_in.field_id is not None:
+        get_field_with_ownership(task_in.field_id, user, db)
+
     task = models.AdvisoryTaskModel(
         user_id=user.id,
         field_id=task_in.field_id,
@@ -850,6 +853,9 @@ def add_expense(
     user: models.UserModel = Depends(get_current_user_strict), 
     db: Session = Depends(get_db)
 ):
+    if expense_in.field_id is not None:
+        get_field_with_ownership(expense_in.field_id, user, db)
+
     new_expense = models.FarmExpenseModel(
         user_id=user.id,
         field_id=expense_in.field_id,

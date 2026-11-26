@@ -2124,7 +2124,7 @@ fun FertilizationPlanModule() {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            Text("Plain-language fertilizer dosages per acre tailored to your crop greenness.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Crop-specific guideline dosage estimates per acre based on standard agronomic recommendations. (Note: Optical NDVI measures canopy greenness, not soil nutrients. Validate with physical Soil Health Card tests before application).", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             Spacer(modifier = Modifier.height(14.dp))
 
@@ -2132,7 +2132,7 @@ fun FertilizationPlanModule() {
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
 
-                Text("Recommended Urea (Nitrogen)", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontSize = 13.5.sp)
+                Text("Guideline Urea (Nitrogen) Estimate", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontSize = 13.5.sp)
 
                 Text("${nitrogenKg.toInt()} kg / acre (1 Bag)", fontWeight = FontWeight.Bold, color = LimeAccent, fontSize = 14.sp)
 
@@ -2473,7 +2473,7 @@ fun SatelliteHistoryModule() {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            Text("Review satellite greenness comparisons over the crop season.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Review optical satellite greenness comparisons over the crop season (Sentinel-2 10m MSI). (Note: Optical NDVI measures canopy chlorophyll absorption, not soil chemical fertility).", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             Spacer(modifier = Modifier.height(14.dp))
 
@@ -2787,9 +2787,9 @@ fun MarketCommodityModule() {
 
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-            Text("Local Mandi Wholesale Selling Rates", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text("Local Mandi Wholesale Price Bulletin", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
 
-            Text("Today's verified wholesale agricultural market prices in ₹ / Quintal (Agmarknet data).", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Official AGMARKNET modal wholesale reference bulletin in ₹ / Quintal (Historical benchmark reference; not live futures market).", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
 
 
@@ -2805,14 +2805,14 @@ fun MarketCommodityModule() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            if (isLoading) "Fetching Mandi Wholesale Prices..." else "No Mandi Rates Available",
+                            if (isLoading) "Retrieving AGMARKNET Wholesale Bulletin..." else "No Mandi Rates Available",
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 13.5.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            if (isLoading) "Retrieving live wholesale arrivals from Agmarknet..." else "Connect to network to fetch verified AGMARKNET wholesale market rates for your district.",
+                            if (isLoading) "Querying official APMC benchmark bulletin..." else "Connect to network to fetch AGMARKNET commodity prices.",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -2835,7 +2835,8 @@ fun MarketCommodityModule() {
                             ) {
                                 Column {
                                     Text(rate.commodity, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
-                                    Text("${rate.mandiName}, ${rate.state}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    val dateNote = if (rate.recordedDate.isNotBlank()) " · Recorded: ${rate.recordedDate}" else ""
+                                    Text("${rate.mandiName}, ${rate.state}$dateNote", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text("₹${rate.modalPrice.toInt()} / Q", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)

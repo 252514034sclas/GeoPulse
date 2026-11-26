@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
 
         // Explicit security allowlist for internal notification and deep-link destinations.
         // Replaces arbitrary dynamic reflection with strict compile-time class mapping.
-        private val ALLOWED_DESTINATIONS: Map<String, Class<out ComponentActivity>> = mapOf(
+        val ALLOWED_DESTINATIONS: Map<String, Class<out ComponentActivity>> = mapOf(
             "Screen7Activity" to Screen7Activity::class.java,
             "Screen8Activity" to Screen8Activity::class.java,
             "Screen9Activity" to Screen9Activity::class.java,
@@ -46,6 +46,20 @@ class MainActivity : ComponentActivity() {
             "LoginActivity" to LoginActivity::class.java,
             "SplashActivity" to SplashActivity::class.java
         )
+
+        fun isDestinationAllowed(target: String?): Boolean {
+            if (target.isNullOrBlank()) return false
+            return ALLOWED_DESTINATIONS.containsKey(target)
+        }
+
+        fun isPublicDestination(target: String?): Boolean {
+            return target in listOf("WelcomeActivity", "LoginActivity", "SplashActivity")
+        }
+
+        fun sanitizeIntentExtras(extras: Map<String, Any?>): Map<String, Any?> {
+            val protectedKeys = setOf("auth_token", "token", "user_id", "email", "password", "api_key", "IS_LOGGED_IN")
+            return extras.filterKeys { it !in protectedKeys }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,21 +85,35 @@ class MainActivity : ComponentActivity() {
 
         val target = intent?.getStringExtra("TARGET_SCREEN")
         if (!target.isNullOrEmpty()) {
-            val destinationClass = ALLOWED_DESTINATIONS[target]
-            if (destinationClass != null) {
+            if (isDestinationAllowed(target)) {
+                val destinationClass = ALLOWED_DESTINATIONS[target]!!
                 val isLoggedIn = UserSession.isLoggedIn(this)
-                val isPublicScreen = target in listOf("WelcomeActivity", "LoginActivity", "SplashActivity")
+                val isPublicScreen = isPublicDestination(target)
 
                 // Enforce authentication check: protected screens cannot be accessed anonymously
                 if (isLoggedIn || isPublicScreen) {
-                    val fieldId = intent?.getIntExtra("FIELD_ID", -1) ?: -1
-                    if (fieldId > 0 && isLoggedIn) {
-                        UserSession.setSelectedFieldId(this, fieldId)
+                    val rawFieldId = intent?.getIntExtra("FIELD_ID", -1) ?: -1
+                    if (rawFieldId > 0 && isLoggedIn) {
+                        if (UserSession.isFieldOwned(this, rawFieldId)) {
+                            UserSession.setSelectedFieldId(this, rawFieldId)
+                        } else {
+                            Log.w(TAG, "Security: Untrusted/unverified FIELD_ID $rawFieldId rejected. Not in verified owned fields. Preserving existing selection.")
+                            intent?.removeExtra("FIELD_ID")
+                        }
                     }
-                    startActivity(Intent(this, destinationClass).apply {
+
+                    // Security: Sanitize intent extras to prevent untrusted callers from overriding authentication state
+                    val sanitizedIntent = Intent(this, destinationClass).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                         putExtras(intent)
-                    })
+                        removeExtra("auth_token")
+                        removeExtra("token")
+                        removeExtra("user_id")
+                        removeExtra("email")
+                        removeExtra("password")
+                        removeExtra("api_key")
+                    }
+                    startActivity(sanitizedIntent)
                     finish()
                     return
                 } else {
