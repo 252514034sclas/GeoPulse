@@ -1,134 +1,154 @@
-# GeoPulse — Final Release Integrity Correction & Verification Report
+# GeoPulse — Final Release Integrity & Handover Freeze Report
 
-**Branch:** `feature/farmer-workflow-navigation`  
-**Latest Integrity Commit:** `a5b4723` (`fix(security): enforce field-selection ownership, sanitize intent extras, and correct scientific data descriptions`)  
-**Frozen Baseline Tag:** `v1.0.0-rc1` (commit `2083d56afe126cc6d5182013f7c388b1cd5599ac`) — Strictly Preserved  
-**Package:** `com.geopulse.app`  
-**Verification Date:** November 26, 2026  
+**Working Branch:** `feature/farmer-workflow-navigation` (Tracked & pushed to `origin/feature/farmer-workflow-navigation`)  
+**HEAD Commit:** `9d0424f05c59af0a0c5d54387e323294e798651c`  
+**Integrity Baseline Commit:** `a5b47236d895ba32439c279a0db2a7b8e19c353f`  
+**Frozen Tag:** `v1.0.0-rc1` (Dereferenced target commit: `2083d56afe126cc6d5182013f7c388b1cd5599ac`) — Strictly Preserved  
+**Package Name:** `com.geopulse.app`  
+**Handover Date:** November 26, 2026  
 **Auditor:** DeepMind Engineering Quality & Security Handover Team  
 
 ---
 
-## 1. Executive Summary
+## 1. Executive Summary & Release Freeze
 
-The objective of this final handover mission was to eliminate factual inaccuracies, harden deep-link security and field-isolation boundaries (anti-IDOR), disaggregate Firebase Cloud Messaging (FCM) operational stages transparently, and generate a cryptographically verified production release APK, without altering frozen baselines or introducing scope creep.
+This final verification report establishes the authoritative release handover for GeoPulse. All development has been frozen. No new features, screen redesigns, or changes to working navigation have been introduced.
 
-All code modifications were strictly restricted to the working feature branch `feature/farmer-workflow-navigation`. The frozen RC-1 tag (`v1.0.0-rc1`) remains completely unmodified.
+The authoritative signed release APK has been preserved and verified directly from the artifact repository.
 
-### Key Handover Deliverables:
-1. **Scientific Truth in Labelling:** Copernicus Sentinel-2 optical imagery correctly distinguished from radar SAR; optical NDVI canopy greenness decoupled from soil chemical nutrients; fertilizer dosages labelled as guideline estimates requiring Soil Health Card laboratory validation; AGMARKNET modal prices accurately presented as official historical APMC reference bulletins displaying recorded observation dates.
-2. **Field-Selection & Deep-Link Security:** Deep link `FIELD_ID` inputs treated as untrusted; client-side ownership validation implemented in `UserSession.kt`; intent extra sanitization implemented in `MainActivity.kt` to strip authentication keys; strict backend anti-IDOR ownership checks enforced in `backend/main.py` across all field-specific endpoints (including advisory tasks and farm expenses).
-3. **Transparent 7-Stage FCM Operational Reporting:** Unambiguous demarcation between verified local/decision logic and blocked cloud infrastructure (Stages 5, 6, and 7 marked as `BLOCKED — INFRASTRUCTURE` due to missing Firebase service-account private key and cloud scheduler).
-4. **Cryptographic Release Artifact:** Freshly compiled release APK (`app-release.apk`) verified with APK Signature Scheme v2, SHA-256 hash `49198BAC698DB4650AB06F45944F82E4165F2280C0EA480D9413C0F6A1440998`, and verified live on `emulator-5554` (Pixel 10 Pro Android Emulator).
-
----
-
-## 2. Scientific & Data-Source Labelling Corrections
-
-| Source / Feature | Previous Inaccurate Label | Corrected Scientific Description | Relevant Screens & Code Locations |
-|---|---|---|---|
-| **Copernicus Sentinel-2** | Described ambiguously or conflated with radar | **Optical satellite imagery** (10m MultiSpectral Instrument bands: Red, Green, Blue, NIR). Decoupled from radar. | `Screen20Activity.kt`, `Screen24Activity.kt`, `GeoComponents.kt` |
-| **Optical NDVI** | Implied measurement of soil chemical nutrients / fertilizer need | **Canopy chlorophyll reflectance & vegetative vigor only**. Explicit note that optical NDVI cannot detect soil nitrogen (N), phosphorus (P), or potassium (K). | `GeoComponents.kt`, `Screen20Activity.kt` |
-| **Fertilizer Guidance** | "Recommended Urea / Precision Dosage" | **"Guideline Urea (Nitrogen) Estimate"**. Crop-specific standard agronomic guideline estimate requiring physical Soil Health Card laboratory testing for precision application. | `Screen20Activity.kt`, `GeoComponents.kt` |
-| **AGMARKNET Mandi Rates** | "Today's Live Wholesale Arrivals" | **Official AGMARKNET modal wholesale reference bulletin**. Explicitly labelled as historical benchmark reference (not live futures market tickers); displays actual recorded date per mandi entry (`Recorded: 2026-10-29`). | `Screen27Activity.kt`, `Screen7Activity.kt`, `GeoComponents.kt` |
-| **Radar SAR (Sentinel-1 / EOS-04)** | Conflated with operational soil moisture | **C-band Synthetic Aperture Radar (SAR)** backscatter reflects 0–5 cm surface roughness/dielectric skin; labelled as experimental/uncalibrated for root-zone moisture. | Backend agronomic models & Screen 12 documentation |
+### Key Handover Verifications:
+1. **Remote Repository Push:** Branch `feature/farmer-workflow-navigation` has been committed and pushed to `https://github.com/252514034sclas/GeoPulse.git`.
+2. **Frozen Tag Confirmation:** Tag `v1.0.0-rc1` (tag object `2f54e627bf4de272bebd04ec730a6aa32cc2a4ae`) dereferences directly to commit `2083d56afe126cc6d5182013f7c388b1cd5599ac`. It has not been modified or moved.
+3. **Preserved Authoritative APK:** The exact signed release APK with SHA-256 `49198BAC698DB4650AB06F45944F82E4165F2280C0EA480D9413C0F6A1440998` is preserved and verified.
+4. **Test Verification Integrity (No Double Counting):**
+   - **23 Android Unit Tests** PASSED (0 failures, 0 errors).
+   - **30 Backend Unit/Regression Tests** PASSED (0 failures, 0 errors in 4.08s).
+   - **28 Empty/Multi-Field Matrix Assertions** PASSED (separate matrix script).
+   - **19 Multi-User Isolation / Anti-IDOR Tests** PASSED (separate isolation script).
+5. **Testing Environment Transparency:** All dynamic testing was performed on `emulator-5554 (Pixel 10 Pro Android Emulator)`. No physical phone was connected or claimed.
+6. **Data Provenance & Scientific Truth:** Copernicus Sentinel-2 confirmed as optical satellite imagery (periodic 5-day orbit, never a continuous live feed); AGMARKNET modal rates confirmed as historical APMC benchmark bulletins; fertilizer dosages confirmed as crop-specific guideline estimates requiring Soil Health Card laboratory validation.
+7. **Pending Production Infrastructure:** Live FCM remote push dispatch, automated cloud scheduler, public cloud backend deployment, and physical-device fleet testing remain explicitly documented as pending.
 
 ---
 
-## 3. Field-Selection Security & Anti-IDOR Enforcement
+## 2. Authoritative APK Verification & Checksum Lineage
 
-### 3.1 Vulnerability Elimination Architecture
+### 2.1 Cryptographic Identity of Preserved Release APK
 
-```mermaid
-flowchart TD
-    Ext["External Intent / Notification Deep Link"] --> TargetCheck{"Destination in Allowlist?"}
-    TargetCheck -- "No (Unknown/Arbitrary)" --> Drop["Drop Intent & Route to Screen7 (Home)"]
-    TargetCheck -- "Yes" --> AuthCheck{"Target Requires Auth & User Logged In?"}
-    AuthCheck -- "Unauthenticated" --> LoginRoute["Route to LoginActivity"]
-    AuthCheck -- "Authenticated" --> SanitizeExtras["Sanitize Extras (Strip auth_token, password, user_id)"]
-    SanitizeExtras --> FieldCheck{"FIELD_ID Present?"}
-    FieldCheck -- "No" --> LaunchTarget["Launch Whitelisted Target Activity"]
-    FieldCheck -- "Yes" --> OwnerCheck{"isFieldOwned(FIELD_ID)?"}
-    OwnerCheck -- "Not Owned / Spoofed" --> RejectField["Log Warning & Strip Untrusted FIELD_ID\n(Retain Current Active Field)"]
-    OwnerCheck -- "Owned & Valid" --> SetField["UserSession.setSelectedFieldId(FIELD_ID)"]
-    RejectField --> LaunchTarget
-    SetField --> LaunchTarget
-```
+Verification performed directly on the preserved artifact using `apksigner.bat` and `Get-FileHash`:
 
-### 3.2 Implementation Specifics
+- **Preserved Artifact Path:** `app-release-integrity-verified.apk`
+- **Source Build Path:** `app/build/outputs/apk/release/app-release.apk`
+- **Artifact Size:** `71,487,405` bytes (68.17 MB)
+- **SHA-256 Checksum:** `49198BAC698DB4650AB06F45944F82E4165F2280C0EA480D9413C0F6A1440998`
+- **Signing Scheme:** APK Signature Scheme v2 (`Verified using v2 scheme: true`)
+- **Signer DN:** `CN=GeoPulse Production Release, OU=Agricultural Engineering, O=GeoPulse Technologies, L=Chennai, ST=Tamil Nadu, C=IN`
+- **Signer Certificate SHA-256 Digest:** `464070a93c24bfd9bf67f4b6e9f777cf470aec4009ea3c710c3d8e8f849f8143`
+- **Signer Certificate SHA-1 Digest:** `ca65756e62bfb98fbcad73b1d921c5fd1b4184e1`
+- **Signer Certificate MD5 Digest:** `db6c588f8d2c83d4c476da180d9dc93a`
+- **Key Algorithm:** RSA 2048-bit
 
-1. **Client-Side Ownership Caching & Validation (`UserSession.kt`):**
-   - Added `saveOwnedFieldIds(context, fieldIds)` backed by `KEY_OWNED_FIELD_IDS` in SharedPreferences.
-   - Implemented `isFieldOwned(context, fieldId)` and pure JVM validation `validateFieldOwnership(fieldId, ownedIds)`.
-   - Implemented `sanitizeSelectedFieldId(requestedId, ownedIds, currentSelectedId)` ensuring untrusted or invalid IDs cannot overwrite a farmer's valid field context.
-   - Updated `resolveSelectedField` to automatically maintain the set of owned field IDs from the authenticated user's field list.
-2. **Intent Extra Sanitization & Allowlist Hardening (`MainActivity.kt`):**
-   - Untrusted `FIELD_ID` values are validated against `UserSession.isFieldOwned(this, rawFieldId)` before adoption. Unowned IDs trigger a security warning and are stripped.
-   - Implemented `sanitizeIntentExtras()` stripping protected authentication keys (`auth_token`, `token`, `user_id`, `email`, `password`, `api_key`, `IS_LOGGED_IN`) to prevent intent-redirection session hijacking.
-   - Enforced compile-time `ALLOWED_DESTINATIONS` allowlist covering all 30 activities.
-3. **Backend Ownership & Anti-IDOR Enforcement (`backend/main.py`):**
-   - Hardened `get_field_with_ownership(field_id, user, db)`: strictly verifies `field.user_id == user.id`. Orphan or unowned fields trigger HTTP 403 Forbidden.
-   - Added `get_field_with_ownership` validation to `POST /api/v1/advisory/tasks` and `POST /api/v1/budget/expenses`, ensuring malicious users cannot attach tasks or expenses to other users' fields.
+### 2.2 Checksum Lineage & Difference Explanation
 
-### 3.3 Live Emulator Verification Evidence
-Live execution on `emulator-5554` confirmed active protection against intent manipulation:
-```text
-11-26 09:35:00.857  5596  5596 W MainActivity: Security: Untrusted/unverified FIELD_ID 99999 rejected. Not in verified owned fields. Preserving existing selection.
-```
+The three reported checksums represent distinct compiled iterations of the application codebase:
+
+| Checksum | Commit Origin | Engineering Scope & Reason for Difference |
+|---|---|---|
+| `585288AEFD38FBCE...` | Commit `4e866d9` | **Initial Navigation Consolidation:** Consolidated overlapping profile screens (Screen 10 & 29) and established distinct boundaries for GPS/parcel editing (Screens 8, 17, 23). |
+| `0F9F0D0C424C0158...` | Commit `b765bb7` | **Circular Navigation Fix:** Eliminated all forward-navigation circular cycles across Screens 11–27, replacing forward intent loops with `activity.finish()` to preserve the Android back-stack. |
+| `49198BAC698DB465...` *(Authoritative Preserved)* | Commit `a5b4723` | **Security Hardening & Truth in Labelling:** Implemented deep-link field ownership validation (anti-IDOR) in `UserSession.kt` and `MainActivity.kt`, intent extra sanitization (stripping auth tokens), and corrected scientific data descriptions across Screens 7, 11, 20, 24, 27 and `GeoComponents.kt`. |
 
 ---
 
-## 4. Transparent 7-Stage FCM Operational Reporting
+## 3. Scientific Data Provenance & Freshness Verification
 
-To eliminate speculation, the notification lifecycle was disaggregated into 7 distinct stages and evaluated against physical and cloud infrastructure requirements:
+### 3.1 Satellite Freshness & Observation Truth (Screen 11)
+- **Platform:** Copernicus Sentinel-2 (MSI optical sensor bands: B02, B04, B08, B11).
+- **Misleading Wording Removed:** Removed all claims of "live satellite", "live feed", or continuous streaming.
+- **Acquisition Date:** Explicitly displays the actual recorded observation date (e.g. `2026-11-20`).
+- **Data Freshness / Age:** Communicated as a periodic orbital revisit pass (5-day constellation revisit cycle).
+- **Cloud Coverage:** Displayed as `< 15% (Cloud-filtered observation over parcel boundary)`.
+- **Processing Status:** Identified as Level-2A Bottom-Of-Atmosphere (BOA) surface reflectance processed via Planetary Computer STAC.
+- **NDVI Scope:** Decoupled from soil chemical nutrients; restricted to canopy chlorophyll greenness and vigor.
 
-| Stage # | Operational Stage | Implementation Component | Verification Status | Operational Notes / Real-World Blockers |
-|---|---|---|---|---|
-| **1** | Device Token Generation | Android Firebase Messaging Client Library | **VERIFIED** | Successfully generates Firebase client tokens when Google Play Services is available. |
-| **2** | Backend Token Registration | `POST /api/v1/notifications/register-token` | **VERIFIED** | Persists token, user ID, platform (`android`), and active status into PostgreSQL `device_tokens` table. |
-| **3** | Field Decision Engine & Payload Generation | `backend/services/notification_service.py` | **VERIFIED** | FAO-56 water balance, weather triggers (rain postponement, wind spray safety), and crop stage rules generate structured notification JSON. |
-| **4** | Local Display & Deep-Link Routing | `GeoPulseFirebaseMessagingService.kt` + `MainActivity.kt` | **VERIFIED** | Creates 4 priority notification channels, posts local alerts, and routes securely to allowlisted screens. |
-| **5** | Cloud Messaging HTTP v1 Dispatch | `firebase_admin.messaging.send()` | **BLOCKED — INFRASTRUCTURE** | Missing Google Cloud service-account private key JSON (`serviceAccountKey.json`). Backend defaults safely to simulation logging mode. |
-| **6** | Remote Physical-Device Receipt | Google Play Services Push Daemon | **BLOCKED — INFRASTRUCTURE** | No physical Android device connected. Requires an active Google Play Services connection over external internet. |
-| **7** | Automated Cloud Cron Scheduler | Celery / APScheduler / Cloud Scheduler | **BLOCKED — INFRASTRUCTURE** | No external persistent daemon or cron worker configured to execute daily evaluation cycles in the cloud. |
+### 3.2 Mandi Data Provenance (Screen 27 & Screen 7)
+Backend inspection of `/api/v1/mandi/prices` and `/api/v1/mandi/rates` verified:
+- **Provenance Classification:** **Official Historical APMC Benchmark Reference Data**.
+- **Upstream Source:** AGMARKNET (Directorate of Marketing & Inspection, Ministry of Agriculture & Farmers Welfare, Govt. of India).
+- **Is it Live Upstream Data?** **NO**. Live upstream synchronization requires an active `DATA_GOV_IN_API_KEY`. The backend explicitly returns `"is_live": false`, `"data_status": "HISTORICAL_BENCHMARK_REFERENCE"`, and notes: *"Live mandi feed requires DATA_GOV_IN_API_KEY. Displaying verified APMC benchmark reference rates."*
+- **Is it Manually Entered?** No, records are seeded from the official AGMARKNET benchmark transaction registry.
+- **Displayed Metadata:** Market (e.g. *Kallakurichi Mandi*, *Thanjavur Regulated Market*), State (*Tamil Nadu*), Commodity (*Corn*, *Soybeans*, *Wheat*, *Cotton*, *Paddy Basmati*), Unit (*₹ / Quintal*), and Recorded Observation Date (*2026-10-29* / *2026-11-15*).
 
 ---
 
-## 5. Verification & Test Evidence
+## 4. Navigation Architecture & Regression Verification (Screens 11–27)
+
+A targeted regression confirmed clean navigation behavior across all secondary screens:
+1. **Zero Circular Forward Cycles:** Screens 11–27 navigate linearly. Secondary actions (e.g. "Return to Farm Dashboard") invoke `activity.finish()` to pop the top of the back stack rather than launching new forward instances.
+2. **Back Navigation Integrity:** Both the physical/virtual Android Back button and the top-bar Back arrow consistently return to the immediate previous screen without accumulating redundant activity instances.
+3. **Field Context Preservation:** The selected field ID persists in `UserSession` across hub transitions (Home ↔ Fields ↔ Activity ↔ Profile) and into all detail screens.
+4. **Anti-IDOR Deep Link Protection:** Deep link `FIELD_ID` inputs are validated against `UserSession.isFieldOwned()`. Spoofed or unauthorized IDs (e.g. `FIELD_ID 99999`) trigger a security log warning and are stripped, preserving the active field selection.
+
+---
+
+## 5. Comprehensive Test Evidence
 
 ### 5.1 Android Unit Test Suite
 - **Command:** `call gradlew.bat testDebugUnitTest --no-build-cache --rerun-tasks`
-- **Execution:** 25/25 tasks freshly executed (no cache reuse)
 - **Result:** **23/23 tests PASSED (100%)** — 0 failures, 0 errors in 47s.
-- **Included Suites:**
-  - `SecurityAndFieldIntegrityTest` (6 tests)
-  - `ExampleUnitTest` (1 test)
-  - Existing regression suite (16 tests)
+- **Breakdown:**
+  - `SecurityAndFieldIntegrityTest`: 6 tests
+  - `ExampleUnitTest`: 1 test
+  - Regression unit suite: 16 tests
+  - **Total: 23 unit tests**.
 
-### 5.2 Backend Test Suites
+### 5.2 Backend Test Suite
 - **Command:** `python -m unittest test_final_release_security.py test_fcm_notifications.py test_api.py test_scientific_rigor.py test_field_security_regression.py`
 - **Result:** **30/30 tests PASSED in 4.08s (100%)** — 0 failures, 0 errors.
+- **Breakdown:**
+  - `test_field_security_regression.py`: 4 tests
+  - `test_final_release_security.py`: 5 tests
+  - `test_fcm_notifications.py`: 6 tests
+  - `test_scientific_rigor.py`: 7 tests
+  - `test_api.py`: 8 tests
+  - **Total: 30 unit/regression tests**.
 
-### 5.3 Multi-Field & Multi-User Isolation Scripts
-- **Command:** `python test_empty_and_multi_field_state.py`
-  - **Result:** 28/28 assertions PASSED across 5 lifecycle matrix phases.
-- **Command:** `python test_multi_user_isolation.py`
-  - **Result:** 19/19 tests PASSED with strict cross-account IDOR rejection.
+### 5.3 Separate Isolation & Lifecycle Matrix Scripts (Not Double Counted)
+- **Empty & Multi-Field Matrix (`test_empty_and_multi_field_state.py`):** **28/28 assertions PASSED** across 5 lifecycle phases.
+- **User Isolation Script (`test_multi_user_isolation.py`):** **19/19 tests PASSED** validating strict cross-account isolation across all endpoints.
 
 ---
 
-## 6. Release APK Cryptographic Identity & Verification
+## 6. Execution Environment & Operational Status
 
-- **Source APK Path:** `app\build\outputs\apk\release\app-release.apk`
-- **Artifact Path:** `app-release-integrity-verified.apk`
-- **File Size:** `71,487,405` bytes (68.17 MB)
-- **SHA-256 Checksum:** `49198BAC698DB4650AB06F45944F82E4165F2280C0EA480D9413C0F6A1440998`
-- **Signing Scheme:** APK Signature Scheme v2 (Verified: `true`)
-- **Signer DN:** `CN=GeoPulse Production Release, OU=Agricultural Engineering, O=GeoPulse Technologies, L=Chennai, ST=Tamil Nadu, C=IN`
-- **Signer Certificate SHA-256 Digest:** `464070a93c24bfd9bf67f4b6e9f777cf470aec4009ea3c710c3d8e8f849f8143`
-- **Signer Key Algorithm:** RSA 2048-bit
+### 6.1 Testing Environment
+- **Device Target:** `emulator-5554` (`Pixel 10 Pro Android Emulator`, Android 16 API 36, x86_64).
+- **Physical Device:** **None connected** (`adb devices` verified; all tests executed on Android Studio Emulator).
 
-### Verification Environment:
-- **Test Target:** `emulator-5554` (`Pixel 10 Pro Android Emulator`, Android 16 API 36)
-- **Physical Device:** None connected (`adb devices` verified; emulator clearly distinguished from physical hardware)
-- **Installation:** `adb -s emulator-5554 install -r app-release.apk` (`Performing Streamed Install -> Success`)
+### 6.2 FCM 7-Stage Status & Production Gaps
+To prevent ambiguity, operational capabilities are explicitly classified:
+
+| Stage # | Stage Name | Status | Real-World Blocker / Pending Requirement |
+|---|---|---|---|
+| 1 | Device Token Generation | **VERIFIED** | Local Firebase client library functions. |
+| 2 | Backend Token Registration | **VERIFIED** | Persisted in PostgreSQL `device_tokens` table. |
+| 3 | Agronomic Decision Engine | **VERIFIED** | FAO-56 balance and weather rules generate valid payloads. |
+| 4 | Local Alert Display & Deep Links | **VERIFIED** | Notification channels and allowlisted navigation function. |
+| 5 | Firebase HTTP v1 Remote Push | **PENDING — INFRASTRUCTURE** | Missing Google Cloud service-account private key (`serviceAccountKey.json`). |
+| 6 | Remote Push Receipt on Phone | **PENDING — INFRASTRUCTURE** | Requires physical Android device with Google Play Services. |
+| 7 | Automated Cloud Cron Scheduler | **PENDING — INFRASTRUCTURE** | Requires cloud hosting with persistent cron worker (e.g. Celery / Cloud Scheduler). |
+| — | Public Backend Hosting | **PENDING — INFRASTRUCTURE** | Backend runs locally on `127.0.0.1:8000`. Cloud deployment and TLS remain pending. |
+| — | Physical-Device Fleet QA | **PENDING — INFRASTRUCTURE** | Low-spec device testing in rural field conditions remains pending. |
+
+---
+
+## 7. Handover Checklist & Conclusion
+
+- [x] All intended changes committed and pushed to `origin/feature/farmer-workflow-navigation`.
+- [x] Frozen tag `v1.0.0-rc1` confirmed pointing to commit `2083d56afe126cc6d5182013f7c388b1cd5599ac`.
+- [x] Exact signed APK preserved with SHA-256 `49198BAC698DB4650AB06F45944F82E4165F2280C0EA480D9413C0F6A1440998`.
+- [x] Signing certificate verified with SHA-256 `464070a93c24bfd9bf67f4b6e9f777cf470aec4009ea3c710c3d8e8f849f8143`.
+- [x] Test counts accurately stated (23 Android tests, 30 backend tests, 28 matrix assertions, 19 isolation tests).
+- [x] Testing explicitly recorded on Android emulator, not physical phone.
+- [x] Live FCM, cloud scheduler, public cloud hosting, and physical device testing documented as pending.
+- [x] No features added, screens redesigned, or working functionality changed.
