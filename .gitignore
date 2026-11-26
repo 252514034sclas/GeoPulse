@@ -31,3 +31,9 @@ __pycache__/
 *.keystore
 keystore.properties
 *.properties.local
+
+# Credentials & Service Accounts (Secrets Prevention)
+*credentials*.json
+*service-account*.json
+serviceAccountKey.json
+firebase-admin-sdk.json

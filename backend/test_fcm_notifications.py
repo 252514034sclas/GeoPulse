@@ -214,6 +214,18 @@ class TestIntelligentNotifications(unittest.TestCase):
         res_b_mark_a = self.client.post(f"/api/v1/notifications/{notif_a_id}/read", headers=self.headers_b)
         self.assertEqual(res_b_mark_a.status_code, 403, "IDOR Vulnerability: Farmer B could modify Farmer A's notification!")
 
+        # Farmer B attempts to evaluate advisories on Farmer A's field -> MUST return 403 Forbidden!
+        res_b_eval_a = self.client.post("/api/v1/notifications/evaluate", params={"field_id": self.field_a_id}, headers=self.headers_b)
+        self.assertEqual(res_b_eval_a.status_code, 403, "IDOR Vulnerability: Farmer B could trigger evaluation on Farmer A's field!")
+
+        # Farmer B attempts to query notifications for Farmer A's field -> MUST return 403 Forbidden!
+        res_b_query_a = self.client.get("/api/v1/notifications", params={"field_id": self.field_a_id}, headers=self.headers_b)
+        self.assertEqual(res_b_query_a.status_code, 403, "IDOR Vulnerability: Farmer B could query notifications for Farmer A's field!")
+
+        # Non-existent field evaluation -> MUST return 404 Not Found!
+        res_404_eval = self.client.post("/api/v1/notifications/evaluate", params={"field_id": 999999}, headers=self.headers_b)
+        self.assertEqual(res_404_eval.status_code, 404)
+
     def test_06_mark_as_read_and_history(self):
         """Test mark as read and notification history querying."""
         res_a = self.client.get("/api/v1/notifications", headers=self.headers_a)

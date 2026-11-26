@@ -1413,6 +1413,13 @@ def trigger_notification_evaluation(
     enforces deduplication and quiet-hour rules, creates notification records,
     and dispatches FCM push alerts to all active registered devices.
     """
+    if field_id is not None:
+        target_field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
+        if not target_field:
+            raise HTTPException(status_code=404, detail="Field not found.")
+        if target_field.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Access denied: Field does not belong to authenticated farmer.")
+
     res = evaluate_user_fields(
         user_id=user.id,
         db=db,
@@ -1454,6 +1461,13 @@ def get_user_notifications(
     Enforces user isolation (anti-IDOR): a farmer only receives their own parcel advisories.
     Supports English and Tamil dynamic message rendering based on farmer preference.
     """
+    if field_id is not None:
+        target_field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
+        if not target_field:
+            raise HTTPException(status_code=404, detail="Field not found.")
+        if target_field.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Access denied: Field does not belong to authenticated farmer.")
+
     pref = get_or_create_user_preferences(user.id, db)
     farmer_lang = pref.language or user.preferred_language or "en"
 

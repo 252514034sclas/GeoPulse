@@ -14,7 +14,7 @@ class Screen27Activity : ComponentActivity() {
             GeoPulseTheme {
                 GeoDetailScreenContent(
                     title = "Local Mandi Market Rates",
-                    subtitle = "Daily wholesale mandi prices for Wheat, Cotton, Paddy, Mustard, and Soybeans.",
+                    subtitle = "Wholesale APMC modal market rates from AGMARKNET bulletin. (Subject to local quality grading; not futures exchange prices).",
                     icon = Icons.AutoMirrored.Filled.TrendingUp,
                     activity = this,
                     primaryActionClass = Screen22Activity::class.java,

@@ -14,7 +14,7 @@ class Screen20Activity : ComponentActivity() {
             GeoPulseTheme {
                 GeoDetailScreenContent(
                     title = "Fertilizer & Nutrient Guide",
-                    subtitle = "Step-by-step guidance on Urea, DAP, and NPK dosage matching satellite crop vigor zones.",
+                    subtitle = "Guideline dosage estimates based on Sentinel-2 satellite vigor zones. (Drone imagery unavailable; adjust dose with your Soil Health Card).",
                     icon = Icons.Default.Spa,
                     activity = this,
                     primaryActionClass = Screen12Activity::class.java,
