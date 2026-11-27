@@ -38,7 +38,8 @@ from services.fcm_service import send_fcm_notification, is_simulation_mode
 from services.notification_scheduler import (
     evaluate_user_fields,
     evaluate_all_active_users,
-    get_or_create_user_preferences
+    get_or_create_user_preferences,
+    notification_scheduler
 )
 
 # Create all database tables
@@ -72,6 +73,14 @@ app.add_middleware(
 def startup_event():
     # Verify and create database tables without seeding dummy data
     models.Base.metadata.create_all(bind=engine)
+    # Start automated background notification scheduler
+    notification_scheduler.start()
+
+
+@app.on_event("shutdown")
+def shutdown_event():
+    # Stop background notification scheduler cleanly
+    notification_scheduler.stop()
 
 
 # -------------------------------------------------------------
@@ -1404,6 +1413,26 @@ def get_notification_deliveries(
     ).order_by(models.NotificationDeliveryModel.sent_at.desc()).limit(limit).all()
 
     return deliveries
+
+
+@app.get("/api/v1/notifications/scheduler/status")
+def get_scheduler_status():
+    """
+    Get real-time operational status, heartbeat, and execution history
+    for the automated background notification scheduler daemon.
+    """
+    return notification_scheduler.get_status()
+
+
+@app.post("/api/v1/notifications/scheduler/trigger")
+def trigger_scheduler_execution(
+    force: bool = Query(True, description="Force execution even if already executed today"),
+    db: Session = Depends(get_db)
+):
+    """
+    Trigger an immediate automated evaluation pass across all active farmers.
+    """
+    return notification_scheduler.trigger_scheduled_run(db=db, force=force)
 
 
 @app.post("/api/v1/notifications/evaluate", response_model=schemas.NotificationEvaluationResponse)

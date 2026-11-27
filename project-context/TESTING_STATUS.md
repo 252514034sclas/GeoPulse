@@ -17,6 +17,9 @@
 | **Live PostgreSQL Multi-User IDOR Verification** | `backend/scripts/verify_live_postgres_isolation.py` | 11 checks | 11 | 0 | 0 | 1.1s | **100% PASS** |
 | **Final Release Security Suite** | `backend/test_final_release_security.py` | 7 | 7 | 0 | 0 | 3.1s | **100% PASS** |
 | **Empty-Field, Multi-Field & Anti-IDOR Suite** | `backend/test_empty_and_multi_field_state.py` | 5 phases (18 assertions) | 18 | 0 | 0 | 1.8s | **100% PASS** |
+| **Android Unit Tests Suite** | `cmd.exe /c run_gradle.bat testDebugUnitTest` | 23 | 23 | 0 | 0 | 13.0s | **100% PASS** |
+| **Notification Decision Rules & Timing Audit Suite** | `backend/test_notification_audit.py` | 20 | 20 | 0 | 0 | 0.8s | **100% PASS** |
+| **FCM Push Notification & Delivery Suite** | `backend/test_fcm_notifications.py` | 7 | 7 | 0 | 0 | 0.6s | **100% PASS** |
 | **Physical Hardware Acceptance Test** | IFP ARM64 (API 26 `minSdk`) & Droidlogic ohm (API 30) | 10 Gates | 10 | 0 | 0 | Live interactive | **100% PASS** |
 | **Android Release Verification** | Google Pixel 10 Pro (`emulator-5554`, API 35) | 8 E2E Workflows | 8 | 0 | 0 | Live interactive | **100% PASS** |
 

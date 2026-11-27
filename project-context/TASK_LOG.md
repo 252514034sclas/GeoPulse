@@ -538,6 +538,35 @@
 
 ---
 
+### Task 20: Intelligent Farmer Push Notification: End-to-End Verification & Timing Audit (November 27, 2026)
+- **Objective:** Establish whether GeoPulse generates the correct agricultural notifications, sends them at the right time, and reliably delivers them to farmers across mobile and backend architectures.
+- **Root Cause & Architectural Discoveries:**
+  1. *Timezone Defect:* Quiet hours and evaluation runs previously used `datetime.utcnow()`, causing UTC misalignment against Indian Standard Time (`Asia/Kolkata`, UTC+05:30).
+  2. *Crop-Stage Multi-Field Deduplication Collision:* Crop stage deduplication keys lacked `field_id` scoping, causing farmers with multiple parcels of the same crop at identical DAS to receive alerts for only one field while other parcels were falsely deduplicated.
+  3. *Quiet Hours 06:00 IST Boundary Bug:* Boundary check `<= end_time` suppressed the scheduled 06:00:00 morning advisory run.
+  4. *Rule 1 Irrigation Trigger:* Engine checked `res.get("irrigation_needed")` while `IrrigationEngine` returned `"irrigation_recommendation": "IRRIGATION RECOMMENDED"`.
+  5. *Agronomic Disclaimers:* Spraying safety lacked pesticide label directions disclaimer; NDVI lacked distinction between chlorophyll vigor and confirmed disease diagnosis; rain forecasts lacked NWP probabilistic expectation labeling; nutrient dosages lacked guideline estimate labeling.
+  6. *Scheduler Daemon:* Standalone server lacked an in-process daemon to trigger daily morning evaluations automatically at 06:00 IST.
+- **Architectural & Code Corrections:**
+  1. *Asia/Kolkata Timezone Standardization:* Standardized all notification decision logic, quiet hour calculations, and daily scheduling to `timezone(timedelta(hours=5, minutes=30), name="Asia/Kolkata")`. Handled UTC conversion solely at database persistence boundaries.
+  2. *Scoped Deduplication Keys:* Updated `_evaluate_crop_stage` in `agricultural_decision_engine.py` to scope keys as `field_{field_id}:{crop_key}_{stage_key}:{das}:{today_date}`.
+  3. *Boundary Correction:* Adjusted quiet hour check to `current_time < end_time` so farmers are eligible at 06:00:00 IST for the morning advisory pass.
+  4. *Rule 1 Recommendation Alignment:* Checked `"IRRIGATION RECOMMENDED" in rec.upper() or res.get("irrigation_needed") is True`.
+  5. *Mandatory Disclaimers:* Added chemical product label compliance disclaimer (EN & TA) in Rule 3; canopy greenness / chlorophyll vigor vs disease scouting disclaimer in Rule 4; NWP model probabilistic expectation labeling in Rule 2; guideline estimate labeling in Rule 7.
+  6. *Automated In-Process Async Scheduler Daemon:* Implemented `NotificationSchedulerService` singleton running an async timer loop checking every 30s in `Asia/Kolkata`, maintaining active heartbeats, executing daily at 06:00 IST, logging execution telemetry, and exposing REST endpoints `GET /api/v1/notifications/scheduler/status` and `POST /api/v1/notifications/scheduler/trigger`.
+  7. *Android Client Integration:* Verified 4 Android notification channels (`geopulse_irrigation`, `geopulse_weather`, `geopulse_crop_health`, `geopulse_agronomy`), deep linking to Screens 11, 12, 13, 14, 18, 28, and anti-IDOR field ownership check in `MainActivity.kt`.
+- **Verification Evidence:**
+  - **Android Unit Tests:** `cmd.exe /c run_gradle.bat testDebugUnitTest` passed 23 of 23 unit tests (100% PASS, 0 failures, 0 errors).
+  - **Backend Notification Suite (`backend/test_notification_audit.py`):** 20 of 20 tests passed (100% PASS) covering all 7 rules, boundary conditions, stale data suppression, multi-field scoping, IST quiet hours, and scheduler telemetry.
+  - **Backend FCM Suite (`backend/test_fcm_notifications.py`):** 7 of 7 tests passed (100% PASS).
+  - **Backend Domain Integration Suite (`backend/test_api.py`):** 24 of 24 domain suites passed (100% PASS).
+  - **Backend Scientific Rigor Suite (`backend/test_scientific_rigor.py`):** 12 of 12 tests passed (100% PASS).
+  - **Backend Multi-User Isolation Suite (`backend/test_multi_user_isolation.py`):** All multi-user isolation and anti-IDOR checks passed (100% PASS).
+  - **Authoritative Preserved Release Baseline:** `v1.0.0-rc1` dereferenced at `2083d56afe126cc6d5182013f7c388b1cd5599ac` strictly preserved. Preserved APK `app-release-integrity-verified.apk` (`49198BAC698DB4650AB06F45944F82E4165F2280C0EA480D9413C0F6A1440998`) strictly preserved.
+  - **Cloud Deployment Reality:** Documented that FCM runs in local simulation mode in development without private service account key; automated scheduler operates as standalone in-process async timer daemon. Multi-worker cluster deployment with distributed locking (Redis/Celery) remains scheduled for cloud deployment.
+
+---
+
 ## 2. UPCOMING PRIORITIES & ROADMAP
 
 1. **Distributed Rate Limiting (Post-RC-1 Cloud Deployment):**
