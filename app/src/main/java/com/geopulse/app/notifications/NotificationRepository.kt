@@ -225,6 +225,19 @@ fun GeoNotificationDialog(
 
     val unreadCount = notificationList.count { !it.isRead }
 
+    val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
+
+    fun categoryLabel(cat: String): String = when (cat) {
+        "All" -> if (isTa) "அனைத்தும்" else "All"
+        "Irrigation" -> if (isTa) "பாசனம்" else "Irrigation"
+        "Weather" -> if (isTa) "வானிலை" else "Weather"
+        "CropHealth" -> if (isTa) "பயிர் நலம்" else "Crop Health"
+        "Spraying" -> if (isTa) "தெளிப்பு" else "Spraying"
+        "Agronomy" -> if (isTa) "பயிர்த்தொழில்" else "Agronomy"
+        "Inspection" -> if (isTa) "ஆய்வு" else "Inspection"
+        else -> cat
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -249,7 +262,7 @@ fun GeoNotificationDialog(
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
-                            text = "Farm Advisories",
+                            text = if (isTa) "பண்ணை ஆலோசனைகள்" else "Farm Advisories",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = MaterialTheme.colorScheme.onSurface
@@ -281,7 +294,7 @@ fun GeoNotificationDialog(
                             contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "Mark all read",
+                                text = if (isTa) "அனைத்தும் படித்தவை" else "Mark all read",
                                 fontSize = 12.sp,
                                 color = LimeAccent,
                                 fontWeight = FontWeight.SemiBold
@@ -305,7 +318,7 @@ fun GeoNotificationDialog(
                             modifier = Modifier.clickable { selectedCategory = cat }
                         ) {
                             Text(
-                                text = cat,
+                                text = categoryLabel(cat),
                                 fontSize = 11.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                 color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -339,13 +352,16 @@ fun GeoNotificationDialog(
                                 modifier = Modifier.size(44.dp)
                             )
                             Text(
-                                text = "All Farm Conditions Normal",
+                                text = if (isTa) "அனைத்து பண்ணை நிலவரங்களும் சீராக உள்ளன" else "All Farm Conditions Normal",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "No active advisories for this category. Field-specific recommendations will appear here as sensor & satellite models update.",
+                                text = if (isTa)
+                                    "இந்த பிரிவில் புதிய அறிவிப்புகள் ஏதுமில்லை. செயற்கைக்கோள் & வானிலை மாதிரிகள் புதுப்பிக்கப்படும் போது ஆலோசனைகள் இங்கு தோன்றும்."
+                                else
+                                    "No active advisories for this category. Field-specific recommendations will appear here as sensor & satellite models update.",
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -379,7 +395,7 @@ fun GeoNotificationDialog(
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Close", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(if (isTa) "மூடு" else "Close", fontWeight = FontWeight.Bold, fontSize = 14.sp)
             }
         },
         shape = RoundedCornerShape(20.dp),

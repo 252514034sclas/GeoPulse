@@ -83,6 +83,9 @@ class Screen7Activity : ComponentActivity() {
             android.util.Log.w("Screen7Activity", "FCM token registration: ${e.message}")
         }
 
+        // Initialize language state
+        com.geopulse.app.util.GeoLanguageManager.init(this)
+
         // Sync notifications with backend
         lifecycleScope.launch {
             com.geopulse.app.notifications.NotificationRepository.syncWithBackend(this@Screen7Activity)
@@ -1763,21 +1766,37 @@ fun FullProfileSettingsTab(
                                 }
                             }
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                listOf("English", "தமிழ் (Tamil)").forEach { lang ->
-                                    val isSelected = selectedLanguage == lang
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = { selectedLanguage = lang },
-                                        modifier = Modifier.weight(1f),
-                                        label = {
-                                            Text(
-                                                lang,
-                                                fontSize = 12.5.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                            )
-                                        }
-                                    )
-                                }
+                                val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
+                                FilterChip(
+                                    selected = !isTa,
+                                    onClick = {
+                                        selectedLanguage = "English"
+                                        com.geopulse.app.util.GeoLanguageManager.setLanguage(context, "en")
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    label = {
+                                        Text(
+                                            "English",
+                                            fontSize = 12.5.sp,
+                                            fontWeight = if (!isTa) FontWeight.Bold else FontWeight.Medium
+                                        )
+                                    }
+                                )
+                                FilterChip(
+                                    selected = isTa,
+                                    onClick = {
+                                        selectedLanguage = "தமிழ் (Tamil)"
+                                        com.geopulse.app.util.GeoLanguageManager.setLanguage(context, "ta")
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    label = {
+                                        Text(
+                                            "தமிழ் (Tamil)",
+                                            fontSize = 12.5.sp,
+                                            fontWeight = if (isTa) FontWeight.Bold else FontWeight.Medium
+                                        )
+                                    }
+                                )
                             }
                         }
                     }

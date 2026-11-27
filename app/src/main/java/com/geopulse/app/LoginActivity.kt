@@ -28,11 +28,14 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geopulse.app.ui.theme.*
+import com.geopulse.app.util.GeoLanguageManager
+import com.geopulse.app.util.GeoStrings
 import kotlinx.coroutines.launch
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        GeoLanguageManager.init(this)
         setContent {
             GeoPulseTheme {
                 var email by remember { mutableStateOf("") }
@@ -77,21 +80,52 @@ class LoginActivity : ComponentActivity() {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(16.dp),
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                modifier = Modifier.size(56.dp),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.Agriculture,
-                                        contentDescription = "GeoPulse Logo",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(32.dp)
-                                    )
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                    modifier = Modifier.size(52.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Agriculture,
+                                            contentDescription = "GeoPulse Logo",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(30.dp)
+                                        )
+                                    }
+                                }
+
+                                Surface(
+                                    onClick = {
+                                        val nextLang = if (GeoLanguageManager.isTamil) "en" else "ta"
+                                        GeoLanguageManager.setLanguage(this@LoginActivity, nextLang)
+                                    },
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.surface,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text("🌐", fontSize = 12.sp)
+                                        Text(
+                                            text = if (GeoLanguageManager.isTamil) "English" else "தமிழ்",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
                                 }
                             }
+
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     text = "GeoPulse",
@@ -100,7 +134,7 @@ class LoginActivity : ComponentActivity() {
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
                                 Text(
-                                    text = "Precision Geospatial Farm Intelligence",
+                                    text = GeoStrings.appTagline,
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f)
                                 )
@@ -119,13 +153,13 @@ class LoginActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = "Sign In to GeoPulse",
+                                    text = GeoStrings.signIn,
                                     fontSize = 24.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "Access your farm geospatial dashboard",
+                                    text = GeoStrings.appTagline,
                                     fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
                                 )
@@ -137,7 +171,7 @@ class LoginActivity : ComponentActivity() {
                                         email = it
                                         errorMessage = null
                                     },
-                                    label = { Text("Email Address") },
+                                    label = { Text(GeoStrings.emailLabel) },
                                     leadingIcon = {
                                         Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                     },
@@ -152,7 +186,7 @@ class LoginActivity : ComponentActivity() {
                                         password = it
                                         errorMessage = null
                                     },
-                                    label = { Text("Password") },
+                                    label = { Text(GeoStrings.passwordLabel) },
                                     leadingIcon = {
                                         Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                     },
@@ -188,7 +222,7 @@ class LoginActivity : ComponentActivity() {
                                     TextButton(onClick = {
                                         startActivity(Intent(this@LoginActivity, ForgotPasswordActivity::class.java))
                                     }) {
-                                        Text("Forgot Password?", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                                        Text(GeoStrings.forgotPassword, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                                     }
                                 }
 
@@ -196,9 +230,9 @@ class LoginActivity : ComponentActivity() {
                                 Button(
                                     onClick = {
                                         if (email.isBlank() || !email.contains("@") || !email.contains(".")) {
-                                            errorMessage = "Please enter a valid email address."
+                                            errorMessage = GeoStrings.invalidEmailError
                                         } else if (password.isBlank() || password.length < 6) {
-                                            errorMessage = "Password must be at least 6 characters."
+                                            errorMessage = GeoStrings.shortPasswordError
                                         } else {
                                             isLoading = true
                                             errorMessage = null
@@ -216,17 +250,26 @@ class LoginActivity : ComponentActivity() {
                                                             phone = null,
                                                             farmName = "",
                                                             totalAreaHa = 0.0,
-                                                            preferredLanguage = "en",
+                                                            preferredLanguage = GeoLanguageManager.currentLanguage,
                                                             themePreference = "SYSTEM"
                                                         )
                                                         com.geopulse.app.network.UserSession.saveSession(this@LoginActivity, auth.accessToken, user)
+                                                        user.preferredLanguage?.let { userLang ->
+                                                            GeoLanguageManager.setLanguage(this@LoginActivity, userLang)
+                                                        }
                                                         startActivity(Intent(this@LoginActivity, Screen7Activity::class.java))
                                                         finish()
                                                     } else {
-                                                        errorMessage = "Invalid email or password. Please verify credentials."
+                                                        errorMessage = GeoLanguageManager.t(
+                                                            "Invalid email or password. Please verify credentials.",
+                                                            "தவறான மின்னஞ்சல் அல்லது கடவுச்சொல். சரிபார்க்கவும்."
+                                                        )
                                                     }
                                                 } catch (e: Exception) {
-                                                    errorMessage = "Cannot connect to server. Check network connection."
+                                                    errorMessage = GeoLanguageManager.t(
+                                                        "Cannot connect to server. Check network connection.",
+                                                        "சர்வர் தொடர்பு தோல்வி. இணைய இணைப்பை சரிபார்க்கவும்."
+                                                    )
                                                 } finally {
                                                     isLoading = false
                                                 }
@@ -246,7 +289,7 @@ class LoginActivity : ComponentActivity() {
                                         )
                                     } else {
                                         Text(
-                                            text = "Login",
+                                            text = GeoStrings.signIn,
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onPrimary
@@ -258,7 +301,7 @@ class LoginActivity : ComponentActivity() {
                                     startActivity(Intent(this@LoginActivity, CreateAccountActivity::class.java))
                                 }) {
                                     Text(
-                                        text = "Don't have an account? Sign Up",
+                                        text = GeoStrings.dontHaveAccount,
                                         color = MaterialTheme.colorScheme.primary,
                                         fontWeight = FontWeight.SemiBold
                                     )

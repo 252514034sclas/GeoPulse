@@ -13,4 +13,82 @@
     <string name="fertilizer_guide">Fertilizer Guide</string>
     <string name="pest_advisory">Pest Advisory</string>
     <string name="kisan_helpline">Kisan Helpline</string>
+
+    <!-- Navigation Tabs -->
+    <string name="tab_overview">Overview</string>
+    <string name="tab_gis_map">GIS Map</string>
+    <string name="tab_tasks">Advisory</string>
+    <string name="tab_profile">Settings</string>
+
+    <!-- Common Actions -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="close">Close</string>
+    <string name="next">Next</string>
+    <string name="skip">Skip</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="add_field">Add Field</string>
+    <string name="switch_field">Switch Field</string>
+    <string name="refresh">Refresh</string>
+
+    <!-- Language Labels -->
+    <string name="language">Language</string>
+    <string name="english">English</string>
+    <string name="tamil">Tamil (தமிழ்)</string>
+    <string name="preferred_language">Farmer Preferred Language</string>
+
+    <!-- Screen 7-10 Titles -->
+    <string name="title_screen7">GeoPulse Farm Dashboard</string>
+    <string name="sub_screen7">Live satellite telemetry, soil moisture &amp; farm advisories</string>
+    <string name="title_screen8">Geospatial Field Map</string>
+    <string name="sub_screen8">Sentinel-2 satellite observation &amp; live GPS boundaries</string>
+    <string name="title_screen9">Precision Agriculture Advisory</string>
+    <string name="sub_screen9">Hyperlocal farm tasks, weather forecasts &amp; spray timing</string>
+    <string name="title_screen10">Farm Profile &amp; Settings</string>
+    <string name="sub_screen10">Farmer credentials, app appearance &amp; farm parcels</string>
+
+    <!-- Screens 11-20 Titles -->
+    <string name="title_screen11">Crop Health &amp; Vegetation Vigor</string>
+    <string name="sub_screen11">Copernicus Sentinel-2 10m multispectral vegetation analysis</string>
+    <string name="title_screen12">Soil Moisture &amp; Root-Zone Physics</string>
+    <string name="sub_screen12">FAO-56 Soil water balance &amp; available water capacity</string>
+    <string name="title_screen13">Smart Irrigation Timing &amp; Volume</string>
+    <string name="sub_screen13">Crop water requirements, litres needed &amp; split scheduling</string>
+    <string name="title_screen14">Weather Forecast &amp; Spray Safety Window</string>
+    <string name="sub_screen14">Hyperlocal temperature, rain probability &amp; wind drift</string>
+    <string name="title_screen15">Pest &amp; Disease Diagnosis</string>
+    <string name="sub_screen15">Integrated Pest Management (IPM) &amp; symptom guide</string>
+    <string name="title_screen16">Biomass Harvest &amp; Yield Estimator</string>
+    <string name="sub_screen16">NDVI-based yield forecasting &amp; biomass estimation</string>
+    <string name="title_screen17">GPS Field Boundary Survey &amp; Land Area</string>
+    <string name="sub_screen17">Interactive GPS polygon tracing &amp; acre calculation</string>
+    <string name="title_screen18">Crop Phenology Calendar &amp; Certified Sowing</string>
+    <string name="sub_screen18">Days after sowing, variety selection &amp; seed rate</string>
+    <string name="title_screen19">Field Operations &amp; Machinery Tracking</string>
+    <string name="sub_screen19">Tractor hours, labor management &amp; field operations</string>
+    <string name="title_screen20">Split Fertilization &amp; Nutrient Plan</string>
+    <string name="sub_screen20">Crop-specific guideline dosages for Urea, DAP, MOP</string>
+
+    <!-- Screens 21-30 Titles -->
+    <string name="title_screen21">Post-Harvest Storage &amp; Logistics</string>
+    <string name="sub_screen21">Moisture monitoring, grain drying &amp; warehouse storage</string>
+    <string name="title_screen22">Farm Budget &amp; Financial Ledger</string>
+    <string name="sub_screen22">Input costs, labor expenses, market returns &amp; profit</string>
+    <string name="title_screen23">Multi-Farm Parcel Management</string>
+    <string name="sub_screen23">Switch and manage multiple agricultural parcels</string>
+    <string name="title_screen24">Satellite Historical Observations</string>
+    <string name="sub_screen24">Multi-temporal Sentinel-2 vegetation index trends</string>
+    <string name="title_screen25">Organic Soil Carbon &amp; Composting</string>
+    <string name="sub_screen25">Soil organic matter, vermicompost &amp; green manure</string>
+    <string name="title_screen26">Agronomist Helpline &amp; TNAU Advisory</string>
+    <string name="sub_screen26">Kisan Call Center 1800-180-1551 &amp; extension guidance</string>
+    <string name="title_screen27">AGMARKNET Mandi Arrival Rates</string>
+    <string name="sub_screen27">Wholesale APMC arrival rates and benchmark pricing</string>
+    <string name="title_screen28">Severe Weather &amp; Extreme Warning Center</string>
+    <string name="sub_screen28">Heavy rain flood risk, heatwave &amp; wind hazard alerts</string>
+    <string name="title_screen29">System Settings &amp; Offline Cache</string>
+    <string name="sub_screen29">Language preference, theme mode, and offline cache</string>
+    <string name="title_screen30">Data Privacy &amp; Account Rights</string>
+    <string name="sub_screen30">Export parcel data, privacy controls &amp; account deletion</string>
 </resources>

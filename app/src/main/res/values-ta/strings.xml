@@ -13,4 +13,82 @@
     <string name="fertilizer_guide">உர வழிகாட்டி</string>
     <string name="pest_advisory">பூச்சி மேலாண்மை</string>
     <string name="kisan_helpline">விவசாயிகள் உதவி எண்</string>
+
+    <!-- Navigation Tabs -->
+    <string name="tab_overview">மேலோட்டம்</string>
+    <string name="tab_gis_map">வரைபடம்</string>
+    <string name="tab_tasks">பணிகள்</string>
+    <string name="tab_profile">அமைப்புகள்</string>
+
+    <!-- Common Actions -->
+    <string name="save">சேமிக்கவும்</string>
+    <string name="cancel">ரத்து செய்</string>
+    <string name="confirm">உறுதிசெய்</string>
+    <string name="close">மூடு</string>
+    <string name="next">அடுத்து</string>
+    <string name="skip">தவிர்</string>
+    <string name="sign_out">வெளியேறு</string>
+    <string name="add_field">புதிய வயல் சேர்</string>
+    <string name="switch_field">வயல் மாற்று</string>
+    <string name="refresh">புதுப்பி</string>
+
+    <!-- Language Labels -->
+    <string name="language">மொழி</string>
+    <string name="english">English</string>
+    <string name="tamil">தமிழ்</string>
+    <string name="preferred_language">விவசாயி விரும்பும் மொழி</string>
+
+    <!-- Screen 7-10 Titles -->
+    <string name="title_screen7">ஜியோபல்ஸ் பண்ணை டாஷ்போர்டு</string>
+    <string name="sub_screen7">செயற்கைக்கோள் கண்காணிப்பு, மண் ஈரப்பதம் &amp; ஆலோசனைகள்</string>
+    <string name="title_screen8">புவிசார் நில வரைபடம்</string>
+    <string name="sub_screen8">சென்டினல்-2 செயற்கைக்கோள் பார்வை &amp; ஜிபிஎஸ் எல்லைகள்</string>
+    <string name="title_screen9">துல்லிய விவசாய ஆலோசனைகள்</string>
+    <string name="sub_screen9">பண்ணைப் பணிகள், வானிலை முன்னறிவிப்பு &amp; மருந்து தெளிப்பு</string>
+    <string name="title_screen10">பண்ணை சுயவிவரம் &amp; அமைப்புகள்</string>
+    <string name="sub_screen10">விவசாயி விவரங்கள், தோற்றம் &amp; நிலத் தகவல்கள்</string>
+
+    <!-- Screens 11-20 Titles -->
+    <string name="title_screen11">பயிர் நலம் &amp; பசுமை குறியீடு (NDVI)</string>
+    <string name="sub_screen11">சென்டினல்-2 செயற்கைக்கோள் 10மீ பலவண்ண பயிர் ஆய்வு</string>
+    <string name="title_screen12">மண் ஈரப்பதம் &amp; வேர் மண்டல ஆய்வு</string>
+    <string name="sub_screen12">எஃப்.ஏ.ஓ-56 மண் நீர் இருப்பு &amp; கிடைக்கும் ஈரப்பதம்</string>
+    <string name="title_screen13">துல்லிய நீர்ப்பாசன வழிகாட்டி</string>
+    <string name="sub_screen13">பயிருக்கான நீர் தேவை, லிட்டர் கணக்கீடு &amp; பாசன அட்டவணை</string>
+    <string name="title_screen14">வானிலை &amp; மருந்து தெளிக்கும் நேரம்</string>
+    <string name="sub_screen14">மழை வாய்ப்பு, காற்றின் வேகம் &amp; பாதுகாப்பான தெளிப்பு நேரம்</string>
+    <string name="title_screen15">பூச்சி &amp; நோய் மேலாண்மை</string>
+    <string name="sub_screen15">ஒருங்கிணைந்த பயிர்ப் பாதுகாப்பு &amp; அறிகுறிகள் வழிகாட்டி</string>
+    <string name="title_screen16">விளைச்சல் &amp; அறுவடை மதிப்பீடு</string>
+    <string name="sub_screen16">பசுமை குறியீட்டு அடிப்படையிலான மகசூல் மதிப்பீடு</string>
+    <string name="title_screen17">ஜிபிஎஸ் வயல் எல்லை &amp; நிலப்பரப்பு</string>
+    <string name="sub_screen17">ஜிபிஎஸ் மூலம் வயல் எல்லை வரைதல் &amp; ஏக்கர் கணக்கீடு</string>
+    <string name="title_screen18">பயிர் வளர்ச்சி நாள்காட்டி &amp; விதைப்பு</string>
+    <string name="sub_screen18">விதைத்த பின் நாட்கள், ரகம் தேர்வு &amp; விதை அளவு</string>
+    <string name="title_screen19">பண்ணைப் பணிகள் &amp; உழவு இயந்திரங்கள்</string>
+    <string name="sub_screen19">டிராக்டர் பயன்பாடு, ஆட்கள் கூலி &amp; பணிப் பதிவுகள்</string>
+    <string name="title_screen20">பிரித்து உரமிடுதல் &amp; ஊட்டச்சத்து திட்டம்</string>
+    <string name="sub_screen20">யூரியா, டி.ஏ.பி, பொட்டாஷ் பயிர் வழிகாட்டி அளவுகள்</string>
+
+    <!-- Screens 21-30 Titles -->
+    <string name="title_screen21">அறுவடைக்கு பின் தானிய சேமிப்பு</string>
+    <string name="sub_screen21">தானிய ஈரப்பதம், உலர் களம் &amp; கிடங்கு பாதுகாப்பு</string>
+    <string name="title_screen22">பண்ணை வரவு செலவு கணக்கு</string>
+    <string name="sub_screen22">உர செலவு, ஆட்கள் கூலி, வரவு &amp; லாப நட்ட கணக்கீடு</string>
+    <string name="title_screen23">பல வயல் நிலங்கள் மேலாண்மை</string>
+    <string name="sub_screen23">உங்கள் பல்வேறு வயல் நிலங்களை தேர்ந்தெடுத்து நிர்வகிக்கவும்</string>
+    <string name="title_screen24">செயற்கைக்கோள் வரலாற்று பதிவுகள்</string>
+    <string name="sub_screen24">காலவரிசைப்படியான பயிர் பசுமை மாற்றங்கள்</string>
+    <string name="title_screen25">மண் கரிம கார்பன் &amp; இயற்கை உரம்</string>
+    <string name="sub_screen25">மண் வளம், மண்புழு உரம் &amp; பசுந்தாள் உர மேலாண்மை</string>
+    <string name="title_screen26">விவசாய வல்லுநர் உதவி மையம்</string>
+    <string name="sub_screen26">கிசான் உதவி எண் 1800-180-1551 &amp; வேளாண் அலுவலர் தொடர்பு</string>
+    <string name="title_screen27">அக்மார்க்நெட் மண்டி விலை நிலவரம்</string>
+    <string name="sub_screen27">ஒழுங்குமுறை விற்பனைக்கூட மொத்த விலை நிலவரம்</string>
+    <string name="title_screen28">தீவிர வானிலை எச்சரிக்கை மையம்</string>
+    <string name="sub_screen28">கனமழை வெள்ள அபாயம், வெப்ப அலை &amp; காற்று எச்சரிக்கை</string>
+    <string name="title_screen29">அமைப்பு அமைப்புகள் &amp; ஆஃப்லைன் சேமிப்பு</string>
+    <string name="sub_screen29">மொழி தேர்வு, தோற்றம் &amp; ஆஃப்லைன் வரைபட சேமிப்பு</string>
+    <string name="title_screen30">தரவு பாதுகாப்பு &amp; விவசாயி உரிமைகள்</string>
+    <string name="sub_screen30">நில வரைபட தரவு ஏற்றுமதி &amp; கணக்கு நீக்க உரிமைகள்</string>
 </resources>

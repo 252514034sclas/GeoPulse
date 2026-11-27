@@ -84,3 +84,20 @@ Verified by the Provider Registry (`GET /api/v1/providers/registry`):
 - **Data Migration & Sequences:** 100% of SQLite data (118 records across 10 tables) losslessly migrated to PostgreSQL with auto-increment sequences fully synchronized.
 - **Multi-Tenant Isolation:** Complete database and API level tenant isolation verified across all user and field records.
 
+---
+
+## 5. BILINGUAL & LOCALIZATION INTEGRATION SUBSYSTEM
+
+### A. Reactive Client Localization Architecture
+- **Centralized Engine:** Implemented in `app/src/main/java/com/geopulse/app/util/GeoLanguageManager.kt`.
+- **Dynamic State Management:** `currentLanguage by mutableStateOf("en")` and `isTamil: Boolean` trigger Jetpack Compose recomposition globally upon language change without destroying Activities or resetting state.
+- **Dual Persistence:** Language choices are stored in SharedPreferences (`geopulse_language_prefs`) for immediate pre-auth loading and synced with backend user profile `preferredLanguage` (`POST /api/v1/auth/register`, `POST /api/v1/auth/login`).
+- **Resource Key Parity:** Full 1:1 key parity between `app/src/main/res/values/strings.xml` and `app/src/main/res/values-ta/strings.xml`.
+- **Bilingual String Catalog:** `GeoStrings.kt` contains complete English and authentic agricultural Tamil translations for all 30 screens, onboarding slides, dialogs, button labels, and status badges.
+- **Agricultural Units & Terminology:** Standardized unit formatting (`formatArea`, `formatVolume`, `formatRain`, `formatTemperature`, `formatWindSpeed`, `formatPrice`, `formatWeightKg`) with native Tamil units (ஏக்கர், லிட்டர், மி.மீ, °C, கி.மீ/மணி, ₹/குவின்டால், கிலோ).
+
+### B. Backend Bilingual Advisory & Decision Engines
+- **Decision Engines:** Updated `irrigation_engine.py`, `weather_engine.py`, `fertilizer_calculator.py`, and `seed_sowing_engine.py` to deliver bilingual recommendations while keeping underlying agronomic mathematical models unchanged.
+- **Payload Alignment:** Android client models (`NetworkModels.kt`) include optional localized fields (`irrigationRecommendationTa`, `actionExplanationTa`, `recommendedTimingTa`, `verdictTa`, `recommendedHoursTa`, `cautionsTa`) mapped seamlessly to the UI.
+
+

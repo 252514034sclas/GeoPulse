@@ -22,10 +22,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geopulse.app.ui.theme.*
+import com.geopulse.app.util.GeoLanguageManager
+import com.geopulse.app.util.GeoStrings
 
 class WelcomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        GeoLanguageManager.init(this)
         setContent {
             GeoPulseTheme {
                 val isDark = ThemePreferences.isDarkTheme
@@ -62,24 +65,54 @@ class WelcomeActivity : ComponentActivity() {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(20.dp),
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                Surface(
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
                                 ) {
-                                    Text("🌾", fontSize = 12.sp)
-                                    Text(
-                                        text = "TAMIL NADU PRECISION AGRI-TECH",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        letterSpacing = 0.8.sp
-                                    )
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text("🌾", fontSize = 12.sp)
+                                        Text(
+                                            text = GeoStrings.tnAgriTechBadge,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            letterSpacing = 0.8.sp
+                                        )
+                                    }
+                                }
+
+                                Surface(
+                                    onClick = {
+                                        val nextLang = if (GeoLanguageManager.isTamil) "en" else "ta"
+                                        GeoLanguageManager.setLanguage(this@WelcomeActivity, nextLang)
+                                    },
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = MaterialTheme.colorScheme.surface,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text("🌐", fontSize = 12.sp)
+                                        Text(
+                                            text = if (GeoLanguageManager.isTamil) "English" else "தமிழ்",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
                                 }
                             }
 
@@ -113,7 +146,7 @@ class WelcomeActivity : ComponentActivity() {
                                     }
                                     Spacer(modifier = Modifier.height(20.dp))
                                     Text(
-                                        text = "Welcome to GeoPulse",
+                                        text = GeoStrings.welcomeTitle,
                                         fontSize = 24.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface,
@@ -121,7 +154,7 @@ class WelcomeActivity : ComponentActivity() {
                                     )
                                     Spacer(modifier = Modifier.height(10.dp))
                                     Text(
-                                        text = "Monitor crop health, analyze soil moisture, track field activity, and optimize farm yields with real-time geospatial intelligence.",
+                                        text = GeoStrings.welcomeDesc,
                                         fontSize = 14.5.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center,
@@ -147,7 +180,7 @@ class WelcomeActivity : ComponentActivity() {
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                                 ) {
                                     Text(
-                                        text = "Get Started",
+                                        text = GeoStrings.getStarted,
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onPrimary
@@ -162,7 +195,7 @@ class WelcomeActivity : ComponentActivity() {
                                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
                                 ) {
-                                    Text("Sign In", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    Text(GeoStrings.signIn, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }

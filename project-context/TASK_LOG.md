@@ -567,6 +567,52 @@
 
 ---
 
+### Task 21: Complete English & Tamil Localization Audit (November 27, 2026)
+- **Objective:** Verify and ensure that farmers can use the entire GeoPulse Android application independently in either English or authentic agricultural Tamil (தமிழ்).
+- **Architectural & Code Implementations:**
+  1. *Centralized Reactive Language Engine (`GeoLanguageManager.kt`):*
+     - Reactive Compose state `currentLanguage by mutableStateOf("en")` and `isTamil: Boolean`.
+     - Dual persistent storage: synchronizes across `UserSession.user.preferredLanguage` and dedicated `geopulse_language_prefs` SharedPreferences.
+     - Android `Configuration` locale updates via `applySystemLocale(context, language)` to update resources configuration.
+     - Unit formatters: `formatArea` (acres / ஏக்கர்), `formatVolume` (Litres / லிட்டர்), `formatRain` (mm / மி.மீ), `formatTemperature` (°C), `formatWindSpeed` (km/h / கி.மீ/மணி), `formatPrice` (₹ / quintal vs ₹ / குவின்டால்), `formatWeightKg` (kg / கிலோ).
+  2. *Authentic Agricultural Tamil Catalog (`GeoStrings.kt`):*
+     - Comprehensive bilingual strings: onboarding slides, authentication, account labels, all screen titles (Screens 7–30) and subtitles, action buttons.
+     - Authentic Tamil agricultural terminology: Crops (நெல், பருத்தி, மக்காச்சோளம், நிலக்கடலை, கரும்பு); Soils (வண்டல் மண், களிமண் கலந்த வண்டல், மணல் கலந்த வண்டல், கரிசல் மண், செம்மண்); Growth stages (முளைப்புப் பருவம், தூர்கட்டும் பருவம், கதிர் உருவாகும் பருவம், பூக்கும் பருவம், முதிர்ச்சிப் பருவம்).
+  3. *Resource Key Parity:* 100% key parity between `app/src/main/res/values/strings.xml` and `app/src/main/res/values-ta/strings.xml`.
+  4. *Screen & Navigation Localization:*
+     - `SplashActivity.kt`, `WelcomeActivity.kt`: Top language toggle pill `[🌐 English / தமிழ்]`, localized badges, hero card, action buttons.
+     - `OnboardingActivity.kt`: Language toggle pill, dynamic slides (Steps 1–3) in authentic Tamil/English, localized buttons (`Skip` / `தவிர்`, `Next` / `அடுத்து`, `Get Started` / `தொடங்குங்கள்`).
+     - `LoginActivity.kt`, `CreateAccountActivity.kt`, `ForgotPasswordActivity.kt`: Language toggle pills, localized labels, authentic Tamil input validation errors (e.g. `சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்.`, `உங்கள் பெயர் மற்றும் பண்ணை பெயரை உள்ளிடவும்.`), alignment with backend `preferredLanguage`.
+     - `Screen7Activity.kt`, `Screen8Activity.kt`, `Screen9Activity.kt`, `Screen10Activity.kt`: Reactive bottom navigation dock ("மேலோட்டம்", "வரைபடம்", "பணிகள்", "அமைப்புகள்"), localized farmer preferences sheet with language chips, localized sign out confirmation dialog.
+     - `notifications/NotificationRepository.kt`: Fully localized `GeoNotificationDialog` with bilingual title (`பண்ணை ஆலோசனைகள்`), filter chips (`அனைத்தும்`, `பாசனம்`, `வானிலை`, `பயிர் நலம்`, `தெளிப்பு`), mark-all-read, empty state, and close button (`மூடு`).
+     - `GeoComponents.kt`: Dynamic title/subtitle/action resolution across Detail Screens 11–30 via `translateScreenTitle`, `translateScreenSubtitle`, `translateActionText`. Localized interactive modules: `VegetationHealthModule`, `SoilMoistureModule`, `IrrigationTimingModule`, `WeatherSprayingModule`, `FertilizationPlanModule`, `MarketCommodityModule`, `AppSettingsSyncModule`, `FieldSelectorHeader`.
+  5. *Backend Bilingual Dynamic Endpoints:*
+     - `backend/services/irrigation_engine.py`: Returns `irrigation_recommendation_ta`, `action_explanation_ta`, and `recommended_timing_ta`.
+     - `backend/services/weather_engine.py`: Returns `verdict_ta`, `cautions_ta`, and `recommended_hours_ta`.
+     - `backend/services/fertilizer_calculator.py`: Returns `schedule_ta` and `safety_tips_ta`.
+     - `backend/services/seed_sowing_engine.py`: Sowing recommendations with crop and soil mappings.
+- **Verification Evidence:**
+  - **Android Unit Tests (`cmd.exe /c run_gradle.bat testDebugUnitTest`):**
+    - 28 of 28 unit tests passed (100% PASS, 0 failures, 0 errors).
+    - `LocalizationUnitTest.kt`: 5 tests passed verifying 100% strings.xml key parity, 30 screen title/subtitle coverage, crop translation mapping, soil translation mapping, and unit formatting.
+    - `DraggableBottomDockGestureTest.kt`: 9 tests passed.
+    - `NavigationAndGeospatialUnitTest.kt`: 7 tests passed.
+    - `SecurityAndFieldIntegrityTest.kt`: 6 tests passed.
+    - `ExampleUnitTest.kt`: 1 test passed.
+  - **Backend Test Suites:**
+    - `backend/test_api.py`: 24 of 24 domain suites passed (100% PASS).
+    - `backend/test_notification_audit.py`: 20 of 20 tests passed (100% PASS).
+    - `backend/test_scientific_rigor.py`: 12 of 12 tests passed (100% PASS).
+    - `backend/test_multi_user_isolation.py`: 28 isolation/anti-IDOR tests passed (100% PASS).
+  - **Live Android Emulator Verification (Pixel 10 Pro / API 35):**
+    - *Journey A (New Farmer):* Welcome screen language toggle pill, Tamil onboarding slides (1–3), Tamil registration and login with authentic validation errors.
+    - *Journey B (Existing Farmer):* Logged-in Tamil dashboard, 4-tab bottom dock in Tamil, instant settings language switch (English <-> Tamil) without activity restart, persistence across process restart, and full Tamil detail screen rendering (Screen 11).
+  - **Authoritative Preserved Release Baseline:**
+    - Frozen tag `v1.0.0-rc1` dereferenced at `2083d56afe126cc6d5182013f7c388b1cd5599ac` strictly preserved.
+    - Preserved APK `app-release-integrity-verified.apk` (`49198BAC698DB4650AB06F45944F82E4165F2280C0EA480D9413C0F6A1440998`) strictly preserved.
+
+---
+
 ## 2. UPCOMING PRIORITIES & ROADMAP
 
 1. **Distributed Rate Limiting (Post-RC-1 Cloud Deployment):**

@@ -15,6 +15,7 @@ def evaluate_spray_safety(
     - Extreme Heat (> 33°C): Accelerates vaporization and can scorch tender foliage.
     """
     cautions = []
+    cautions_ta = []
     is_safe = True
 
     op = operation_type.lower()
@@ -25,26 +26,35 @@ def evaluate_spray_safety(
     if wind_kmh > max_wind:
         is_safe = False
         cautions.append(f"High wind ({wind_kmh} km/h > {max_wind} km/h threshold) causes off-target spray drift.")
+        cautions_ta.append(f"அதிவேக காற்று ({wind_kmh} கிமீ/மணி > {max_wind} கிமீ/மணி வரம்பு) மருந்தை காற்றில் அடித்துச் சென்று விரயமாக்கும்.")
     elif wind_kmh < 3.0:
         cautions.append("Very low wind (< 3 km/h) indicates thermal inversion risk; droplets may remain suspended.")
+        cautions_ta.append("மிகக் குறைந்த காற்று (< 3 கிமீ/மணி) துளிகள் காற்றில் மிதந்து வீணாக வழிவகுக்கும்.")
 
     if rain_prob_pct > max_rain:
         is_safe = False
         cautions.append(f"Rain probability is {rain_prob_pct}% (threshold: {max_rain}%). Risk of chemical wash-off.")
+        cautions_ta.append(f"மழை வாய்ப்பு {rain_prob_pct}% (வரம்பு: {max_rain}%). மருந்து நீரில் அடித்துச் செல்லப்படும் அபாயம் உள்ளது.")
 
     if temp_c > max_temp:
         is_safe = False
         cautions.append(f"High temperature ({temp_c}°C > {max_temp}°C) causes droplet vaporization and phytotoxic leaf scorch.")
+        cautions_ta.append(f"அதிக வெப்பநிலை ({temp_c}°C > {max_temp}°C) மருந்தை ஆவியாக்கி இலைகளை கருகச் செய்யும் அபாயம்.")
 
     if humidity_pct < 35.0:
         cautions.append(f"Low humidity ({humidity_pct}%) accelerates droplet evaporation before plant absorption.")
+        cautions_ta.append(f"குறைந்த ஈரப்பதம் ({humidity_pct}%) இலைகள் உறிஞ்சுவதற்கு முன்பே மருந்து ஆவியாக வழிவகுக்கும்.")
 
     if is_safe:
         verdict = f"Safe Spraying Window Open for {crop_type.title()}: Weather is favorable for {operation_type.replace('_', ' ')}."
+        verdict_ta = f"{crop_type.title()} பயிருக்கு தெளிப்புக்கான சாதகமான சூழல்: {operation_type.replace('_', ' ')} பணிக்கு வானிலை உகந்தது."
         recommended_hours = ["06:00 AM - 09:30 AM", "04:30 PM - 06:45 PM"]
+        recommended_hours_ta = ["காலை 06:00 - 09:30", "மாலை 04:30 - 06:45"]
     else:
         verdict = f"Unsafe for Spraying ({operation_type.replace('_', ' ').title()}): Postpone application to prevent drift or loss."
+        verdict_ta = f"தெளிப்புக்கு உகந்த நேரமல்ல ({operation_type.replace('_', ' ').title()}): மருந்து விரயம் அல்லது காற்றில் அடித்துச் செல்லப்படுவதைத் தவிர்க்க ஒத்திவைக்கவும்."
         recommended_hours = ["Next Window: Tomorrow 06:00 AM - 08:30 AM (Calm Wind)"]
+        recommended_hours_ta = ["அடுத்த உகந்த நேரம்: நாளை காலை 06:00 - 08:30 (மிதமான காற்று)"]
 
     return {
         "is_safe_now": is_safe,
@@ -54,6 +64,9 @@ def evaluate_spray_safety(
         "current_humidity_pct": humidity_pct,
         "current_rain_prob_pct": rain_prob_pct,
         "verdict": verdict,
+        "verdict_ta": verdict_ta,
         "recommended_hours": recommended_hours,
-        "cautions": cautions if cautions else ["No adverse weather warnings for spraying."]
+        "recommended_hours_ta": recommended_hours_ta,
+        "cautions": cautions if cautions else ["No adverse weather warnings for spraying."],
+        "cautions_ta": cautions_ta if cautions_ta else ["தெளிப்புக்கு சாதகமற்ற வானிலை எச்சரிக்கைகள் எதுவும் இல்லை."]
     }

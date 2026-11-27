@@ -412,7 +412,11 @@ fun DraggableBottomDock(
 
     val totalTabs = 4
 
-    val tabs = remember { listOf("Home", "Fields", "Activity", "Profile") }
+    val isTamil = com.geopulse.app.util.GeoLanguageManager.isTamil
+    val tabs = remember(isTamil) {
+        if (isTamil) listOf("மேலோட்டம்", "வரைபடம்", "பணிகள்", "அமைப்புகள்")
+        else listOf("Home", "Fields", "Activity", "Profile")
+    }
 
     val icons = remember {
 
@@ -889,6 +893,13 @@ fun EmptyFieldStateCard(
     actionLabel: String = "Register First Field",
     onActionClick: () -> Unit
 ) {
+    val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
+    val displayTitle = if (isTa && (title.contains("No Field", true) || title.contains("No registered", true))) "வயல்கள் எதுவும் பதிவு செய்யப்படவில்லை" else title
+    val displayMessage = if (isTa && message.contains("No registered", true))
+        "பதிவுசெய்த விவசாய நிலங்கள் எதுவும் இல்லை. செயற்கைக்கோள் பயிர் நலம் மற்றும் பாசன ஆலோசனைகளைப் பெற உங்கள் வயல் எல்லையை வரைபடத்தில் வரைக."
+    else message
+    val displayAction = if (isTa && actionLabel == "Register First Field") "முதல் வயலை பதிவு செய்" else actionLabel
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -917,7 +928,7 @@ fun EmptyFieldStateCard(
             }
 
             Text(
-                text = title,
+                text = displayTitle,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -925,7 +936,7 @@ fun EmptyFieldStateCard(
             )
 
             Text(
-                text = message,
+                text = displayMessage,
                 fontSize = 12.5.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -947,7 +958,7 @@ fun EmptyFieldStateCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = actionLabel,
+                    text = displayAction,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     color = Color.White
@@ -990,15 +1001,24 @@ fun FieldSelectorHeader(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
+                    val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
+                    val cropName = when (selectedField.cropType.lowercase()) {
+                        "paddy (rice)", "rice", "paddy" -> if (isTa) "நெல்" else selectedField.cropType
+                        "cotton" -> if (isTa) "பருத்தி" else selectedField.cropType
+                        "maize (corn)", "maize", "corn" -> if (isTa) "மக்காச்சோளம்" else selectedField.cropType
+                        "groundnut" -> if (isTa) "நிலக்கடலை" else selectedField.cropType
+                        "sugarcane" -> if (isTa) "கரும்பு" else selectedField.cropType
+                        else -> selectedField.cropType
+                    }
                     Text(
-                        text = "Active Field: ${selectedField.name}",
+                        text = if (isTa) "செயலில் உள்ள வயல்: ${selectedField.name}" else "Active Field: ${selectedField.name}",
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.5.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     val ha = String.format(java.util.Locale.US, "%.1f", selectedField.areaAcres / 2.47105)
                     Text(
-                        text = "$ha ha · ${selectedField.cropType}",
+                        text = "$ha ha · $cropName",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1007,6 +1027,7 @@ fun FieldSelectorHeader(
 
             if (fields.size > 1) {
                 Box {
+                    val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
                     Surface(
                         shape = RoundedCornerShape(6.dp),
                         color = EmeraldPrimary.copy(alpha = 0.2f),
@@ -1018,7 +1039,7 @@ fun FieldSelectorHeader(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Switch ▾",
+                                text = if (isTa) "மாற்று ▾" else "Switch ▾",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = LimeAccent
@@ -1134,6 +1155,7 @@ fun VegetationHealthModule() {
         val record = satRecord
         val ndviVal = record?.ndviValue?.toFloat() ?: 0.327f
         var growthStageSlider by remember(record?.ndviValue) { mutableStateOf(ndviVal) }
+        val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
 
         Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
             Column(modifier = Modifier.padding(18.dp)) {
@@ -1150,8 +1172,8 @@ fun VegetationHealthModule() {
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                        Text("Crop Health & Vigor", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Copernicus Sentinel-2 (MSI 10m Optical Bands)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text(if (isTa) "பயிர் நலம் மற்றும் வளர்ச்சி நிலை" else "Crop Health & Vigor", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text(if (isTa) "கோப்பர்நிகஸ் சென்டினல்-2 (10மீ ஆப்டிகல் பட்டைகள்)" else "Copernicus Sentinel-2 (MSI 10m Optical Bands)", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                     Surface(
                         shape = RoundedCornerShape(8.dp),
@@ -1159,7 +1181,7 @@ fun VegetationHealthModule() {
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
                         Text(
-                            text = if (isLoadingTelemetry) "SYNCING" else "OBSERVED PASS",
+                            text = if (isLoadingTelemetry) (if (isTa) "இணைக்கிறது" else "SYNCING") else (if (isTa) "செயற்கைக்கோள் பார்வை" else "OBSERVED PASS"),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
@@ -1173,15 +1195,16 @@ fun VegetationHealthModule() {
                 val acqDate = record?.recordedDate ?: "2026-11-20"
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Observation Date: $acqDate (Periodic Sentinel-2 orbital revisit; not a continuous live feed)",
+                    text = if (isTa) "கண்காணிப்பு தேதி: $acqDate (சென்டினல்-2 செயற்கைக்கோள் சுழற்சி பார்வை; நேரடி ஒளிபரப்பு அல்ல)"
+                           else "Observation Date: $acqDate (Periodic Sentinel-2 orbital revisit; not a continuous live feed)",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Canopy Greenness Level", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontSize = 13.5.sp)
-                    val statusText = if (growthStageSlider > 0.70f) "Optimal Vigor" else if (growthStageSlider > 0.40f) "Moderate" else "Yellowing / Stressed"
+                    Text(if (isTa) "பயிர் பசுமை குறியீடு (NDVI)" else "Canopy Greenness Level", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontSize = 13.5.sp)
+                    val statusText = if (growthStageSlider > 0.70f) (if (isTa) "சிறந்த வளர்ச்சி" else "Optimal Vigor") else if (growthStageSlider > 0.40f) (if (isTa) "மிதமான வளர்ச்சி" else "Moderate") else (if (isTa) "மஞ்சள் நிறம் / பாதிப்பு" else "Yellowing / Stressed")
                     val statusColor = if (growthStageSlider > 0.70f) LimeAccent else if (growthStageSlider > 0.40f) GoldAccent else RedAccent
                     Text("${(growthStageSlider * 100).toInt()}% · $statusText", fontWeight = FontWeight.Bold, color = statusColor, fontSize = 14.sp)
                 }
@@ -1202,10 +1225,11 @@ fun VegetationHealthModule() {
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("Farmer Recommendation", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = LimeAccent)
+                        Text(if (isTa) "உழவர் பரிந்துரை" else "Farmer Recommendation", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = LimeAccent)
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = record?.laymanAdvice ?: "Crop greenness index is ${String.format(java.util.Locale.US, "%.0f%%", growthStageSlider * 100)} from Copernicus Sentinel-2 observation ($acqDate). Cloud-filtered observation over boundary. Water balance optimal.",
+                            text = record?.laymanAdvice ?: (if (isTa) "கோப்பர்நிகஸ் சென்டினல்-2 கண்காணிப்பின்படி ($acqDate) பயிர் பசுமை குறியீடு ${String.format(java.util.Locale.US, "%.0f%%", growthStageSlider * 100)} ஆக உள்ளது. பயிர் வளர்ச்சி மற்றும் நீர் சமநிலை சீராக உள்ளது."
+                                                          else "Crop greenness index is ${String.format(java.util.Locale.US, "%.0f%%", growthStageSlider * 100)} from Copernicus Sentinel-2 observation ($acqDate). Cloud-filtered observation over boundary. Water balance optimal."),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface,
                             lineHeight = 17.sp
@@ -1228,7 +1252,8 @@ fun VegetationHealthModule() {
                         Icon(Icons.Default.Info, contentDescription = "Observation Notice", tint = GoldAccent, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Latest Observation: $acqDate · Cloud Cover: < 15% · Age: 5-day orbital revisit pass · Processing: Level-2A BOA Surface Reflectance (Not a continuous live feed).",
+                            text = if (isTa) "கடைசி பார்வை: $acqDate · மேகமூட்டம்: < 15% · இடைவெளி: 5-நாள் சுழற்சி பார்வை · முறை: Level-2A BOA (தொடர் நேரலை அல்ல)."
+                                   else "Latest Observation: $acqDate · Cloud Cover: < 15% · Age: 5-day orbital revisit pass · Processing: Level-2A BOA Surface Reflectance (Not a continuous live feed).",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
                         )
@@ -1237,9 +1262,9 @@ fun VegetationHealthModule() {
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MetricChip("Canopy Vigor", String.format(java.util.Locale.US, "%.3f", record?.ndviValue ?: 0.724), Modifier.weight(1f))
-                    MetricChip("Observation", acqDate, Modifier.weight(1f))
-                    MetricChip("Processing", "Level-2A BOA", Modifier.weight(1f))
+                    MetricChip(if (isTa) "பயிர் வளர்ச்சி" else "Canopy Vigor", String.format(java.util.Locale.US, "%.3f", record?.ndviValue ?: 0.724), Modifier.weight(1f))
+                    MetricChip(if (isTa) "கண்காணிப்பு" else "Observation", acqDate, Modifier.weight(1f))
+                    MetricChip(if (isTa) "செயலாக்கம்" else "Processing", "Level-2A BOA", Modifier.weight(1f))
                 }
             }
         }
@@ -1305,6 +1330,7 @@ fun SoilMoistureModule() {
         val activeField = selectedField!!
         val sm = soilMoistureData
         val moistureVal = sm?.moisturePercentage ?: 34.0
+        val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
 
         Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
             Column(modifier = Modifier.padding(18.dp)) {
@@ -1321,16 +1347,23 @@ fun SoilMoistureModule() {
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                        Text("Crop Water Status & Soil Moisture", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Canopy NDMI (10m) & Soil Moisture Model", fontSize = 11.5.sp, color = CyanAccent, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(if (isTa) "பயிர் நீர் நிலை மற்றும் மண் ஈரப்பதம்" else "Crop Water Status & Soil Moisture", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text(if (isTa) "இலைப்பரப்பு NDMI (10மீ) & மண் ஈரப்பதம் மாடல்" else "Canopy NDMI (10m) & Soil Moisture Model", fontSize = 11.5.sp, color = CyanAccent, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = if (moistureVal < 40.0) RedAccent.copy(alpha = 0.15f) else MaterialTheme.colorScheme.primaryContainer,
                         border = BorderStroke(1.dp, if (moistureVal < 40.0) RedAccent.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
+                        val badgeText = if (isLoadingTelemetry) {
+                            if (isTa) "இணைக்கிறது" else "SYNCING"
+                        } else if (moistureVal < 40.0) {
+                            if (isTa) "பற்றாக்குறை" else "DEFICIT"
+                        } else {
+                            if (isTa) "போதுமானது" else "ADEQUATE"
+                        }
                         Text(
-                            text = if (isLoadingTelemetry) "SYNCING" else if (moistureVal < 40.0) "DEFICIT" else "ADEQUATE",
+                            text = badgeText,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (moistureVal < 40.0) RedAccent else MaterialTheme.colorScheme.primary,
@@ -1343,16 +1376,17 @@ fun SoilMoistureModule() {
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Satellite Image Date: 2026-10-11 (Pass Tile: T44PMV · Tamil Nadu)",
+                    text = if (isTa) "செயற்கைக்கோள் படம்: 2026-10-11 (டைல்: T44PMV · தமிழ்நாடு)" else "Satellite Image Date: 2026-10-11 (Pass Tile: T44PMV · Tamil Nadu)",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("0-15 cm (Topsoil)", "15-40 cm (Root Zone)").forEach { depth ->
+                    val depths = if (isTa) listOf("0-15 செமீ (மேல்மண்)", "15-40 செமீ (வேர்ப்பகுதி)") else listOf("0-15 cm (Topsoil)", "15-40 cm (Root Zone)")
+                    depths.forEach { depth ->
                         FilterChip(
-                            selected = selectedDepth == depth,
+                            selected = selectedDepth == depth || (isTa && depth.startsWith("0-15") && selectedDepth.startsWith("0-15")),
                             onClick = { selectedDepth = depth },
                             label = { Text(depth, fontSize = 12.sp) }
                         )
@@ -1368,10 +1402,11 @@ fun SoilMoistureModule() {
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Farmer Recommendation", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
+                        Text(if (isTa) "உழவர் பரிந்துரை" else "Farmer Recommendation", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = LimeAccent)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Estimated Topsoil Moisture is ${moistureVal.toInt()}% (Mild Deficit) and leaf hydration is slightly low. Check the soil 10–15 cm deep with a trowel before starting pumps. If dry, plan an early morning watering tomorrow before 8:30 AM.",
+                            text = if (isTa) "மதிப்பிடப்பட்ட மேல்மண் ஈரப்பதம் ${moistureVal.toInt()}% (லேசான பற்றாக்குறை) மற்றும் இலை நீர்ப்பிடிப்பு சற்று குறைவாக உள்ளது. பம்புகளை இயக்குவதற்கு முன் மண்ணில் 10-15 செமீ ஆழத்தில் பரிசோதிக்கவும். வறண்டிருந்தால், நாளை காலை 8:30 மணிக்குள் பாசனம் செய்யவும்."
+                                   else "Estimated Topsoil Moisture is ${moistureVal.toInt()}% (Mild Deficit) and leaf hydration is slightly low. Check the soil 10–15 cm deep with a trowel before starting pumps. If dry, plan an early morning watering tomorrow before 8:30 AM.",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface,
                             lineHeight = 17.sp
@@ -1384,13 +1419,15 @@ fun SoilMoistureModule() {
                 ExpandableScientificDetails {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            text = "• Canopy NDMI (Normalized Difference Moisture Index) = (B8A - B11) / (B8A + B11) = 0.076. Measures leaf water absorption via Sentinel-2 SWIR bands.",
+                            text = if (isTa) "• இலைப்பரப்பு NDMI குறியீடு = (B8A - B11) / (B8A + B11) = 0.076. சென்டினல்-2 SWIR பட்டைகள் மூலம் இலை நீர் உறிஞ்சுதலை அளவிடுகிறது."
+                                   else "• Canopy NDMI (Normalized Difference Moisture Index) = (B8A - B11) / (B8A + B11) = 0.076. Measures leaf water absorption via Sentinel-2 SWIR bands.",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                             lineHeight = 15.sp
                         )
                         Text(
-                            text = "• Soil moisture proxy is derived from multispectral water absorption reflection. C-band SAR radar penetration (EOS-04/Sentinel-1) is limited to 0–5 cm dielectric skin layer.",
+                            text = if (isTa) "• மண் ஈரப்பதம் மல்டிஸ்பெக்ட்ரல் நீர் உறிஞ்சுதல் பிரதிபலிப்பிலிருந்து கணக்கிடப்படுகிறது. C-band SAR ரேடார் ஊடுருவல் 0-5 செமீ அடுக்குடன் மட்டுப்படுத்தப்பட்டுள்ளது."
+                                   else "• Soil moisture proxy is derived from multispectral water absorption reflection. C-band SAR radar penetration (EOS-04/Sentinel-1) is limited to 0–5 cm dielectric skin layer.",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                             lineHeight = 15.sp
@@ -1400,9 +1437,9 @@ fun SoilMoistureModule() {
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MetricChip("Crop Water Status", "NDMI 0.08", Modifier.weight(1f))
-                    MetricChip("Soil Estimate", "${moistureVal.toInt()}% (Exp.)", Modifier.weight(1f))
-                    MetricChip("Scan Date", "Oct 11, 2026", Modifier.weight(1f))
+                    MetricChip(if (isTa) "பயிர் நீர் நிலை" else "Crop Water Status", "NDMI 0.08", Modifier.weight(1f))
+                    MetricChip(if (isTa) "மண் மதிப்பீடு" else "Soil Estimate", "${moistureVal.toInt()}%", Modifier.weight(1f))
+                    MetricChip(if (isTa) "ஸ்கேன் தேதி" else "Scan Date", if (isTa) "அக் 11, 2026" else "Oct 11, 2026", Modifier.weight(1f))
                 }
             }
         }
@@ -1466,6 +1503,7 @@ fun IrrigationTimingModule() {
     } else {
         val activeField = selectedField!!
         val data = irrigationData
+        val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
 
         Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
             Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1484,16 +1522,17 @@ fun IrrigationTimingModule() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Safe Watering & Evaporation Guide", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Scientific Crop Water Balance calculation", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(if (isTa) "பாசன நேரம் மற்றும் நீர் விரய வழிகாட்டி" else "Safe Watering & Evaporation Guide", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text(if (isTa) "அறிவியல் பயிர் நீர் சமநிலை கணக்கீடு" else "Scientific Crop Water Balance calculation", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     if (data != null) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = if (data.irrigationRecommendation.contains("NO", ignoreCase = true)) EmeraldPrimary.copy(alpha = 0.25f) else RedAccent.copy(alpha = 0.25f)
                         ) {
+                            val badgeText = if (isTa && !data.irrigationRecommendationTa.isNullOrBlank()) data.irrigationRecommendationTa else data.irrigationRecommendation
                             Text(
-                                data.irrigationRecommendation,
+                                badgeText,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                 color = if (data.irrigationRecommendation.contains("NO", ignoreCase = true)) LimeAccent else RedAccent,
                                 fontWeight = FontWeight.Bold,
@@ -1510,14 +1549,17 @@ fun IrrigationTimingModule() {
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                 ) {
                     Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        val timingVal = if (isTa && !data?.recommendedTimingTa.isNullOrBlank()) data?.recommendedTimingTa else data?.recommendedTiming
+                        val timingHeader = if (isTa) "உகந்த நேரம்: ${timingVal ?: "நாளை காலை 6:00 - 8:30"}" else if (!data?.recommendedTiming.isNullOrBlank()) "Best Window: ${data?.recommendedTiming}" else "Best Window: Tomorrow 6:00 AM - 8:30 AM"
                         Text(
-                            text = if (!data?.recommendedTiming.isNullOrBlank()) "Best Window: ${data?.recommendedTiming}" else "Best Window: Tomorrow 6:00 AM - 8:30 AM",
+                            text = timingHeader,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.5.sp,
                             color = LimeAccent
                         )
+                        val explanationVal = if (isTa && !data?.actionExplanationTa.isNullOrBlank()) data?.actionExplanationTa else data?.actionExplanation
                         Text(
-                            text = data?.actionExplanation ?: "Early morning watering allows moisture to soak deep before sun rises. Avoid 11 AM - 3 PM watering when high heat causes up to 40% evaporation loss.",
+                            text = explanationVal ?: (if (isTa) "அதிகாலை பாசனம் நீர் ஆழமாக இறங்க உதவுகிறது. நண்பகல் 11 மணி முதல் பிற்பகல் 3 மணி வரை பாசனம் செய்வதைத் தவிர்க்கவும்." else "Early morning watering allows moisture to soak deep before sun rises. Avoid 11 AM - 3 PM watering when high heat causes up to 40% evaporation loss."),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface,
                             lineHeight = 17.sp
@@ -1538,13 +1580,14 @@ fun IrrigationTimingModule() {
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Recommended Depth", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(if (isTa) "பரிந்துரைக்கப்பட்ட ஆழம்" else "Recommended Depth", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text("${data?.recommendedDepthMm ?: 0.0} mm", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                             }
                             Column(modifier = Modifier.weight(1.5f)) {
-                                Text("Total Water Volume", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(if (isTa) "மொத்த நீர் அளவு" else "Total Water Volume", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(
-                                    "${String.format(java.util.Locale.US, "%,d", data?.totalWaterVolumeLitres ?: 0L)} Litres",
+                                    if (isTa) "${String.format(java.util.Locale.US, "%,d", data?.totalWaterVolumeLitres ?: 0L)} லிட்டர்"
+                                    else "${String.format(java.util.Locale.US, "%,d", data?.totalWaterVolumeLitres ?: 0L)} Litres",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = LimeAccent
@@ -1554,7 +1597,8 @@ fun IrrigationTimingModule() {
 
                         val displayAreaHa = data?.fieldAreaHa ?: (activeField.areaAcres / 2.47105)
                         Text(
-                            text = "Calculated using FAO-56 Crop Evapotranspiration balance for ${String.format(java.util.Locale.US, "%.1f", displayAreaHa)} ha field.",
+                            text = if (isTa) "${String.format(java.util.Locale.US, "%.1f", displayAreaHa)} ஹெக்டேர் நிலத்திற்கான FAO-56 பயிர் ஆவியாதல் சமநிலைப்படி கணக்கிடப்பட்டது."
+                                   else "Calculated using FAO-56 Crop Evapotranspiration balance for ${String.format(java.util.Locale.US, "%.1f", displayAreaHa)} ha field.",
                             fontSize = 10.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                         )
@@ -1562,9 +1606,9 @@ fun IrrigationTimingModule() {
                 }
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MetricChip("Crop Demand", "${data?.dailyCropWaterDemandMm ?: 5.4} mm/d", Modifier.weight(1f))
-                    MetricChip("Soil Moisture", "${data?.currentMoisturePct?.toInt() ?: 72}%", Modifier.weight(1f))
-                    MetricChip("Calculation", "Water Balance", Modifier.weight(1f))
+                    MetricChip(if (isTa) "பயிர் தேவை" else "Crop Demand", "${data?.dailyCropWaterDemandMm ?: 5.4} mm/d", Modifier.weight(1f))
+                    MetricChip(if (isTa) "மண் ஈரப்பதம்" else "Soil Moisture", "${data?.currentMoisturePct?.toInt() ?: 72}%", Modifier.weight(1f))
+                    MetricChip(if (isTa) "கணக்கீடு" else "Calculation", if (isTa) "நீர் சமநிலை" else "Water Balance", Modifier.weight(1f))
                 }
 
                 // Expandable Scientific Calculation Details
@@ -1605,11 +1649,13 @@ fun WeatherSprayingModule() {
         isLoading = false
     }
 
+    val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
+
     Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
         Column(modifier = Modifier.padding(18.dp)) {
-            Text("Weather & Safe Spraying Forecast", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text(if (isTa) "வானிலை மற்றும் பாதுகாப்பான தெளிப்பு வழிகாட்டி" else "Weather & Safe Spraying Forecast", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Hourly rainfall and wind speed forecast for safe crop spraying.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(if (isTa) "பாதுகாப்பான மருந்து தெளிப்பிற்கான மழை மற்றும் காற்றின் வேக முன்னறிவிப்பு." else "Hourly rainfall and wind speed forecast for safe crop spraying.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
 
             Surface(
@@ -1621,20 +1667,26 @@ fun WeatherSprayingModule() {
                 Column(modifier = Modifier.padding(12.dp)) {
                     val isSafe = sprayWindow?.isSafeNow ?: weather?.spraySafe ?: false
                     val statusText = if (isLoading) {
-                        "Assessing Weather Telemetry..."
+                        if (isTa) "வானிலை தரவுகள் ஆய்வு செய்யப்படுகின்றன..." else "Assessing Weather Telemetry..."
                     } else if (weather != null || sprayWindow != null) {
-                        if (isSafe) "Today's Spray Status: Safe to Spray" else "Today's Spray Status: Spraying Not Recommended"
+                        if (isSafe) {
+                            if (isTa) "இன்றைய நிலை: தெளிக்க உகந்த நேரம்" else "Today's Spray Status: Safe to Spray"
+                        } else {
+                            if (isTa) "இன்றைய நிலை: தெளிக்க பரிந்துரைக்கப்படவில்லை" else "Today's Spray Status: Spraying Not Recommended"
+                        }
                     } else {
-                        "Weather Forecast Unavailable Offline"
+                        if (isTa) "வானிலை முன்னறிவிப்பு ஆஃப்லைனில் கிடைக்கவில்லை" else "Weather Forecast Unavailable Offline"
                     }
                     val statusColor = if (isSafe) LimeAccent else if (weather == null && sprayWindow == null) MaterialTheme.colorScheme.onSurfaceVariant else RedAccent
 
                     Text(statusText, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = statusColor)
                     Spacer(modifier = Modifier.height(4.dp))
                     val adviceText = if (isLoading) {
-                        "Fetching latest automated weather station data..."
+                        if (isTa) "வானிலை மையத்தின் சமீபத்திய தரவு பெறப்படுகிறது..." else "Fetching latest automated weather station data..."
                     } else {
-                        sprayWindow?.verdict ?: weather?.sprayAdvice ?: "Live meteorological data could not be retrieved. Please verify internet connection."
+                        val backendTa = sprayWindow?.verdictTa
+                        if (isTa && !backendTa.isNullOrBlank()) backendTa
+                        else sprayWindow?.verdict ?: weather?.sprayAdvice ?: (if (isTa) "வானிலை தரவை பெற முடியவில்லை. இணைய இணைப்பை சரிபார்க்கவும்." else "Live meteorological data could not be retrieved. Please verify internet connection.")
                     }
                     Text(
                         adviceText,
@@ -1650,9 +1702,9 @@ fun WeatherSprayingModule() {
                 val wind = weather?.windSpeedKmh ?: sprayWindow?.currentWindKmh ?: 0.0
                 val precip = weather?.precipitationMm ?: 0.0
                 val humidity = weather?.humidityPercent ?: sprayWindow?.currentHumidityPct ?: 0.0
-                MetricChip("Wind Speed", if (weather != null || sprayWindow != null) "${wind.toInt()} km/h" else "--", Modifier.weight(1f))
-                MetricChip("Precipitation", if (weather != null) "${precip.toInt()} mm" else "--", Modifier.weight(1f))
-                MetricChip("Humidity", if (weather != null || sprayWindow != null) "${humidity.toInt()}%" else "--", Modifier.weight(1f))
+                MetricChip(if (isTa) "காற்றின் வேகம்" else "Wind Speed", if (weather != null || sprayWindow != null) "${wind.toInt()} km/h" else "--", Modifier.weight(1f))
+                MetricChip(if (isTa) "மழைப்பொழிவு" else "Precipitation", if (weather != null) "${precip.toInt()} mm" else "--", Modifier.weight(1f))
+                MetricChip(if (isTa) "ஈரப்பதம்" else "Humidity", if (weather != null || sprayWindow != null) "${humidity.toInt()}%" else "--", Modifier.weight(1f))
             }
         }
     }
@@ -2112,103 +2164,58 @@ fun FieldOperationModule() {
 
 
 @Composable
-
 fun FertilizationPlanModule() {
-
     var nitrogenKg by remember { mutableStateOf(45f) }
+    val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
 
     Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-
         Column(modifier = Modifier.padding(18.dp)) {
-
-            Text("Targeted Crop Nutrition & Split Dosing", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-
+            Text(if (isTa) "பயிர் ஊட்டச்சத்து மேலாண்மை & உர அட்டவணை" else "Targeted Crop Nutrition & Split Dosing", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
-
-            Text("Crop-specific guideline dosage estimates per acre based on standard agronomic recommendations. (Note: Optical NDVI measures canopy greenness, not soil nutrients. Validate with physical Soil Health Card tests before application).", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
+            Text(if (isTa) "பயிர் சார்ந்த ஏக்கர் அளவிலான உத்தேச உர வழிகாட்டுதல்கள். (குறிப்பு: செயற்கைக்கோள் பயிர் பசுமையை மட்டுமே அளவிடுகிறது; மண் பரிசோதனை அட்டை முடிவுகளுடன் ஒப்பிட்டு பயன்படுத்தவும்)." else "Crop-specific guideline dosage estimates per acre based on standard agronomic recommendations. (Note: Optical NDVI measures canopy greenness, not soil nutrients. Validate with physical Soil Health Card tests before application).", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(14.dp))
-
-
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-
-                Text("Guideline Urea (Nitrogen) Estimate", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontSize = 13.5.sp)
-
-                Text("${nitrogenKg.toInt()} kg / acre (1 Bag)", fontWeight = FontWeight.Bold, color = LimeAccent, fontSize = 14.sp)
-
+                Text(if (isTa) "பரிந்துரைக்கப்பட்ட யூரியா அளவு" else "Guideline Urea (Nitrogen) Estimate", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontSize = 13.5.sp)
+                val bagText = if (isTa) "${nitrogenKg.toInt()} கிகி / ஏக்கர் (1 மூட்டை)" else "${nitrogenKg.toInt()} kg / acre (1 Bag)"
+                Text(bagText, fontWeight = FontWeight.Bold, color = LimeAccent, fontSize = 14.sp)
             }
-
             Spacer(modifier = Modifier.height(6.dp))
-
             Slider(
-
                 value = nitrogenKg,
-
                 onValueChange = { nitrogenKg = it },
-
                 valueRange = 25f..65f,
-
                 colors = SliderDefaults.colors(thumbColor = LimeAccent, activeTrackColor = EmeraldPrimary)
-
             )
 
-
-
             Spacer(modifier = Modifier.height(12.dp))
-
             Surface(
-
                 modifier = Modifier.fillMaxWidth(),
-
                 shape = RoundedCornerShape(12.dp),
-
                 color = MaterialTheme.colorScheme.surfaceVariant,
-
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-
             ) {
-
                 Column(modifier = Modifier.padding(12.dp)) {
-
-                    Text("Application Timing Tip", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = LimeAccent)
-
+                    Text(if (isTa) "உரமிடும் நேர ஆலோசனை" else "Application Timing Tip", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = LimeAccent)
                     Spacer(modifier = Modifier.height(2.dp))
-
                     Text(
-
-                        "Apply Urea along rows 12 hours before expected light rain or immediately before morning irrigation for best root uptake.",
-
+                        if (isTa) "யூரியாவை லேசான மழைக்கு 12 மணி நேரத்திற்கு முன் அல்லது அதிகாலை பாசனத்திற்கு சற்று முன் பயிர் வரிசையில் இடவும்."
+                        else "Apply Urea along rows 12 hours before expected light rain or immediately before morning irrigation for best root uptake.",
                         fontSize = 12.sp,
-
                         color = MaterialTheme.colorScheme.onSurface,
-
                         lineHeight = 17.sp
-
                     )
-
                 }
-
             }
-
-
 
             Spacer(modifier = Modifier.height(14.dp))
-
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-
-                MetricChip("Urea (N)", "45 kg/ac", Modifier.weight(1f))
-
-                MetricChip("DAP (P)", "30 kg/ac", Modifier.weight(1f))
-
-                MetricChip("Potash (K)", "20 kg/ac", Modifier.weight(1f))
-
+                MetricChip(if (isTa) "யூரியா (தழை)" else "Urea (N)", "45 kg/ac", Modifier.weight(1f))
+                MetricChip(if (isTa) "டிஏபி (மணி)" else "DAP (P)", "30 kg/ac", Modifier.weight(1f))
+                MetricChip(if (isTa) "பொட்டாஷ் (சாம்பல்)" else "Potash (K)", "20 kg/ac", Modifier.weight(1f))
             }
-
         }
-
     }
-
 }
 
 
@@ -2763,36 +2770,21 @@ fun AgronomistChatModule() {
 
 
 @Composable
-
 fun MarketCommodityModule() {
-
     var mandiRates by remember { mutableStateOf<List<MandiPriceDto>>(emptyList()) }
-
     var isLoading by remember { mutableStateOf(true) }
-
-
+    val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
 
     LaunchedEffect(Unit) {
-
         val repo = GeoPulseRepository()
-
         mandiRates = repo.getMandiRates()
-
         isLoading = false
-
     }
 
-
-
     Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
-            Text("Local Mandi Wholesale Price Bulletin", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-
-            Text("Official AGMARKNET modal wholesale reference bulletin in ₹ / Quintal (Historical benchmark reference; not live futures market).", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-
+            Text(if (isTa) "உள்ளூர் மண்டி மொத்த விலை விபரம்" else "Local Mandi Wholesale Price Bulletin", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text(if (isTa) "அதிகாரப்பூர்வ AGMARKNET சராசரி மொத்த விற்பனை வழிகாட்டி (₹ / குவின்டால்). இது வரலாற்று சந்தை குறிப்பு மட்டுமே; நேரலை பங்குச் சந்தை அல்ல." else "Official AGMARKNET modal wholesale reference bulletin in ₹ / Quintal (Historical benchmark reference; not live futures market).", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             if (mandiRates.isEmpty()) {
                 Surface(
@@ -2806,14 +2798,16 @@ fun MarketCommodityModule() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            if (isLoading) "Retrieving AGMARKNET Wholesale Bulletin..." else "No Mandi Rates Available",
+                            if (isLoading) (if (isTa) "அக்மார்க்நெட் விலை விபரம் பெறப்படுகிறது..." else "Retrieving AGMARKNET Wholesale Bulletin...")
+                            else (if (isTa) "மண்டி விலைகள் கிடைக்கவில்லை" else "No Mandi Rates Available"),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 13.5.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            if (isLoading) "Querying official APMC benchmark bulletin..." else "Connect to network to fetch AGMARKNET commodity prices.",
+                            if (isLoading) (if (isTa) "அதிகாரப்பூர்வ APMC சந்தை நிலவரம் சரிபார்க்கப்படுகிறது..." else "Querying official APMC benchmark bulletin...")
+                            else (if (isTa) "விலை விபரங்களைப் பெற இணைய இணைப்பை சரிபார்க்கவும்." else "Connect to network to fetch AGMARKNET commodity prices."),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -2835,12 +2829,25 @@ fun MarketCommodityModule() {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text(rate.commodity, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
-                                    val dateNote = if (rate.recordedDate.isNotBlank()) " · Recorded: ${rate.recordedDate}" else ""
+                                    val commName = if (isTa) {
+                                        when (rate.commodity.lowercase()) {
+                                            "maize", "corn" -> "மக்காச்சோளம்"
+                                            "paddy", "rice" -> "நெல்"
+                                            "cotton" -> "பருத்தி"
+                                            "groundnut" -> "நிலக்கடலை"
+                                            "sugarcane" -> "கரும்பு"
+                                            "wheat" -> "கோதுமை"
+                                            "soybean" -> "சோயாபீன்"
+                                            else -> rate.commodity
+                                        }
+                                    } else rate.commodity
+                                    Text(commName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    val dateNote = if (rate.recordedDate.isNotBlank()) " · ${rate.recordedDate}" else ""
                                     Text("${rate.mandiName}, ${rate.state}$dateNote", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text("₹${rate.modalPrice.toInt()} / Q", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    val priceUnit = if (isTa) "₹${rate.modalPrice.toInt()} / கு." else "₹${rate.modalPrice.toInt()} / Q"
+                                    Text(priceUnit, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
                                     val trendSign = if (rate.trendPct >= 0) "+${rate.trendPct}% ↗" else "${rate.trendPct}% ↘"
                                     Text(trendSign, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, color = if (rate.trendPct >= 0) LimeAccent else RedAccent)
                                 }
@@ -2852,7 +2859,16 @@ fun MarketCommodityModule() {
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     mandiRates.take(3).forEach { rate ->
-                        val shortName = rate.commodity.split(" ").firstOrNull() ?: rate.commodity
+                        val shortName = if (isTa) {
+                            when (rate.commodity.lowercase()) {
+                                "maize", "corn" -> "சோளம்"
+                                "paddy", "rice" -> "நெல்"
+                                "cotton" -> "பருத்தி"
+                                "groundnut" -> "கடலை"
+                                "wheat" -> "கோதுமை"
+                                else -> rate.commodity.split(" ").firstOrNull() ?: rate.commodity
+                            }
+                        } else rate.commodity.split(" ").firstOrNull() ?: rate.commodity
                         MetricChip(shortName, "₹${rate.modalPrice.toInt()}/Q", Modifier.weight(1f))
                     }
                 }
@@ -3023,41 +3039,40 @@ fun AppSettingsSyncModule() {
             Spacer(modifier = Modifier.height(14.dp))
 
             val context = androidx.compose.ui.platform.LocalContext.current
-            var currentLang by remember { mutableStateOf(com.geopulse.app.network.UserSession.getLanguage(context)) }
+            val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
 
-            Text("Farmer Preferred Language", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                text = if (isTa) "விவசாயி விரும்பும் மொழி" else "Farmer Preferred Language",
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.5.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             Spacer(modifier = Modifier.height(4.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
-                    selected = currentLang == "en",
+                    selected = !isTa,
                     onClick = {
-                        currentLang = "en"
-                        com.geopulse.app.network.UserSession.setLanguage(context, "en")
+                        com.geopulse.app.util.GeoLanguageManager.setLanguage(context, "en")
                     },
                     modifier = Modifier.weight(1f),
-                    label = { Text("English", fontSize = 12.sp, fontWeight = if (currentLang == "en") FontWeight.Bold else FontWeight.Medium) }
+                    label = { Text("English", fontSize = 12.sp, fontWeight = if (!isTa) FontWeight.Bold else FontWeight.Medium) }
                 )
                 FilterChip(
-                    selected = currentLang == "ta",
+                    selected = isTa,
                     onClick = {
-                        currentLang = "ta"
-                        com.geopulse.app.network.UserSession.setLanguage(context, "ta")
+                        com.geopulse.app.util.GeoLanguageManager.setLanguage(context, "ta")
                     },
                     modifier = Modifier.weight(1f),
-                    label = { Text("தமிழ் (Tamil)", fontSize = 12.sp, fontWeight = if (currentLang == "ta") FontWeight.Bold else FontWeight.Medium) }
+                    label = { Text("தமிழ் (Tamil)", fontSize = 12.sp, fontWeight = if (isTa) FontWeight.Bold else FontWeight.Medium) }
                 )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-
-                MetricChip("Current Theme", currentMode.name.lowercase().replaceFirstChar { it.uppercase() }, Modifier.weight(1f))
-
-                MetricChip("Offline Maps", "Ready", Modifier.weight(1f))
-
-                MetricChip("Language", if (currentLang == "ta") "தமிழ்" else "English", Modifier.weight(1f))
-
+                MetricChip(if (isTa) "தோற்றம்" else "Current Theme", currentMode.name.lowercase().replaceFirstChar { it.uppercase() }, Modifier.weight(1f))
+                MetricChip(if (isTa) "ஆஃப்லைன் வரைபடம்" else "Offline Maps", if (isTa) "தயார்" else "Ready", Modifier.weight(1f))
+                MetricChip(if (isTa) "தேர்ந்தெடுத்த மொழி" else "Language", if (isTa) "தமிழ்" else "English", Modifier.weight(1f))
             }
 
 
@@ -3455,215 +3470,190 @@ fun GenericFarmerModule(title: String) {
 
 
 // -------------------------------------------------------------------------
-
 // Detail Screen Content for Screens 11 to 30 with working responsive layout
-
 // -------------------------------------------------------------------------
 
+fun translateScreenTitle(title: String, isTamil: Boolean): String {
+    if (!isTamil) return title
+    return when {
+        title.contains("Crop Health", true) || title.contains("Vegetation", true) || title.contains("Vigor", true) -> com.geopulse.app.util.GeoStrings.screen11Title
+        title.contains("Soil Moisture", true) || title.contains("Hydration", true) -> com.geopulse.app.util.GeoStrings.screen12Title
+        title.contains("Watering", true) || title.contains("Irrigation", true) -> com.geopulse.app.util.GeoStrings.screen13Title
+        title.contains("Weather", true) || title.contains("Spraying", true) -> com.geopulse.app.util.GeoStrings.screen14Title
+        title.contains("Pest", true) || title.contains("Disease", true) -> com.geopulse.app.util.GeoStrings.screen15Title
+        title.contains("Yield", true) || title.contains("Harvest Estimator", true) -> com.geopulse.app.util.GeoStrings.screen16Title
+        title.contains("Boundary", true) || title.contains("Land Area", true) -> com.geopulse.app.util.GeoStrings.screen17Title
+        title.contains("Calendar", true) || title.contains("Sowing", true) || title.contains("Phenology", true) -> com.geopulse.app.util.GeoStrings.screen18Title
+        title.contains("Operations", true) || title.contains("Machinery", true) || title.contains("Plowing", true) -> com.geopulse.app.util.GeoStrings.screen19Title
+        title.contains("Fertiliz", true) || title.contains("Nutrient", true) -> com.geopulse.app.util.GeoStrings.screen20Title
+        title.contains("Storage", true) || title.contains("Logistics", true) -> com.geopulse.app.util.GeoStrings.screen21Title
+        title.contains("Financial", true) || title.contains("Budget", true) || title.contains("Ledger", true) -> com.geopulse.app.util.GeoStrings.screen22Title
+        title.contains("Multi-Farm", true) || title.contains("Parcels", true) -> com.geopulse.app.util.GeoStrings.screen23Title
+        title.contains("History", true) || title.contains("Drone", true) -> com.geopulse.app.util.GeoStrings.screen24Title
+        title.contains("Carbon", true) || title.contains("Organic", true) || title.contains("Composting", true) -> com.geopulse.app.util.GeoStrings.screen25Title
+        title.contains("Agronomist", true) || title.contains("Helpline", true) -> com.geopulse.app.util.GeoStrings.screen26Title
+        title.contains("Commodity", true) || title.contains("Mandi", true) || title.contains("Market", true) -> com.geopulse.app.util.GeoStrings.screen27Title
+        title.contains("Warning", true) || title.contains("Severe", true) || title.contains("Extreme", true) -> com.geopulse.app.util.GeoStrings.screen28Title
+        title.contains("Settings", true) || title.contains("Sync", true) -> com.geopulse.app.util.GeoStrings.screen29Title
+        title.contains("Privacy", true) || title.contains("Deletion", true) || title.contains("Export", true) -> com.geopulse.app.util.GeoStrings.screen30Title
+        else -> title
+    }
+}
+
+fun translateScreenSubtitle(subtitle: String, isTamil: Boolean): String {
+    if (!isTamil) return subtitle
+    return when {
+        subtitle.contains("Sentinel-2", true) && subtitle.contains("optical", true) -> com.geopulse.app.util.GeoStrings.screen11Subtitle
+        subtitle.contains("FAO-56", true) || subtitle.contains("water balance", true) -> com.geopulse.app.util.GeoStrings.screen12Subtitle
+        subtitle.contains("litres", true) || subtitle.contains("Crop water", true) -> com.geopulse.app.util.GeoStrings.screen13Subtitle
+        subtitle.contains("wind drift", true) || subtitle.contains("Hyperlocal temperature", true) -> com.geopulse.app.util.GeoStrings.screen14Subtitle
+        subtitle.contains("IPM", true) || subtitle.contains("symptom", true) -> com.geopulse.app.util.GeoStrings.screen15Subtitle
+        subtitle.contains("biomass", true) || subtitle.contains("NDVI-based yield", true) -> com.geopulse.app.util.GeoStrings.screen16Subtitle
+        subtitle.contains("polygon", true) || subtitle.contains("acre calculation", true) -> com.geopulse.app.util.GeoStrings.screen17Subtitle
+        subtitle.contains("Days after sowing", true) || subtitle.contains("seed rate", true) -> com.geopulse.app.util.GeoStrings.screen18Subtitle
+        subtitle.contains("Tractor", true) || subtitle.contains("labor management", true) -> com.geopulse.app.util.GeoStrings.screen19Subtitle
+        subtitle.contains("Urea", true) || subtitle.contains("dosages", true) -> com.geopulse.app.util.GeoStrings.screen20Subtitle
+        subtitle.contains("drying", true) || subtitle.contains("grain", true) -> com.geopulse.app.util.GeoStrings.screen21Subtitle
+        subtitle.contains("expenses", true) || subtitle.contains("Input costs", true) -> com.geopulse.app.util.GeoStrings.screen22Subtitle
+        subtitle.contains("multiple agricultural parcels", true) -> com.geopulse.app.util.GeoStrings.screen23Subtitle
+        subtitle.contains("trends", true) || subtitle.contains("vegetation index", true) -> com.geopulse.app.util.GeoStrings.screen24Subtitle
+        subtitle.contains("vermicompost", true) || subtitle.contains("organic matter", true) -> com.geopulse.app.util.GeoStrings.screen25Subtitle
+        subtitle.contains("1800-180-1551", true) || subtitle.contains("Kisan", true) -> com.geopulse.app.util.GeoStrings.screen26Subtitle
+        subtitle.contains("APMC", true) || subtitle.contains("benchmark", true) -> com.geopulse.app.util.GeoStrings.screen27Subtitle
+        subtitle.contains("flood risk", true) || subtitle.contains("hazard", true) -> com.geopulse.app.util.GeoStrings.screen28Subtitle
+        subtitle.contains("offline", true) || subtitle.contains("cache", true) -> com.geopulse.app.util.GeoStrings.screen29Subtitle
+        subtitle.contains("GDPR", true) || subtitle.contains("privacy", true) || subtitle.contains("deletion", true) -> com.geopulse.app.util.GeoStrings.screen30Subtitle
+        else -> subtitle
+    }
+}
+
+fun translateActionText(text: String, isTamil: Boolean): String {
+    if (!isTamil) return text
+    return when {
+        text.contains("Return to Farm Dashboard", true) -> "பண்ணை டாஷ்போர்டுக்கு திரும்புக"
+        text.contains("View Related Advisory", true) -> "தொடர்புடைய ஆலோசனையைக் காண்க"
+        text.contains("Open Interactive Map", true) -> "வரைபடத்தைத் திறக்கவும்"
+        text.contains("View Historical Growth Trends", true) -> "வரலாற்று வளர்ச்சிப் போக்கைக் காண்க"
+        text.contains("Check Soil Hydration Status", true) -> "மண் ஈரப்பத நிலையைச் சரிபார்க்கவும்"
+        text.contains("Trace Field Boundary", true) -> "வயல் எல்லையை வரைக"
+        text.contains("Calculate Fertilizer Dosage", true) -> "உர அளவை கணக்கிடுக"
+        text.contains("View Market Mandi Prices", true) -> "மண்டி சந்தை விலையைக் காண்க"
+        text.contains("Call Kisan Helpline", true) -> "விவசாயி உதவி எண்ணை அழைக்கவும்"
+        text.contains("Review Extreme Weather Warnings", true) -> "தீவிர வானிலை எச்சரிக்கைகளைக் காண்க"
+        text.contains("Export Parcel GIS Data", true) -> "நில வரைபட தரவை ஏற்றுமதி செய்"
+        else -> text
+    }
+}
+
 @Composable
-
 fun GeoDetailScreenContent(
-
     title: String,
-
     subtitle: String,
-
     icon: ImageVector,
-
     activity: ComponentActivity,
-
     primaryActionClass: Class<*>? = null,
-
     primaryActionText: String? = null,
-
     secondaryActionClass: Class<*>? = null,
-
     secondaryActionText: String? = null,
-
     nextActivityClass: Class<*>? = null,
-
     nextButtonText: String = "View Related Advisory"
-
 ) {
-
+    val isTamil = com.geopulse.app.util.GeoLanguageManager.isTamil
+    val localizedTitle = translateScreenTitle(title, isTamil)
+    val localizedSubtitle = translateScreenSubtitle(subtitle, isTamil)
     val effectivePrimaryClass = primaryActionClass ?: nextActivityClass
-
-    val effectivePrimaryText = primaryActionText ?: nextButtonText
+    val rawPrimaryText = primaryActionText ?: nextButtonText
+    val effectivePrimaryText = translateActionText(rawPrimaryText, isTamil)
+    val effectiveSecondaryText = secondaryActionText?.let { translateActionText(it, isTamil) }
 
     var visible by remember { mutableStateOf(false) }
-
     LaunchedEffect(Unit) {
-
         visible = true
-
     }
 
-
-
     Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
-
         Scaffold(
-
             topBar = {
-
                 GeoTopBar(
-
-                    title = title,
-
-                    subtitle = subtitle,
-
+                    title = localizedTitle,
+                    subtitle = localizedSubtitle,
                     onBackClick = {
-
                         activity.finish()
-
                     }
-
                 )
-
             },
-
             containerColor = MaterialTheme.colorScheme.background
-
         ) { padding ->
-
             BoxWithConstraints(
-
                 modifier = Modifier
-
                     .fillMaxSize()
-
                     .padding(padding),
-
                 contentAlignment = Alignment.TopCenter
-
             ) {
-
                 val isTablet = maxWidth > 600.dp
-
                 val contentWidth = if (isTablet) 600.dp else maxWidth
-
                 val horizontalPadding = if (maxWidth < 360.dp) 12.dp else 16.dp
-
                 val heroGradient = remember {
-
                     Brush.linearGradient(colors = listOf(GradientHeroStart, GradientHeroMid, GradientHeroEnd))
-
                 }
 
-
-
                 AnimatedVisibility(
-
                     visible = visible,
-
                     enter = fadeIn(animationSpec = tween(350)) + slideInVertically(animationSpec = tween(350), initialOffsetY = { 20 })
-
                 ) {
-
                     LazyColumn(
-
                         modifier = Modifier
-
                             .width(contentWidth)
-
                             .fillMaxHeight(),
-
                         contentPadding = PaddingValues(
-
                             start = horizontalPadding,
-
                             end = horizontalPadding,
-
                             top = 12.dp,
                             bottom = 120.dp
                         ),
-
                         verticalArrangement = Arrangement.spacedBy(14.dp),
-
                         horizontalAlignment = Alignment.CenterHorizontally
-
                     ) {
-
                         // Specific Interactive Layperson Satellite Module matching this screen
-
                         item {
-
+                            val searchTarget = "$title $localizedTitle"
                             when {
-
-                                title.contains("Notification", ignoreCase = true) || title.contains("Alert", ignoreCase = true) || title.contains("Warning", ignoreCase = true) -> NotificationCenterModule()
-
-                                title.contains("Vegetation", ignoreCase = true) || title.contains("Crop Health", ignoreCase = true) -> VegetationHealthModule()
-
-                                title.contains("Soil Moisture", ignoreCase = true) -> SoilMoistureModule()
-
-                                title.contains("Watering", ignoreCase = true) || title.contains("Irrigation", ignoreCase = true) -> IrrigationTimingModule()
-
-                                title.contains("Weather", ignoreCase = true) || title.contains("Radar", ignoreCase = true) || title.contains("Spraying", ignoreCase = true) -> WeatherSprayingModule()
-
-                                title.contains("Pest", ignoreCase = true) || title.contains("Disease", ignoreCase = true) -> PestAdvisoryModule()
-
-                                title.contains("Yield", ignoreCase = true) || title.contains("Harvest Estimator", ignoreCase = true) -> YieldEstimatorModule()
-
-                                title.contains("Boundary", ignoreCase = true) || title.contains("Land Area", ignoreCase = true) -> FieldBoundaryModule()
-
-                                title.contains("Calendar", ignoreCase = true) || title.contains("Stages", ignoreCase = true) || title.contains("Sensor", ignoreCase = true) -> CropCalendarModule()
-
-                                title.contains("Operations", ignoreCase = true) || title.contains("Plowing", ignoreCase = true) || title.contains("Machinery", ignoreCase = true) -> FieldOperationModule()
-
-                                title.contains("Fertiliz", ignoreCase = true) || title.contains("Nutrient", ignoreCase = true) -> FertilizationPlanModule()
-
-                                title.contains("Storage", ignoreCase = true) || title.contains("Harvest Logistics", ignoreCase = true) || title.contains("Harvest Preparation", ignoreCase = true) -> HarvestStorageModule()
-
-                                title.contains("Financial", ignoreCase = true) || title.contains("Budget", ignoreCase = true) -> FarmBudgetModule()
-
-                                title.contains("Multi-Farm", ignoreCase = true) || title.contains("Parcels", ignoreCase = true) || title.contains("My Land", ignoreCase = true) -> MyFieldsModule()
-
-                                title.contains("Drone", ignoreCase = true) || title.contains("History", ignoreCase = true) -> SatelliteHistoryModule()
-
-                                title.contains("Carbon", ignoreCase = true) || title.contains("Organic", ignoreCase = true) || title.contains("Composting", ignoreCase = true) -> OrganicSoilModule()
-
-                                title.contains("Agronomist", ignoreCase = true) || title.contains("Helpline", ignoreCase = true) -> AgronomistChatModule()
-
-                                title.contains("Commodity", ignoreCase = true) || title.contains("Mandi", ignoreCase = true) || title.contains("Market", ignoreCase = true) -> MarketCommodityModule()
-
-                                title.contains("Notification", ignoreCase = true) || title.contains("Alert", ignoreCase = true) || title.contains("Warning", ignoreCase = true) -> NotificationCenterModule()
-
-                                title.contains("Settings", ignoreCase = true) || title.contains("Sync", ignoreCase = true) || title.contains("Appearance", ignoreCase = true) || title.contains("GIS", ignoreCase = true) || title.contains("Basemap", ignoreCase = true) -> {
-
+                                searchTarget.contains("Notification", true) || searchTarget.contains("Alert", true) || searchTarget.contains("Warning", true) || searchTarget.contains("அறிவிப்பு", true) || searchTarget.contains("எச்சரிக்கை", true) -> NotificationCenterModule()
+                                searchTarget.contains("Vegetation", true) || searchTarget.contains("Crop Health", true) || searchTarget.contains("பயிர் நலம்", true) || searchTarget.contains("பசுமை", true) -> VegetationHealthModule()
+                                searchTarget.contains("Soil Moisture", true) || searchTarget.contains("மண் ஈரப்பதம்", true) -> SoilMoistureModule()
+                                searchTarget.contains("Watering", true) || searchTarget.contains("Irrigation", true) || searchTarget.contains("பாசனம்", true) || searchTarget.contains("நீர்", true) -> IrrigationTimingModule()
+                                searchTarget.contains("Weather", true) || searchTarget.contains("Radar", true) || searchTarget.contains("Spraying", true) || searchTarget.contains("வானிலை", true) || searchTarget.contains("தெளி", true) -> WeatherSprayingModule()
+                                searchTarget.contains("Pest", true) || searchTarget.contains("Disease", true) || searchTarget.contains("பூச்சி", true) || searchTarget.contains("நோய்", true) -> PestAdvisoryModule()
+                                searchTarget.contains("Yield", true) || searchTarget.contains("Harvest Estimator", true) || searchTarget.contains("விளைச்சல்", true) || searchTarget.contains("மகசூல்", true) -> YieldEstimatorModule()
+                                searchTarget.contains("Boundary", true) || searchTarget.contains("Land Area", true) || searchTarget.contains("எல்லை", true) || searchTarget.contains("நிலப்பரப்பு", true) -> FieldBoundaryModule()
+                                searchTarget.contains("Calendar", true) || searchTarget.contains("Stages", true) || searchTarget.contains("Sensor", true) || searchTarget.contains("நாள்காட்டி", true) || searchTarget.contains("விதைப்பு", true) -> CropCalendarModule()
+                                searchTarget.contains("Operations", true) || searchTarget.contains("Plowing", true) || searchTarget.contains("Machinery", true) || searchTarget.contains("பணிகள்", true) || searchTarget.contains("உழவு", true) || searchTarget.contains("இயந்திர", true) -> FieldOperationModule()
+                                searchTarget.contains("Fertiliz", true) || searchTarget.contains("Nutrient", true) || searchTarget.contains("உரம்", true) || searchTarget.contains("ஊட்டச்சத்து", true) -> FertilizationPlanModule()
+                                searchTarget.contains("Storage", true) || searchTarget.contains("Harvest Logistics", true) || searchTarget.contains("Harvest Preparation", true) || searchTarget.contains("சேமிப்பு", true) || searchTarget.contains("அறுவடை", true) -> HarvestStorageModule()
+                                searchTarget.contains("Financial", true) || searchTarget.contains("Budget", true) || searchTarget.contains("வரவு", true) || searchTarget.contains("செலவு", true) -> FarmBudgetModule()
+                                searchTarget.contains("Multi-Farm", true) || searchTarget.contains("Parcels", true) || searchTarget.contains("My Land", true) || searchTarget.contains("வயல்", true) || searchTarget.contains("நிலங்கள்", true) -> MyFieldsModule()
+                                searchTarget.contains("Drone", true) || searchTarget.contains("History", true) || searchTarget.contains("வரலாற்று", true) -> SatelliteHistoryModule()
+                                searchTarget.contains("Carbon", true) || searchTarget.contains("Organic", true) || searchTarget.contains("Composting", true) || searchTarget.contains("இயற்கை", true) || searchTarget.contains("கரிம", true) -> OrganicSoilModule()
+                                searchTarget.contains("Agronomist", true) || searchTarget.contains("Helpline", true) || searchTarget.contains("உதவி", true) || searchTarget.contains("வல்லுநர்", true) -> AgronomistChatModule()
+                                searchTarget.contains("Commodity", true) || searchTarget.contains("Mandi", true) || searchTarget.contains("Market", true) || searchTarget.contains("மண்டி", true) || searchTarget.contains("சந்தை", true) || searchTarget.contains("விலை", true) -> MarketCommodityModule()
+                                searchTarget.contains("Settings", true) || searchTarget.contains("Sync", true) || searchTarget.contains("Appearance", true) || searchTarget.contains("GIS", true) || searchTarget.contains("Basemap", true) || searchTarget.contains("அமைப்புகள்", true) || searchTarget.contains("சேமிப்பு", true) -> {
                                     AppSettingsSyncModule()
-
                                     Spacer(modifier = Modifier.height(14.dp))
-
                                     MapConfigurationModule()
-
                                 }
-
-                                title.contains("Privacy", ignoreCase = true) || title.contains("Deletion", ignoreCase = true) || title.contains("Export", ignoreCase = true) -> DataPrivacyDeletionModule()
-
-                                else -> GenericFarmerModule(title)
-
+                                searchTarget.contains("Privacy", true) || searchTarget.contains("Deletion", true) || searchTarget.contains("Export", true) || searchTarget.contains("பாதுகாப்பு", true) || searchTarget.contains("உரிமைகள்", true) || searchTarget.contains("நீக்கம்", true) -> DataPrivacyDeletionModule()
+                                else -> GenericFarmerModule(localizedTitle)
                             }
-
                         }
 
-
-
                         // Contextual Primary Action Button
-
                         if (effectivePrimaryClass != null) {
-
                             item {
-
                                 Spacer(modifier = Modifier.height(2.dp))
-
                                 Button(
-
                                     onClick = {
-
                                         activity.startActivity(Intent(activity, effectivePrimaryClass))
-
                                     },
-
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(52.dp),
@@ -3679,7 +3669,7 @@ fun GeoDetailScreenContent(
                         }
 
                         // Contextual Secondary Action Button (Optional)
-                        if (secondaryActionClass != null && secondaryActionText != null) {
+                        if (secondaryActionClass != null && effectiveSecondaryText != null) {
                             item {
                                 val isDark = ThemePreferences.isDarkTheme
                                 val secColor = if (isDark) LimeAccent else LeafGreen
@@ -3694,26 +3684,19 @@ fun GeoDetailScreenContent(
                                     colors = ButtonDefaults.outlinedButtonColors(contentColor = secColor),
                                     border = BorderStroke(1.5.dp, secColor.copy(alpha = 0.7f))
                                 ) {
-                                    Text(secondaryActionText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    Text(effectiveSecondaryText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
-
-
 
                         // Bottom Spacing for floating dock or navigation bars
                         item {
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
-
                 }
-
             }
-
         }
-
     }
-
 }
 

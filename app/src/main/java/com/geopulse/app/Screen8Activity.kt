@@ -19,10 +19,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.geopulse.app.ui.theme.GeoPulseTheme
+import com.geopulse.app.util.GeoLanguageManager
+import com.geopulse.app.util.GeoStrings
 
 class Screen8Activity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        GeoLanguageManager.init(this)
         setContent {
             GeoPulseTheme {
                 var isFullscreen by remember { mutableStateOf(false) }
@@ -40,8 +43,8 @@ class Screen8Activity : ComponentActivity() {
                         topBar = {
                             if (!isFullscreen) {
                                 GeoTopBar(
-                                    title = "Geospatial Field Map",
-                                    subtitle = "Sentinel-2 satellite observation & live GPS boundaries",
+                                    title = GeoStrings.screen8Title,
+                                    subtitle = GeoStrings.screen8Subtitle,
                                     onBackClick = { finish() }
                                 )
                             }

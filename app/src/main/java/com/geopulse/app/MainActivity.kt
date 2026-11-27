@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemePreferences.init(this)
+        com.geopulse.app.util.GeoLanguageManager.init(this)
         ApiClient.initFromContext(this)
         UserSession.initSession(this)
 

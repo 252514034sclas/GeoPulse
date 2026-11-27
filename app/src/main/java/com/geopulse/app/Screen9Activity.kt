@@ -12,18 +12,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.geopulse.app.ui.theme.GeoPulseTheme
+import com.geopulse.app.util.GeoLanguageManager
+import com.geopulse.app.util.GeoStrings
 
 class Screen9Activity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        GeoLanguageManager.init(this)
         setContent {
             GeoPulseTheme {
                 Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
                     Scaffold(
                         topBar = {
                             GeoTopBar(
-                                title = "Precision Agriculture Advisory",
-                                subtitle = "Hyperlocal farm tasks, weather forecasts & spray timing",
+                                title = GeoStrings.screen9Title,
+                                subtitle = GeoStrings.screen9Subtitle,
                                 onBackClick = { finish() }
                             )
                         },

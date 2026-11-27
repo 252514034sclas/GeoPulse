@@ -31,6 +31,7 @@ class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         com.geopulse.app.network.UserSession.initSession(this)
+        com.geopulse.app.util.GeoLanguageManager.init(this)
         lifecycleScope.launch {
             delay(1800.milliseconds)
             if (!isFinishing && !isDestroyed) {

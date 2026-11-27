@@ -21,10 +21,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.geopulse.app.ui.theme.GeoPulseTheme
 import com.geopulse.app.ui.theme.ThemePreferences
+import com.geopulse.app.util.GeoLanguageManager
+import com.geopulse.app.util.GeoStrings
 
 class Screen10Activity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        GeoLanguageManager.init(this)
         setContent {
             GeoPulseTheme {
                 var showLogoutDialog by remember { mutableStateOf(false) }
@@ -33,8 +36,8 @@ class Screen10Activity : ComponentActivity() {
                     Scaffold(
                         topBar = {
                             GeoTopBar(
-                                title = "Farm Profile & Settings",
-                                subtitle = "Farmer credentials, app appearance & farm parcels",
+                                title = GeoStrings.screen10Title,
+                                subtitle = GeoStrings.screen10Subtitle,
                                 onBackClick = { finish() }
                             )
                         },
@@ -60,8 +63,8 @@ class Screen10Activity : ComponentActivity() {
                     if (showLogoutDialog) {
                         AlertDialog(
                             onDismissRequest = { showLogoutDialog = false },
-                            title = { Text("Sign Out of GeoPulse?", fontWeight = FontWeight.Bold) },
-                            text = { Text("You will need your registered credentials to access your satellite farm telemetry.") },
+                            title = { Text(GeoStrings.signOutConfirmTitle, fontWeight = FontWeight.Bold) },
+                            text = { Text(GeoStrings.signOutConfirmText) },
                             confirmButton = {
                                 Button(
                                     onClick = {
@@ -73,12 +76,12 @@ class Screen10Activity : ComponentActivity() {
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                                 ) {
-                                    Text("Sign Out", fontWeight = FontWeight.Bold)
+                                    Text(GeoStrings.signOut, fontWeight = FontWeight.Bold)
                                 }
                             },
                             dismissButton = {
                                 OutlinedButton(onClick = { showLogoutDialog = false }) {
-                                    Text("Cancel")
+                                    Text(GeoStrings.cancel)
                                 }
                             }
                         )

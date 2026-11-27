@@ -31,6 +31,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geopulse.app.ui.theme.*
+import com.geopulse.app.util.GeoLanguageManager
+import com.geopulse.app.util.GeoStrings
 
 data class OnboardingSlide(
     val title: String,
@@ -42,27 +44,29 @@ data class OnboardingSlide(
 class OnboardingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        GeoLanguageManager.init(this)
         setContent {
             GeoPulseTheme {
-                val slides = remember {
+                val currentLang = GeoLanguageManager.currentLanguage
+                val slides = remember(currentLang) {
                     listOf(
                         OnboardingSlide(
-                            title = "Precision Satellite Farm Mapping",
-                            description = "Trace your field boundaries and monitor crop health directly from European Space Agency (Sentinel-2) and ISRO satellites.",
+                            title = GeoStrings.slide1Title,
+                            description = GeoStrings.slide1Desc,
                             icon = Icons.Default.Map,
-                            tag = "STEP 1 OF 3"
+                            tag = GeoStrings.step1of3
                         ),
                         OnboardingSlide(
-                            title = "Smart Soil Moisture & Irrigation",
-                            description = "Track root-zone soil moisture from orbit. Receive daily watering alerts so you only irrigate when your crops truly need it.",
+                            title = GeoStrings.slide2Title,
+                            description = GeoStrings.slide2Desc,
                             icon = Icons.Default.Water,
-                            tag = "STEP 2 OF 3"
+                            tag = GeoStrings.step2of3
                         ),
                         OnboardingSlide(
-                            title = "Practical Crop & Yield Advisory",
-                            description = "Receive simple, practical guidance on fertilizer dosage, safe weather spraying windows, and local mandi prices to protect your harvest.",
+                            title = GeoStrings.slide3Title,
+                            description = GeoStrings.slide3Desc,
                             icon = Icons.Default.AutoAwesome,
-                            tag = "STEP 3 OF 3"
+                            tag = GeoStrings.step3of3
                         )
                     )
                 }
@@ -83,7 +87,7 @@ class OnboardingActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // Header with Skip action
+                        // Header with Language Selector & Skip action
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -95,17 +99,46 @@ class OnboardingActivity : ComponentActivity() {
                                 color = MaterialTheme.colorScheme.primary,
                                 fontSize = 18.sp
                             )
-                            TextButton(
-                                onClick = {
-                                    startActivity(Intent(this@OnboardingActivity, LoginActivity::class.java))
-                                    finish()
-                                }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text(
-                                    text = "Skip",
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                Surface(
+                                    onClick = {
+                                        val nextLang = if (GeoLanguageManager.isTamil) "en" else "ta"
+                                        GeoLanguageManager.setLanguage(this@OnboardingActivity, nextLang)
+                                    },
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.surface,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text("🌐", fontSize = 11.sp)
+                                        Text(
+                                            text = if (GeoLanguageManager.isTamil) "English" else "தமிழ்",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+
+                                TextButton(
+                                    onClick = {
+                                        startActivity(Intent(this@OnboardingActivity, LoginActivity::class.java))
+                                        finish()
+                                    }
+                                ) {
+                                    Text(
+                                        text = GeoStrings.skip,
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
                         }
 
@@ -210,7 +243,7 @@ class OnboardingActivity : ComponentActivity() {
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Text(
-                                text = if (currentSlideIndex == slides.size - 1) "Get Started" else "Next",
+                                text = if (currentSlideIndex == slides.size - 1) GeoStrings.getStarted else GeoStrings.next,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary

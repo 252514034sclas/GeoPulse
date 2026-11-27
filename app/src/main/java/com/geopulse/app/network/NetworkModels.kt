@@ -83,8 +83,11 @@ data class SprayWindowDto(
     @SerializedName("current_wind_kmh") val currentWindKmh: Double,
     @SerializedName("current_humidity_pct") val currentHumidityPct: Double,
     val verdict: String,
+    @SerializedName("verdict_ta") val verdictTa: String? = null,
     @SerializedName("recommended_hours") val recommendedHours: List<String>,
-    val cautions: List<String>
+    @SerializedName("recommended_hours_ta") val recommendedHoursTa: List<String>? = null,
+    val cautions: List<String>,
+    @SerializedName("cautions_ta") val cautionsTa: List<String>? = null
 )
 
 // -------------------------------------------------------------
@@ -98,8 +101,11 @@ data class IrrigationDto(
     @SerializedName("daily_crop_water_demand_mm") val dailyCropWaterDemandMm: Double,
     @SerializedName("current_moisture_pct") val currentMoisturePct: Double,
     @SerializedName("irrigation_recommendation") val irrigationRecommendation: String,
+    @SerializedName("irrigation_recommendation_ta") val irrigationRecommendationTa: String? = null,
     @SerializedName("action_explanation") val actionExplanation: String,
+    @SerializedName("action_explanation_ta") val actionExplanationTa: String? = null,
     @SerializedName("recommended_timing") val recommendedTiming: String,
+    @SerializedName("recommended_timing_ta") val recommendedTimingTa: String? = null,
     @SerializedName("recommended_depth_mm") val recommendedDepthMm: Double,
     @SerializedName("total_water_volume_litres") val totalWaterVolumeLitres: Long,
     @SerializedName("total_water_volume_m3") val totalWaterVolumeM3: Double,

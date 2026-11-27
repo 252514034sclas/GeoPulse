@@ -28,10 +28,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geopulse.app.ui.theme.*
+import com.geopulse.app.util.GeoLanguageManager
+import com.geopulse.app.util.GeoStrings
 
 class ForgotPasswordActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        GeoLanguageManager.init(this)
         setContent {
             GeoPulseTheme {
                 var email by remember { mutableStateOf("") }
@@ -73,21 +76,52 @@ class ForgotPasswordActivity : ComponentActivity() {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(16.dp),
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                modifier = Modifier.size(56.dp),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.Agriculture,
-                                        contentDescription = "GeoPulse Logo",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(32.dp)
-                                    )
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                    modifier = Modifier.size(52.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Agriculture,
+                                            contentDescription = "GeoPulse Logo",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(30.dp)
+                                        )
+                                    }
+                                }
+
+                                Surface(
+                                    onClick = {
+                                        val nextLang = if (GeoLanguageManager.isTamil) "en" else "ta"
+                                        GeoLanguageManager.setLanguage(this@ForgotPasswordActivity, nextLang)
+                                    },
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.surface,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text("🌐", fontSize = 12.sp)
+                                        Text(
+                                            text = if (GeoLanguageManager.isTamil) "English" else "தமிழ்",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
                                 }
                             }
+
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     text = "GeoPulse",
@@ -96,7 +130,7 @@ class ForgotPasswordActivity : ComponentActivity() {
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
                                 Text(
-                                    text = "Precision Geospatial Farm Intelligence",
+                                    text = GeoStrings.appTagline,
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f)
                                 )
@@ -115,14 +149,17 @@ class ForgotPasswordActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = "Reset Password",
+                                    text = GeoLanguageManager.t("Reset Password", "கடவுச்சொல்லை மீட்டமைக்கவும்"),
                                     fontSize = 24.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Enter your registered email address and we'll send you recovery instructions.",
+                                    text = GeoLanguageManager.t(
+                                        "Enter your registered email address and we'll send you recovery instructions.",
+                                        "உங்கள் பதிவுசெய்த மின்னஞ்சல் முகவரியை உள்ளிடவும்."
+                                    ),
                                     fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                                     textAlign = TextAlign.Center,
@@ -136,7 +173,7 @@ class ForgotPasswordActivity : ComponentActivity() {
                                         email = it
                                         errorMessage = null
                                     },
-                                    label = { Text("Email Address") },
+                                    label = { Text(GeoStrings.emailLabel) },
                                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                                     modifier = Modifier.fillMaxWidth(),
                                     singleLine = true,
@@ -157,7 +194,7 @@ class ForgotPasswordActivity : ComponentActivity() {
                                 Button(
                                     onClick = {
                                         if (email.isBlank() || !email.contains("@")) {
-                                            errorMessage = "Please enter a valid email address."
+                                            errorMessage = GeoStrings.invalidEmailError
                                         } else {
                                             submitted = true
                                         }
@@ -166,7 +203,12 @@ class ForgotPasswordActivity : ComponentActivity() {
                                     shape = RoundedCornerShape(14.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                                 ) {
-                                    Text("Send Recovery Link", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                                    Text(
+                                        text = GeoLanguageManager.t("Send Recovery Link", "மீட்டெடுப்பு இணைப்பை அனுப்புக"),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
                                 }
 
                                 AnimatedVisibility(visible = submitted) {
@@ -182,7 +224,10 @@ class ForgotPasswordActivity : ComponentActivity() {
                                         Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Text(
-                                            text = "Automated email recovery is currently not configured on this server. Please contact your system administrator or farm manager to reset your credentials.",
+                                            text = GeoLanguageManager.t(
+                                                "Automated email recovery is currently not configured on this server. Please contact your system administrator or farm manager to reset your credentials.",
+                                                "தானியங்கி மின்னஞ்சல் கடவுச்சொல் மீட்பு இந்த சர்வரில் கட்டமைக்கப்படவில்லை. உங்கள் நிர்வாகியைத் தொடர்பு கொள்ளவும்."
+                                            ),
                                             color = MaterialTheme.colorScheme.onSurface,
                                             fontWeight = FontWeight.Medium,
                                             fontSize = 12.5.sp,
@@ -196,7 +241,11 @@ class ForgotPasswordActivity : ComponentActivity() {
                                 TextButton(onClick = {
                                     finish()
                                 }) {
-                                    Text("Back to Sign In", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                                    Text(
+                                        text = GeoLanguageManager.t("Back to Sign In", "உள்நுழைவுப் பக்கத்திற்கு திரும்புக"),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
                                 }
                             }
                         }

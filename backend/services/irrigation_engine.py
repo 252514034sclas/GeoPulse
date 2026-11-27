@@ -201,28 +201,48 @@ class IrrigationEngine:
 
         if forecast_rain_next_48h_mm >= 12.0 and forecast_rain_probability_pct >= 55.0 and clamped_moisture >= 25.0:
             recommendation = "WAIT FOR RAIN"
+            recommendation_ta = "மழைக்கு காத்திருக்கவும்"
             action_verdict = (
                 f"Probable rainfall ({forecast_rain_next_48h_mm} mm forecast at {int(forecast_rain_probability_pct)}% PoP) "
                 f"will deliver approx {effective_rain_mm} mm effective root moisture. Delay irrigation to prevent "
                 f"waterlogging, nutrient leaching, and pumping energy loss."
             )
+            action_verdict_ta = (
+                f"எதிர்பார்க்கப்படும் மழை ({forecast_rain_next_48h_mm} மிமீ, {int(forecast_rain_probability_pct)}% வாய்ப்பு) "
+                f"பயிரின் வேர்ப்பகுதிக்கு போதுமான ஈரப்பதத்தை ({effective_rain_mm} மிமீ) அளிக்கும். நீர் தேங்குதல், "
+                f"ஊட்டச்சத்து விரயம் மற்றும் மின் விரயத்தைத் தவிர்க்க பாசனத்தைத் தள்ளிப்போடவும்."
+            )
             recommended_timing = "Re-assess soil moisture 24h after rainfall ceases."
+            recommended_timing_ta = "மழை நின்ற 24 மணி நேரத்திற்குப் பிறகு மண் ஈரப்பதத்தை மீண்டும் சரிபார்க்கவும்."
         elif effective_rain_mm >= depletion_mm and effective_rain_mm > 5.0:
             recommendation = "WAIT FOR RAIN"
+            recommendation_ta = "மழைக்கு காத்திருக்கவும்"
             action_verdict = (
                 f"Natural rainfall ({forecast_rain_next_48h_mm} mm forecast) satisfies root-zone moisture deficit ({depletion_mm} mm). "
                 f"Irrigation is postponed to protect crop aeration."
             )
+            action_verdict_ta = (
+                f"இயற்கை மழைப்பொழிவு ({forecast_rain_next_48h_mm} மிமீ) வேர்ப்பகுதி ஈரப்பதம் பற்றாக்குறையை ({depletion_mm} மிமீ) "
+                f"நிறைவு செய்யும். பயிரின் வேர் காற்றோட்டத்தைப் பாதுகாக்க பாசனம் தள்ளிவைக்கப்படுகிறது."
+            )
             recommended_timing = "Re-assess after rainfall ceases."
+            recommended_timing_ta = "மழை நின்ற பிறகு மீண்டும் ஆய்வு செய்யவும்."
         elif not is_stress_imminent or gross_irrigation_mm < 5.0:
             recommendation = "NO IRRIGATION NEEDED"
+            recommendation_ta = "பாசனம் தேவையில்லை"
             action_verdict = (
                 f"Soil moisture ({clamped_moisture}%) is above critical stress threshold (Depletion: {depletion_mm} mm <= "
                 f"RAW threshold: {raw_mm} mm). Root-zone water storage is adequate."
             )
+            action_verdict_ta = (
+                f"மண் ஈரப்பதம் ({clamped_moisture}%) போதுமான அளவில் உள்ளது (பற்றாக்குறை: {depletion_mm} மிமீ <= "
+                f"வரம்பு: {raw_mm} மிமீ). வேர்ப்பகுதி நீர் இருப்பு பாதுகாப்பாக உள்ளது."
+            )
             recommended_timing = "Check moisture again in 2 to 3 days."
+            recommended_timing_ta = "2 முதல் 3 நாட்களில் மீண்டும் ஈரப்பதத்தை சரிபார்க்கவும்."
         else:
             recommendation = "IRRIGATION RECOMMENDED"
+            recommendation_ta = "பாசனம் பரிந்துரைக்கப்படுகிறது"
             if split_application_required:
                 action_verdict = (
                     f"Root depletion ({depletion_mm} mm) has exceeded RAW threshold ({raw_mm} mm). "
@@ -230,12 +250,23 @@ class IrrigationEngine:
                     f"Due to hydraulic absorption limits ({max_single_cycle_mm} mm/cycle), apply in {split_cycles} split cycles "
                     f"of {depth_per_cycle_mm} mm each ({round(gross_volume_litres/split_cycles):,} L/cycle) separated by 24h."
                 )
+                action_verdict_ta = (
+                    f"வேர்ப்பகுதி நீர் பற்றாக்குறை ({depletion_mm} மிமீ) அனுமதிக்கப்பட்ட வரம்பை ({raw_mm} மிமீ) தாண்டியுள்ளது. "
+                    f"மொத்த பாசனத் தேவை: {gross_irrigation_mm} மிமீ ({gross_volume_litres:,} லிட்டர்). "
+                    f"மண்ணின் உறிஞ்சும் திறனைக் கருத்தில் கொண்டு {split_cycles} சுற்றுகளாக தலா {depth_per_cycle_mm} மிமீ "
+                    f"பாசனம் செய்யவும் ({round(gross_volume_litres/split_cycles):,} லிட்டர்/சுற்று)."
+                )
             else:
                 action_verdict = (
                     f"Root depletion ({depletion_mm} mm) has exceeded RAW threshold ({raw_mm} mm). "
                     f"Apply {gross_irrigation_mm} mm of water ({gross_volume_litres:,} litres) via {irrigation_method} to refill root zone."
                 )
+                action_verdict_ta = (
+                    f"வேர்ப்பகுதி நீர் பற்றாக்குறை ({depletion_mm} மிமீ) அனுமதிக்கப்பட்ட வரம்பை ({raw_mm} மிமீ) தாண்டியுள்ளது. "
+                    f"வேர்ப்பகுதியை நிறைவு செய்ய {irrigation_method} முறையில் {gross_irrigation_mm} மிமீ நீர் ({gross_volume_litres:,} லிட்டர்) பாசனம் செய்யவும்."
+                )
             recommended_timing = "Early morning (06:00 AM - 09:00 AM) or evening (05:00 PM - 07:00 PM) to minimize evaporation."
+            recommended_timing_ta = "ஆவியாதலைக் குறைக்க அதிகாலை (காலை 06:00 - 09:00) அல்லது மாலையில் (மாலை 05:00 - 07:00) பாசனம் செய்யவும்."
 
         return {
             "field_area_ha": area_hectares,
@@ -294,8 +325,11 @@ class IrrigationEngine:
                 "interval_hours": cycle_interval_hours
             },
             "irrigation_recommendation": recommendation,
+            "irrigation_recommendation_ta": recommendation_ta,
             "action_explanation": action_verdict,
+            "action_explanation_ta": action_verdict_ta,
             "recommended_timing": recommended_timing,
+            "recommended_timing_ta": recommended_timing_ta,
             "conversion_formula": "1 mm water depth over 1 hectare = 10,000 litres (10 m^3)",
             "confidence": "High (Calibrated with FAO-56 Penman-Monteith crop evapotranspiration & soil water balance)",
             "rain_forecast_disclaimer": "Precipitation forecasts are probabilistic. If forecasted rain fails to occur within 48h, re-evaluate soil moisture."
