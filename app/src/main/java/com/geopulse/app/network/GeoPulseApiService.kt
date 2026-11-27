@@ -22,7 +22,9 @@ interface GeoPulseApiService {
     suspend fun checkHealth(): Response<HealthDto>
 
     @GET("api/v1/dashboard")
-    suspend fun getDashboardSummary(): Response<DashboardSummaryDto>
+    suspend fun getDashboardSummary(
+        @Query("field_id") fieldId: Int? = null
+    ): Response<DashboardSummaryDto>
 
     @GET("api/v1/fields")
     suspend fun getFields(): Response<List<FieldDto>>
@@ -63,10 +65,18 @@ interface GeoPulseApiService {
     ): Response<SoilMoistureDto>
 
     @GET("api/v1/weather/current")
-    suspend fun getCurrentWeather(): Response<WeatherDto>
+    suspend fun getCurrentWeather(
+        @Query("field_id") fieldId: Int? = null,
+        @Query("lat") lat: Double? = null,
+        @Query("lon") lon: Double? = null
+    ): Response<WeatherDto>
 
     @GET("api/v1/weather/spray-window")
-    suspend fun getSprayWindow(): Response<SprayWindowDto>
+    suspend fun getSprayWindow(
+        @Query("field_id") fieldId: Int? = null,
+        @Query("lat") lat: Double? = null,
+        @Query("lon") lon: Double? = null
+    ): Response<SprayWindowDto>
 
     @GET("api/v1/advisory/tasks")
     suspend fun getAdvisoryTasks(): Response<List<AdvisoryTaskDto>>

@@ -6,9 +6,9 @@ import kotlinx.coroutines.withContext
 class GeoPulseRepository(
     private val api: GeoPulseApiService = ApiClient.service
 ) {
-    suspend fun getDashboardSummary(): DashboardSummaryDto = withContext(Dispatchers.IO) {
+    suspend fun getDashboardSummary(fieldId: Int? = null): DashboardSummaryDto = withContext(Dispatchers.IO) {
         try {
-            val response = api.getDashboardSummary()
+            val response = api.getDashboardSummary(fieldId)
             if (response.isSuccessful && response.body() != null) {
                 return@withContext response.body()!!
             }
@@ -163,17 +163,17 @@ class GeoPulseRepository(
         return@withContext emptyList()
     }
 
-    suspend fun getCurrentWeather(): WeatherDto? = withContext(Dispatchers.IO) {
+    suspend fun getCurrentWeather(fieldId: Int? = null, lat: Double? = null, lon: Double? = null): WeatherDto? = withContext(Dispatchers.IO) {
         try {
-            val response = api.getCurrentWeather()
+            val response = api.getCurrentWeather(fieldId, lat, lon)
             if (response.isSuccessful) return@withContext response.body()
         } catch (_: Exception) {}
         return@withContext null
     }
 
-    suspend fun getSprayWindow(): SprayWindowDto? = withContext(Dispatchers.IO) {
+    suspend fun getSprayWindow(fieldId: Int? = null, lat: Double? = null, lon: Double? = null): SprayWindowDto? = withContext(Dispatchers.IO) {
         try {
-            val response = api.getSprayWindow()
+            val response = api.getSprayWindow(fieldId, lat, lon)
             if (response.isSuccessful) return@withContext response.body()
         } catch (_: Exception) {}
         return@withContext null

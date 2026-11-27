@@ -240,6 +240,7 @@ def get_field_with_ownership(field_id: int, user: models.UserModel, db: Session)
 def get_dashboard(
     lat: Optional[float] = Query(None, description="User device GPS latitude from Location SDK"),
     lon: Optional[float] = Query(None, description="User device GPS longitude from Location SDK"),
+    field_id: Optional[int] = Query(None, description="Active selected field ID"),
     user: Optional[models.UserModel] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
@@ -254,7 +255,7 @@ def get_dashboard(
 
     field_ids = [f.id for f in fields]
 
-    weather = get_current_weather(lat=lat, lon=lon, db=db)
+    weather = get_current_weather(lat=lat, lon=lon, field_id=field_id, user=user, db=db)
     mandi = db.query(models.MandiPriceModel).limit(4).all()
 
     moisture_records = db.query(models.SoilMoistureModel).filter(models.SoilMoistureModel.field_id.in_(field_ids)).all() if field_ids else []
@@ -645,89 +646,180 @@ def get_field_satellite_history(
 def get_current_weather(
     lat: Optional[float] = Query(None, description="User device GPS latitude from Android Location SDK"),
     lon: Optional[float] = Query(None, description="User device GPS longitude from Android Location SDK"),
+    field_id: Optional[int] = Query(None, description="Optional target field ID to fetch field-specific weather"),
+    user: Optional[models.UserModel] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
     Live hyperlocal weather observation.
-    Accepts real-time device GPS coordinates from mobile users.
-    Falls back to user's registered field centroid if coordinates not passed in request.
+    Accepts real-time device GPS coordinates, manual coordinates, or field_id.
+    Validates coordinate bounds [-90, 90] and [-180, 180].
+    Enforces anti-IDOR isolation when field_id is requested.
     """
-    if lat is None or lon is None:
-        first_field = db.query(models.FieldModel).first()
-        if first_field:
-            lat = first_field.latitude
-            lon = first_field.longitude
-        else:
+    target_field = None
+    if field_id is not None:
+        target_field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
+        if not target_field:
+            raise HTTPException(status_code=404, detail="Field parcel not found.")
+        if user and target_field.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this field parcel (anti-IDOR).")
+        lat = target_field.latitude
+        lon = target_field.longitude
+
+    if lat is not None and lon is not None:
+        if not (-90.0 <= lat <= 90.0) or not (-180.0 <= lon <= 180.0):
+            raise HTTPException(status_code=400, detail=f"Coordinates out of bounds: lat={lat}, lon={lon}. Range [-90, 90], [-180, 180].")
+    else:
+        # Fall back to user's first registered field if available
+        if user:
+            user_field = db.query(models.FieldModel).filter(models.FieldModel.user_id == user.id).first()
+            if user_field:
+                target_field = user_field
+                lat = user_field.latitude
+                lon = user_field.longitude
+        if lat is None or lon is None:
+            # Default to reference regional Tamil Nadu agricultural coordinate (Chennai / Kaveri Delta)
             lat = 13.0827
             lon = 80.2707
 
     live_weather = OpenMeteoAdapter.get_forecast(lat, lon)
-    weather = db.query(models.WeatherModel).first()
-    if not weather:
-        weather = models.WeatherModel()
-        db.add(weather)
 
-    weather.location = f"Lat: {lat:.4f}, Lon: {lon:.4f}"
-    weather.temperature_c = live_weather.get("temperature_c", 28.0)
-    weather.humidity_percent = live_weather.get("humidity_percent", 58.0)
-    weather.precipitation_mm = live_weather.get("precipitation_mm", 0.0)
-    weather.wind_speed_kmh = live_weather.get("wind_speed_kmh", 8.5)
+    # Check if live weather returned an error
+    if live_weather.get("status") == "INVALID_COORDINATES":
+        raise HTTPException(status_code=400, detail=live_weather.get("error", "Invalid coordinates"))
 
+    # Update or get singleton database cache row safely
+    weather_db = db.query(models.WeatherModel).first()
+    if not weather_db:
+        weather_db = models.WeatherModel()
+        db.add(weather_db)
+
+    loc_name = target_field.name if target_field else f"Lat: {lat:.4f}, Lon: {lon:.4f}"
+    weather_db.location = loc_name
+    temp_val = live_weather.get("temperature_c", 28.0) or 28.0
+    humid_val = live_weather.get("humidity_percent", 58.0) or 58.0
+    precip_val = live_weather.get("precipitation_mm", 0.0) or 0.0
+    wind_val = live_weather.get("wind_speed_kmh", 8.5) or 8.5
+    gusts_val = live_weather.get("wind_gusts_kmh", wind_val) or wind_val
+
+    weather_db.temperature_c = temp_val
+    weather_db.humidity_percent = humid_val
+    weather_db.precipitation_mm = precip_val
+    weather_db.wind_speed_kmh = wind_val
+
+    crop_name = target_field.crop_type if target_field else "general"
     spray_eval = evaluate_spray_safety(
-        wind_kmh=weather.wind_speed_kmh,
-        rain_prob_pct=live_weather.get("rain_next_24h_mm", 0.0),
-        temp_c=weather.temperature_c,
-        humidity_pct=weather.humidity_percent,
-        crop_type="general",
-        operation_type="foliar_nutrient"
+        wind_kmh=wind_val,
+        rain_prob_pct=live_weather.get("rain_next_24h_mm", 0.0) or 0.0,
+        temp_c=temp_val,
+        humidity_pct=humid_val,
+        crop_type=crop_name,
+        operation_type="foliar_nutrient",
+        wind_gusts_kmh=gusts_val
     )
-    weather.spray_safe = spray_eval["is_safe_now"]
-    weather.spray_advice = spray_eval["verdict"]
-    weather.status_message = f"Live observation at ({lat:.4f}, {lon:.4f}): {weather.temperature_c}°C, Wind {weather.wind_speed_kmh} km/h, Humidity {weather.humidity_percent}%."
-    weather.data_source = live_weather.get("attribution", "Open-Meteo High-Resolution NWP")
-    weather.updated_at = datetime.utcnow()
+    weather_db.spray_safe = spray_eval["is_safe_now"]
+    weather_db.spray_advice = spray_eval["verdict"]
+    weather_db.status_message = f"Live observation for {loc_name}: {temp_val}°C, Wind {wind_val} km/h (Gusts {gusts_val} km/h), Humidity {humid_val}%."
+    weather_db.data_source = live_weather.get("attribution", "Open-Meteo High-Resolution NWP")
+    weather_db.updated_at = datetime.utcnow()
     db.commit()
-    db.refresh(weather)
+    db.refresh(weather_db)
 
-    return weather
+    # Return comprehensive schema response
+    return schemas.WeatherSchema(
+        id=weather_db.id,
+        location=loc_name,
+        temperature_c=temp_val,
+        apparent_temperature_c=live_weather.get("apparent_temperature_c", temp_val),
+        humidity_percent=humid_val,
+        precipitation_mm=precip_val,
+        rain_next_24h_mm=live_weather.get("rain_next_24h_mm", 0.0),
+        rain_next_48h_mm=live_weather.get("rain_next_48h_mm", 0.0),
+        precipitation_probability_pct=live_weather.get("precipitation_probability_pct", 0.0),
+        wind_speed_kmh=wind_val,
+        wind_direction_deg=live_weather.get("wind_direction_deg", 180),
+        wind_gusts_kmh=gusts_val,
+        cloud_cover_pct=live_weather.get("cloud_cover_pct", 0.0),
+        uv_index=live_weather.get("uv_index", 5.0),
+        temp_min_c=live_weather.get("temp_min_c", 22.0),
+        temp_max_c=live_weather.get("temp_max_c", 32.0),
+        weather_code=live_weather.get("weather_code", 0),
+        condition_text=live_weather.get("condition_text", "Fair"),
+        condition_text_ta=live_weather.get("condition_text_ta", "சாதகமானது"),
+        spray_safe=spray_eval["is_safe_now"],
+        spray_advice=spray_eval["verdict"],
+        spray_advice_ta=spray_eval.get("verdict_ta"),
+        status_message=weather_db.status_message,
+        data_source=weather_db.data_source,
+        data_freshness_label=live_weather.get("data_freshness_label", "Live observation"),
+        is_live=live_weather.get("is_live", True),
+        is_cached=live_weather.get("is_cached", False),
+        is_model_forecast=True,
+        field_id=target_field.id if target_field else None,
+        field_name=target_field.name if target_field else None,
+        updated_at=weather_db.updated_at,
+        hourly_forecast=live_weather.get("hourly_forecast"),
+        daily_forecast=live_weather.get("daily_forecast")
+    )
 
 
 @app.get("/api/v1/weather/spray-window", response_model=schemas.SprayWindowResponse)
 def get_spray_window(
-    crop_type: str = Query("Corn", description="Target crop"),
+    crop_type: Optional[str] = Query(None, description="Target crop"),
     operation_type: str = Query("foliar_nutrient", description="herbicide, fungicide, or foliar_nutrient"),
+    field_id: Optional[int] = Query(None, description="Optional target field ID"),
     lat: Optional[float] = Query(None, description="User device GPS latitude from Android Location SDK"),
     lon: Optional[float] = Query(None, description="User device GPS longitude from Android Location SDK"),
+    user: Optional[models.UserModel] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
     Evaluates live spray window safety for the user's exact device GPS or field location.
     """
-    weather = get_current_weather(lat=lat, lon=lon, db=db)
+    target_field = None
+    if field_id is not None:
+        target_field = db.query(models.FieldModel).filter(models.FieldModel.id == field_id).first()
+        if not target_field:
+            raise HTTPException(status_code=404, detail="Field parcel not found.")
+        if user and target_field.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Forbidden: You do not own this field parcel (anti-IDOR).")
+        lat = target_field.latitude
+        lon = target_field.longitude
+        if not crop_type:
+            crop_type = target_field.crop_type
+
+    effective_crop = crop_type or "Corn"
+    weather = get_current_weather(lat=lat, lon=lon, field_id=field_id, user=user, db=db)
     wind = weather.wind_speed_kmh if weather else 8.5
-    rain_prob = 0.0
+    gusts = weather.wind_gusts_kmh if weather and weather.wind_gusts_kmh is not None else wind
+    rain_prob = weather.precipitation_probability_pct if weather and weather.precipitation_probability_pct is not None else 0.0
     temp = weather.temperature_c if weather else 28.0
     humidity = weather.humidity_percent if weather else 58.0
-    return evaluate_spray_safety(
+
+    eval_res = evaluate_spray_safety(
         wind_kmh=wind,
         rain_prob_pct=rain_prob,
         temp_c=temp,
         humidity_pct=humidity,
-        crop_type=crop_type,
-        operation_type=operation_type
+        crop_type=effective_crop,
+        operation_type=operation_type,
+        wind_gusts_kmh=gusts
     )
-    weather = get_current_weather(db)
-    wind = weather.wind_speed_kmh if weather else 8.5
-    rain_prob = 0.0
-    temp = weather.temperature_c if weather else 28.0
-    humidity = weather.humidity_percent if weather else 58.0
-    return evaluate_spray_safety(
-        wind_kmh=wind,
-        rain_prob_pct=rain_prob,
-        temp_c=temp,
-        humidity_pct=humidity,
-        crop_type=crop_type,
-        operation_type=operation_type
+    return schemas.SprayWindowResponse(
+        is_safe_now=eval_res["is_safe_now"],
+        current_wind_kmh=wind,
+        current_humidity_pct=humidity,
+        current_rain_prob_pct=rain_prob,
+        verdict=eval_res["verdict"],
+        verdict_ta=eval_res.get("verdict_ta"),
+        recommended_hours=eval_res["recommended_hours"],
+        recommended_hours_ta=eval_res.get("recommended_hours_ta"),
+        cautions=eval_res["cautions"],
+        cautions_ta=eval_res.get("cautions_ta"),
+        current_wind_gusts_kmh=gusts,
+        temperature_c=temp,
+        field_id=target_field.id if target_field else None,
+        field_name=target_field.name if target_field else None
     )
 
 

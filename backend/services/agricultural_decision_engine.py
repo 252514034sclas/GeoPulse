@@ -50,11 +50,46 @@ class AgriculturalDecisionEngine:
         area_acres = float(getattr(field, "area_acres", 1.0) or 1.0)
         sowing_date_str = getattr(field, "sowing_date", None)
 
-        # Weather parameters
-        temp_c = float(getattr(weather, "temperature_c", 28.0) or 28.0) if weather else 28.0
-        humidity_pct = float(getattr(weather, "humidity_percent", 65.0) or 65.0) if weather else 65.0
-        wind_kmh = float(getattr(weather, "wind_speed_kmh", 8.0) or 8.0) if weather else 8.0
-        precip_mm = float(getattr(weather, "precipitation_mm", 0.0) or 0.0) if weather else 0.0
+        # Parse weather parameters from dictionary or SQLAlchemy model
+        if isinstance(weather, dict):
+            status = weather.get("status", "LIVE_SUCCESS")
+            temp_c = weather.get("temperature_c")
+            humidity_pct = float(weather.get("humidity_percent", 65.0) or 65.0)
+            wind_kmh = float(weather.get("wind_speed_kmh", 8.0) or 8.0)
+            wind_gusts_kmh = float(weather.get("wind_gusts_kmh", wind_kmh) or wind_kmh)
+            precip_mm = float(weather.get("precipitation_mm", 0.0) or 0.0)
+            rain_forecast_mm = float(weather.get("rain_next_24h_mm", precip_mm) or precip_mm)
+            weather_code = weather.get("weather_code")
+            weather_timestamp = weather.get("timestamp", now.isoformat())
+            is_weather_stale = weather.get("is_stale", False) or status == "UNAVAILABLE"
+        elif weather:
+            status = "LIVE_SUCCESS"
+            temp_c = getattr(weather, "temperature_c", 28.0)
+            humidity_pct = float(getattr(weather, "humidity_percent", 65.0) or 65.0)
+            wind_kmh = float(getattr(weather, "wind_speed_kmh", 8.0) or 8.0)
+            wind_gusts_kmh = float(getattr(weather, "wind_gusts_kmh", wind_kmh) or wind_kmh)
+            precip_mm = float(getattr(weather, "precipitation_mm", 0.0) or 0.0)
+            rain_forecast_mm = float(getattr(weather, "rain_next_24h_mm", None) or getattr(weather, "precipitation_mm", 0.0) or 0.0)
+            weather_code = getattr(weather, "weather_code", None)
+            u_at = getattr(weather, "updated_at", now)
+            weather_timestamp = u_at.isoformat() if hasattr(u_at, "isoformat") else str(u_at)
+            is_weather_stale = False
+        else:
+            status = "UNAVAILABLE"
+            temp_c = None
+            humidity_pct = 65.0
+            wind_kmh = 8.0
+            wind_gusts_kmh = 8.0
+            precip_mm = 0.0
+            rain_forecast_mm = 0.0
+            weather_code = None
+            weather_timestamp = now.isoformat()
+            is_weather_stale = True
+
+        # Check for urban / non-agricultural parcel types to prevent misleading recommendations
+        crop_lower = str(crop_type).lower().strip()
+        non_agri_keywords = ["urban", "non-agri", "non_agri", "residential", "commercial", "barren", "none", "fallow", "built-up", "non-agricultural"]
+        is_non_agri = any(k in crop_lower for k in non_agri_keywords)
 
         # Remote sensing soil moisture
         current_moisture_pct = float(getattr(soil_moisture, "moisture_percentage", 65.0) or 65.0) if soil_moisture else 65.0
@@ -64,41 +99,41 @@ class AgriculturalDecisionEngine:
         # (Must be evaluated first to govern Rule 1 irrigation decisions)
         # ----------------------------------------------------------------------
         rain_postponement_needed = False
-        rain_forecast_mm = precip_mm
-        # If forecast precipitation is >= 5.0 mm, postpone irrigation to avoid waterlogging
-        if rain_forecast_mm >= 5.0:
-            rain_postponement_needed = True
-            candidate_alerts.append({
-                "category": "Weather",
-                "priority": "HIGH",
-                "deduplication_key": f"field_{field.id}:rain_postpone:{today_str}",
-                "title_en": f"Rain Forecast: Postpone Irrigation on {field_name}",
-                "title_ta": f"மழை முன்னறிவிப்பு: {field_name}-ல் நீர்ப்பாசனத்தை ஒத்திவைக்கவும்",
-                "message_en": (
-                    f"NWP weather forecast indicates expected precipitation of ~{rain_forecast_mm:.1f} mm within the next 24-36 hours. "
-                    f"Postpone scheduled irrigation for {crop_type} to conserve water and prevent root-zone waterlogging. Re-evaluate post-rainfall."
-                ),
-                "message_ta": (
-                    f"அடுத்த 24-36 மணி நேரத்தில் ~{rain_forecast_mm:.1f} மி.மீ மழை பெய்யக்கூடும் என வானிலை மாதிரி முன்னறிவிக்கிறது. "
-                    f"உங்கள் {crop_type} பயிருக்கு திட்டமிட்ட நீர்ப்பாசனத்தை ஒத்திவைத்து நீர் வீணாவதையும் நீர் தேங்குவதையும் தவிர்க்கவும்."
-                ),
-                "action_needed": "Postpone Irrigation",
-                "recommended_datetime": (now + timedelta(hours=24)).strftime("%Y-%m-%d 08:00 IST"),
-                "input_quantity": f"0 mm (Conserve ~{rain_forecast_mm:.1f} mm rain)",
-                "reason": (
-                    f"Atmospheric weather grid indicates forecast precipitation of {rain_forecast_mm:.1f} mm exceeding the 5 mm soil saturation threshold. "
-                    f"Note: Forecast models are probabilistic; monitor actual local sky conditions."
-                ),
-                "source": "High-Resolution NWP Numerical Weather Prediction",
-                "source_data_timestamp": getattr(weather, "updated_at", now).isoformat() if weather else now.isoformat(),
-                "confidence": "High (88%)",
-                "expires_at": now + timedelta(hours=36)
-            })
+        if not is_non_agri and not is_weather_stale and temp_c is not None:
+            # If forecast precipitation is >= 5.0 mm, postpone irrigation to avoid waterlogging
+            if rain_forecast_mm >= 5.0:
+                rain_postponement_needed = True
+                candidate_alerts.append({
+                    "category": "Weather",
+                    "priority": "HIGH",
+                    "deduplication_key": f"field_{field.id}:rain_postpone:{today_str}",
+                    "title_en": f"Rain Forecast: Postpone Irrigation on {field_name}",
+                    "title_ta": f"மழை முன்னறிவிப்பு: {field_name}-ல் நீர்ப்பாசனத்தை ஒத்திவைக்கவும்",
+                    "message_en": (
+                        f"NWP weather forecast indicates expected precipitation of ~{rain_forecast_mm:.1f} mm within the next 24-36 hours. "
+                        f"Postpone scheduled irrigation for {crop_type} to conserve water and prevent root-zone waterlogging. Re-evaluate post-rainfall."
+                    ),
+                    "message_ta": (
+                        f"அடுத்த 24-36 மணி நேரத்தில் ~{rain_forecast_mm:.1f} மி.மீ மழை பெய்யக்கூடும் என வானிலை மாதிரி முன்னறிவிக்கிறது. "
+                        f"உங்கள் {crop_type} பயிருக்கு திட்டமிட்ட நீர்ப்பாசனத்தை ஒத்திவைத்து நீர் வீணாவதையும் நீர் தேங்குவதையும் தவிர்க்கவும்."
+                    ),
+                    "action_needed": "Postpone Irrigation",
+                    "recommended_datetime": (now + timedelta(hours=24)).strftime("%Y-%m-%d 08:00 IST"),
+                    "input_quantity": f"0 mm (Conserve ~{rain_forecast_mm:.1f} mm rain)",
+                    "reason": (
+                        f"Atmospheric weather grid indicates forecast precipitation of {rain_forecast_mm:.1f} mm exceeding the 5 mm soil saturation threshold. "
+                        f"Note: Forecast models are probabilistic; monitor actual local sky conditions."
+                    ),
+                    "source": "High-Resolution NWP Numerical Weather Prediction",
+                    "source_data_timestamp": weather_timestamp,
+                    "confidence": "High (88%)",
+                    "expires_at": now + timedelta(hours=36)
+                })
 
         # ----------------------------------------------------------------------
         # RULE 1: FAO-56 Soil-Water Balance Irrigation Need & Recommended Timing
         # ----------------------------------------------------------------------
-        if not rain_postponement_needed:
+        if not is_non_agri and not rain_postponement_needed:
             # Check soil moisture data freshness (observations older than 7 days cannot trigger automated watering)
             soil_date_val = getattr(soil_moisture, "recorded_at", None) or getattr(soil_moisture, "recorded_date", None)
             is_soil_stale = False
@@ -165,75 +200,77 @@ class AgriculturalDecisionEngine:
                     logger.error(f"[DecisionEngine] Irrigation calculation failed for field {field.id}: {e}")
 
         # ----------------------------------------------------------------------
-        # RULE 3: Unsafe Spraying Conditions (Wind, Rainfall & Extreme Temp)
+        # RULE 3: Unsafe Spraying Conditions (Wind, Wind Gusts, Rain & Temp)
         # ----------------------------------------------------------------------
-        spray_eval = evaluate_spray_safety(
-            wind_kmh=wind_kmh,
-            rain_prob_pct=min(precip_mm * 15.0, 95.0),
-            temp_c=temp_c,
-            humidity_pct=humidity_pct,
-            crop_type=crop_type,
-            operation_type="foliar_nutrient"
-        )
+        if not is_non_agri and not is_weather_stale and temp_c is not None:
+            spray_eval = evaluate_spray_safety(
+                wind_kmh=wind_kmh,
+                rain_prob_pct=min(rain_forecast_mm * 10.0, 95.0),
+                temp_c=temp_c,
+                humidity_pct=humidity_pct,
+                crop_type=crop_type,
+                operation_type="foliar_nutrient",
+                wind_gusts_kmh=wind_gusts_kmh
+            )
 
-        if not spray_eval.get("is_safe_now", True):
-            cautions = spray_eval.get("cautions", ["Adverse weather detected."])
-            reason_str = " ".join(cautions)
-            candidate_alerts.append({
-                "category": "Spraying",
-                "priority": "MEDIUM",
-                "deduplication_key": f"field_{field.id}:spray_unsafe:{today_str}",
-                "title_en": f"Unsafe Spraying Conditions: {field_name}",
-                "title_ta": f"மருந்து தெளிக்க சாதகமற்ற வானிலை: {field_name}",
-                "message_en": (
-                    f"Suboptimal spraying conditions detected on {field_name} (Wind: {wind_kmh:.1f} km/h, Temp: {temp_c:.1f}°C). "
-                    f"Avoid foliar spraying today to prevent chemical drift and loss. Next window: Tomorrow 06:00 IST. "
-                    f"Note: Always follow pesticide product label directions and local agricultural officer advice before chemical application."
-                ),
-                "message_ta": (
-                    f"{field_name}-ல் மருந்து தெளிக்க சாதகமற்ற வானிலை (காற்று: {wind_kmh:.1f} கி.மீ/மணி, வெப்பநிலை: {temp_c:.1f}°C). "
-                    f"மருந்து வீணாவதைத் தவிர்க்க இன்று தெளிப்பதைத் தவிர்க்கவும். அடுத்த உகந்த நேரம்: நாளை காலை 06:00 IST. "
-                    f"குறிப்பு: பூச்சிக்கொல்லி லேபிள் வழிகாட்டுதல் மற்றும் வேளாண் அலுவலர் அறிவுரைப்படி செயல்படவும்."
-                ),
-                "action_needed": "Postpone Chemical & Nutrient Spraying",
-                "recommended_datetime": (now + timedelta(days=1)).strftime("%Y-%m-%d 06:00 IST"),
-                "input_quantity": "Zero Application Window",
-                "reason": (
-                    f"{reason_str} Note: Universal weather thresholds do not replace chemical product label instructions "
-                    f"or registered agricultural extension guidance."
-                ),
-                "source": "Agronomic Microclimate Spray Drift Model",
-                "source_data_timestamp": getattr(weather, "updated_at", now).isoformat() if weather else now.isoformat(),
-                "confidence": "High (89%)",
-                "expires_at": now + timedelta(hours=24)
-            })
+            if not spray_eval.get("is_safe_now", True):
+                cautions = spray_eval.get("cautions", ["Adverse weather detected."])
+                reason_str = " ".join(cautions)
+                candidate_alerts.append({
+                    "category": "Spraying",
+                    "priority": "MEDIUM",
+                    "deduplication_key": f"field_{field.id}:spray_unsafe:{today_str}",
+                    "title_en": f"Unsafe Spraying Conditions: {field_name}",
+                    "title_ta": f"மருந்து தெளிக்க சாதகமற்ற வானிலை: {field_name}",
+                    "message_en": (
+                        f"Suboptimal spraying conditions detected on {field_name} (Wind: {wind_kmh:.1f} km/h, Gusts: {wind_gusts_kmh:.1f} km/h, Temp: {temp_c:.1f}°C). "
+                        f"Avoid foliar spraying today to prevent chemical drift and loss. Next window: Tomorrow 06:00 IST. "
+                        f"Note: Always follow pesticide product label directions and local agricultural officer advice before chemical application."
+                    ),
+                    "message_ta": (
+                        f"{field_name}-ல் மருந்து தெளிக்க சாதகமற்ற வானிலை (காற்று: {wind_kmh:.1f} கி.மீ/மணி, காற்று வீச்சு: {wind_gusts_kmh:.1f} கி.மீ/மணி, வெப்பநிலை: {temp_c:.1f}°C). "
+                        f"மருந்து வீணாவதைத் தவிர்க்க இன்று தெளிப்பதைத் தவிர்க்கவும். அடுத்த உகந்த நேரம்: நாளை காலை 06:00 IST. "
+                        f"குறிப்பு: பூச்சிக்கொல்லி லேபிள் வழிகாட்டுதல் மற்றும் வேளாண் அலுவலர் அறிவுரைப்படி செயல்படவும்."
+                    ),
+                    "action_needed": "Postpone Chemical & Nutrient Spraying",
+                    "recommended_datetime": (now + timedelta(days=1)).strftime("%Y-%m-%d 06:00 IST"),
+                    "input_quantity": "Zero Application Window",
+                    "reason": (
+                        f"{reason_str} Note: Universal weather thresholds do not replace chemical product label instructions "
+                        f"or registered agricultural extension guidance."
+                    ),
+                    "source": "Agronomic Microclimate Spray Drift Model",
+                    "source_data_timestamp": weather_timestamp,
+                    "confidence": "High (89%)",
+                    "expires_at": now + timedelta(hours=24)
+                })
 
         # ----------------------------------------------------------------------
         # RULE 4: Crop-Stage-Based Sowing and Field-Management Reminders
         # ----------------------------------------------------------------------
-        das = None
-        if sowing_date_str:
-            try:
-                sowing_dt = datetime.strptime(sowing_date_str[:10], "%Y-%m-%d").replace(tzinfo=IST_TIMEZONE)
-                das = (now - sowing_dt).days
-            except Exception:
-                das = None
+        if not is_non_agri:
+            das = None
+            if sowing_date_str:
+                try:
+                    sowing_dt = datetime.strptime(sowing_date_str[:10], "%Y-%m-%d").replace(tzinfo=IST_TIMEZONE)
+                    das = (now - sowing_dt).days
+                except Exception:
+                    das = None
 
-        if das is not None and das >= 0:
-            stage_alert = cls._evaluate_crop_stage(field.id, field_name, crop_type, das, today_str, now)
-            if stage_alert:
-                candidate_alerts.append(stage_alert)
+            if das is not None and das >= 0:
+                stage_alert = cls._evaluate_crop_stage(field.id, field_name, crop_type, das, today_str, now)
+                if stage_alert:
+                    candidate_alerts.append(stage_alert)
 
         # ----------------------------------------------------------------------
         # RULE 5: Satellite Vegetation-Health Deterioration (Sentinel-2 NDVI)
         # ----------------------------------------------------------------------
-        if satellite_record:
+        if not is_non_agri and satellite_record:
             rec_date_str = getattr(satellite_record, "recorded_date", None)
             is_stale = False
             if rec_date_str:
                 try:
                     rec_dt = datetime.strptime(rec_date_str[:10], "%Y-%m-%d").replace(tzinfo=IST_TIMEZONE)
-                    # Strict data freshness rule: observations older than 14 days cannot be sent as current alerts
                     if (now - rec_dt).days > 14:
                         is_stale = True
                 except Exception:
@@ -241,7 +278,6 @@ class AgriculturalDecisionEngine:
 
             if not is_stale:
                 ndvi = float(getattr(satellite_record, "ndvi_value", 0.70) or 0.70)
-                # Significant deterioration condition: NDVI < 0.42 or stressed status
                 health_status = str(getattr(satellite_record, "health_status", "Optimal"))
                 if ndvi < 0.42 or health_status.lower() in ["stressed", "low", "deficient"]:
                     candidate_alerts.append({
@@ -273,61 +309,143 @@ class AgriculturalDecisionEngine:
                     })
 
         # ----------------------------------------------------------------------
-        # RULE 6: Severe Weather Warnings (Heatwave, Storm, Frost, Heavy Deluge)
+        # RULE 6: Severe Weather Warnings (Heatwave, Storm, Squall, Deluge, Cold)
+        # Evaluated for ALL fields (including urban/non-agri for human/infrastructure safety)
         # ----------------------------------------------------------------------
-        if temp_c >= 38.0:
-            candidate_alerts.append({
-                "category": "Weather",
-                "priority": "CRITICAL",
-                "deduplication_key": f"field_{field.id}:heatwave:{today_str}",
-                "title_en": f"Severe Heatwave Warning ({temp_c:.0f}°C): {field_name}",
-                "title_ta": f"கடுமையான வெப்ப அலை எச்சரிக்கை ({temp_c:.0f}°C): {field_name}",
-                "message_en": (
-                    f"Extreme temperature of {temp_c:.1f}°C expected today. Ensure adequate shallow standing water in {crop_type} "
-                    f"to prevent spikelet sterility and canopy desiccation. Note: Temperature represents NWP forecast model; observe actual ambient conditions."
-                ),
-                "message_ta": (
-                    f"அதிகபட்ச வெப்பநிலை {temp_c:.1f}°C பதிவாக வாய்ப்புள்ளது. வெப்ப அழுத்தத்தைத் தவிர்க்க {crop_type} "
-                    f"பயிரில் போதிய அளவு நீர் நிறுத்துவதை உறுதி செய்யவும். இது மாதிரி முன்னறிவிப்பு; உள்ளூர் சூழலைக் கவனிக்கவும்."
-                ),
-                "action_needed": "Maintain Shallow Standing Water to Buffer Heat",
-                "recommended_datetime": now.strftime("%Y-%m-%d Morning IST"),
-                "input_quantity": "Light cooling flush",
-                "reason": f"Ambient air temperature {temp_c:.1f}°C exceeds critical heat threshold (38°C). NWP atmospheric forecast model.",
-                "source": "IMD & NWP Severe Weather Grid",
-                "source_data_timestamp": now.isoformat(),
-                "confidence": "High (94%)",
-                "expires_at": now + timedelta(hours=24)
-            })
+        if not is_weather_stale and temp_c is not None:
+            # Extreme Heatwave (>= 38°C)
+            if temp_c >= 38.0:
+                candidate_alerts.append({
+                    "category": "Weather",
+                    "priority": "CRITICAL",
+                    "deduplication_key": f"field_{field.id}:heatwave:{today_str}",
+                    "title_en": f"Severe Heatwave Warning ({temp_c:.0f}°C): {field_name}",
+                    "title_ta": f"கடுமையான வெப்ப அலை எச்சரிக்கை ({temp_c:.0f}°C): {field_name}",
+                    "message_en": (
+                        f"Extreme temperature of {temp_c:.1f}°C expected today. Ensure adequate shallow standing water in {crop_type} "
+                        f"to prevent spikelet sterility and canopy desiccation. Note: Temperature represents NWP forecast model; observe actual ambient conditions."
+                    ),
+                    "message_ta": (
+                        f"அதிகபட்ச வெப்பநிலை {temp_c:.1f}°C பதிவாக வாய்ப்புள்ளது. வெப்ப அழுத்தத்தைத் தவிர்க்க {crop_type} "
+                        f"பயிரில் போதிய அளவு நீர் நிறுத்துவதை உறுதி செய்யவும். இது மாதிரி முன்னறிவிப்பு; உள்ளூர் சூழலைக் கவனிக்கவும்."
+                    ),
+                    "action_needed": "Maintain Shallow Standing Water to Buffer Heat",
+                    "recommended_datetime": now.strftime("%Y-%m-%d Morning IST"),
+                    "input_quantity": "Light cooling flush",
+                    "reason": f"Ambient air temperature {temp_c:.1f}°C exceeds critical heat threshold (38°C). NWP atmospheric forecast model.",
+                    "source": "IMD & NWP Severe Weather Grid",
+                    "source_data_timestamp": weather_timestamp,
+                    "confidence": "High (94%)",
+                    "expires_at": now + timedelta(hours=24)
+                })
+            # Cold Shock / Low Temperature Advisory (<= 15°C)
+            elif temp_c <= 15.0:
+                candidate_alerts.append({
+                    "category": "Weather",
+                    "priority": "MEDIUM",
+                    "deduplication_key": f"field_{field.id}:cold_stress:{today_str}",
+                    "title_en": f"Cold Temperature Advisory ({temp_c:.1f}°C): {field_name}",
+                    "title_ta": f"குளிர்ந்த வானிலை எச்சரிக்கை ({temp_c:.1f}°C): {field_name}",
+                    "message_en": (
+                        f"Low temperature of {temp_c:.1f}°C detected. Cold-sensitive crops like {crop_type} may experience "
+                        f"slowed seedling growth and root metabolic depression. Maintain shallow standing water in nurseries to buffer night temperatures."
+                    ),
+                    "message_ta": (
+                        f"குறைந்த வெப்பநிலை {temp_c:.1f}°C பதிவாகியுள்ளது. {crop_type} போன்ற வெப்பமண்டல பயிர்களின் வளர்ச்சி "
+                        f"மெதுவாகக்கூடும். இரவு நேரக் குளிரில் இருந்து நாற்றுகளைப் பாதுகாக்க 2-3 செ.மீ நீர் நிறுத்தி வைக்கவும்."
+                    ),
+                    "action_needed": "Maintain Overnight Water Buffer in Seedbed",
+                    "recommended_datetime": now.strftime("%Y-%m-%d Evening IST"),
+                    "input_quantity": "2-3 cm standing water",
+                    "reason": f"Night ambient temperature ({temp_c:.1f}°C) dropped below 15°C physiological threshold. NWP forecast grid.",
+                    "source": "NWP Surface Temperature Grid",
+                    "source_data_timestamp": weather_timestamp,
+                    "confidence": "High (90%)",
+                    "expires_at": now + timedelta(hours=24)
+                })
 
-        if wind_kmh >= 35.0:
-            candidate_alerts.append({
-                "category": "Weather",
-                "priority": "HIGH",
-                "deduplication_key": f"field_{field.id}:high_wind:{today_str}",
-                "title_en": f"High Wind & Squall Advisory ({wind_kmh:.0f} km/h): {field_name}",
-                "title_ta": f"பலத்த காற்று எச்சரிக்கை ({wind_kmh:.0f} கி.மீ/மணி): {field_name}",
-                "message_en": (
-                    f"Strong wind gusts up to {wind_kmh:.0f} km/h forecast today. "
-                    f"Do not spray or apply surface fertilizers; brace tall crops against lodging. NWP forecast advisory."
-                ),
-                "message_ta": (
-                    f"இன்று {wind_kmh:.0f} கி.மீ/மணி வரை பலத்த காற்று வீசக்கூடும் என முன்னறிவிப்பு. மருந்து அல்லது உரம் தெளிக்க வேண்டாம்; பயிர் சாய்வதைத் தடுக்கவும்."
-                ),
-                "action_needed": "Suspend Field Operations & Secure Trellises",
-                "recommended_datetime": now.strftime("%Y-%m-%d IST"),
-                "input_quantity": "No application",
-                "reason": f"Wind gusts of {wind_kmh:.1f} km/h exceed mechanical safety limits (35 km/h). NWP atmospheric forecast vector.",
-                "source": "NWP Wind Gust Vector",
-                "source_data_timestamp": now.isoformat(),
-                "confidence": "High (90%)",
-                "expires_at": now + timedelta(hours=18)
-            })
+            # Severe Thunderstorm & Lightning Warning (WMO Codes 95, 96, 99)
+            if weather_code in [95, 96, 99]:
+                candidate_alerts.append({
+                    "category": "Weather",
+                    "priority": "CRITICAL",
+                    "deduplication_key": f"field_{field.id}:thunderstorm:{today_str}",
+                    "title_en": f"Severe Thunderstorm & Lightning Warning: {field_name}",
+                    "title_ta": f"இடியுடன் கூடிய கனமழை & மின்னல் எச்சரிக்கை: {field_name}",
+                    "message_en": (
+                        f"Severe thunderstorm activity and lightning hazard forecast in {field_name} area today. "
+                        f"Suspend all open-field operations immediately. Do not take shelter under isolated trees or operate metal machinery."
+                    ),
+                    "message_ta": (
+                        f"{field_name} பகுதியில் இடியுடன் கூடிய கனமழை மற்றும் மின்னல் தாக்கும் அபாயம் முன்னறிவிக்கப்பட்டுள்ளது. "
+                        f"திறந்தவெளி வயல் வேலைகளை உடனடியாக நிறுத்தவும்; மரங்களின் கீழ் ஒதுங்குவதைத் தவிர்க்கவும்."
+                    ),
+                    "action_needed": "Immediate Field Evacuation & Livestock Shelter",
+                    "recommended_datetime": now.strftime("%Y-%m-%d Immediate IST"),
+                    "input_quantity": "Evacuation / Zero Operations",
+                    "reason": f"NWP atmospheric convective instability indicates WMO code {weather_code} (severe convective storm).",
+                    "source": "IMD & Open-Meteo Severe Weather Convective Grid",
+                    "source_data_timestamp": weather_timestamp,
+                    "confidence": "High (92%)",
+                    "expires_at": now + timedelta(hours=12)
+                })
+
+            # High Wind & Squall Advisory (wind >= 35 km/h or gusts >= 45 km/h)
+            max_wind_val = max(wind_kmh, wind_gusts_kmh)
+            if max_wind_val >= 35.0:
+                candidate_alerts.append({
+                    "category": "Weather",
+                    "priority": "HIGH",
+                    "deduplication_key": f"field_{field.id}:high_wind:{today_str}",
+                    "title_en": f"High Wind & Squall Advisory ({max_wind_val:.0f} km/h): {field_name}",
+                    "title_ta": f"பலத்த காற்று எச்சரிக்கை ({max_wind_val:.0f} கி.மீ/மணி): {field_name}",
+                    "message_en": (
+                        f"Strong wind gusts up to {max_wind_val:.0f} km/h forecast today. "
+                        f"Do not spray or apply surface fertilizers; brace tall crops and banana/sugarcane plants against lodging. NWP forecast advisory."
+                    ),
+                    "message_ta": (
+                        f"இன்று {max_wind_val:.0f} கி.மீ/மணி வரை பலத்த காற்று வீசக்கூடும் என முன்னறிவிப்பு. மருந்து அல்லது உரம் தெளிக்க வேண்டாம்; பயிர் சாய்வதைத் தடுக்கவும்."
+                    ),
+                    "action_needed": "Suspend Field Operations & Secure Trellises",
+                    "recommended_datetime": now.strftime("%Y-%m-%d IST"),
+                    "input_quantity": "No application",
+                    "reason": f"Wind gusts of {max_wind_val:.1f} km/h exceed mechanical safety limits (35 km/h). NWP atmospheric forecast vector.",
+                    "source": "NWP Wind Gust Vector",
+                    "source_data_timestamp": weather_timestamp,
+                    "confidence": "High (90%)",
+                    "expires_at": now + timedelta(hours=18)
+                })
+
+            # Extreme Heavy Deluge / Flood Inundation Warning (>= 40 mm)
+            if rain_forecast_mm >= 40.0:
+                candidate_alerts.append({
+                    "category": "Weather",
+                    "priority": "CRITICAL",
+                    "deduplication_key": f"field_{field.id}:flood_deluge:{today_str}",
+                    "title_en": f"Heavy Deluge & Flood Risk Warning: {field_name}",
+                    "title_ta": f"கனமழை வெள்ள அபாய எச்சரிக்கை: {field_name}",
+                    "message_en": (
+                        f"Heavy precipitation deluge of ~{rain_forecast_mm:.1f} mm forecast in next 24-36h. "
+                        f"High risk of waterlogging, nutrient leaching, and root asphyxiation on {field_name}. Clear main drainage canals immediately."
+                    ),
+                    "message_ta": (
+                        f"அடுத்த 24-36 மணி நேரத்தில் ~{rain_forecast_mm:.1f} மி.மீ பெருமழை பெய்ய வாய்ப்புள்ளது. "
+                        f"வயலில் நீர் தேங்கி வேர் அழுகல் ஏற்படுவதைத் தடுக்க உடனடியாக வடிகால் வாய்க்கால்களை தூர்வாரி தயார் செய்யவும்."
+                    ),
+                    "action_needed": "Clear Main Drainage Channels & Outlets",
+                    "recommended_datetime": now.strftime("%Y-%m-%d Immediate IST"),
+                    "input_quantity": "Drainage canal clearance",
+                    "reason": f"Accumulated rainfall forecast ({rain_forecast_mm:.1f} mm) exceeds 40 mm critical saturation threshold.",
+                    "source": "IMD Heavy Rainfall Forecast Grid",
+                    "source_data_timestamp": weather_timestamp,
+                    "confidence": "High (93%)",
+                    "expires_at": now + timedelta(hours=36)
+                })
 
         # ----------------------------------------------------------------------
         # RULE 7: Follow-up Field Inspection Reminders
         # ----------------------------------------------------------------------
-        if rain_forecast_mm >= 25.0:
+        if not is_non_agri and not is_weather_stale and rain_forecast_mm >= 25.0:
             candidate_alerts.append({
                 "category": "Inspection",
                 "priority": "MEDIUM",
@@ -345,10 +463,12 @@ class AgriculturalDecisionEngine:
                 "input_quantity": "Manual Drainage Clearance",
                 "reason": "Heavy rainfall accumulation requires proactive root aeration verification.",
                 "source": "Field Management Agronomic Protocol",
-                "source_data_timestamp": now.isoformat(),
+                "source_data_timestamp": weather_timestamp,
                 "confidence": "High (95%)",
                 "expires_at": now + timedelta(days=2)
             })
+
+        return candidate_alerts
 
         return candidate_alerts
 

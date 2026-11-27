@@ -1638,21 +1638,55 @@ fun IrrigationTimingModule() {
 
 @Composable
 fun WeatherSprayingModule() {
+    val context = LocalContext.current
+    val repo = remember { GeoPulseRepository() }
+    var fields by remember { mutableStateOf<List<FieldDto>>(emptyList()) }
+    var selectedField by remember { mutableStateOf<FieldDto?>(null) }
     var weather by remember { mutableStateOf<com.geopulse.app.network.WeatherDto?>(null) }
     var sprayWindow by remember { mutableStateOf<com.geopulse.app.network.SprayWindowDto?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
+    var isLoadingFields by remember { mutableStateOf(true) }
+    var isLoadingTelemetry by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        val repo = GeoPulseRepository()
-        weather = repo.getCurrentWeather()
-        sprayWindow = repo.getSprayWindow()
-        isLoading = false
+        try {
+            isLoadingFields = true
+            val fetched = repo.getFields()
+            fields = fetched
+            selectedField = UserSession.resolveSelectedField(context, fetched)
+        } catch (_: Exception) {
+        } finally {
+            isLoadingFields = false
+        }
+    }
+
+    LaunchedEffect(selectedField?.id) {
+        val field = selectedField
+        isLoadingTelemetry = true
+        try {
+            weather = repo.getCurrentWeather(fieldId = field?.id)
+            sprayWindow = repo.getSprayWindow(fieldId = field?.id)
+        } catch (_: Exception) {
+        } finally {
+            isLoadingTelemetry = false
+        }
     }
 
     val isTa = com.geopulse.app.util.GeoLanguageManager.isTamil
 
     Card(modifier = Modifier.fillMaxWidth().glassSurface(cornerRadius = 16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
         Column(modifier = Modifier.padding(18.dp)) {
+            if (fields.isNotEmpty() && selectedField != null) {
+                FieldSelectorHeader(
+                    fields = fields,
+                    selectedField = selectedField!!,
+                    onFieldSelected = { newField ->
+                        selectedField = newField
+                        UserSession.setSelectedFieldId(context, newField.id)
+                    }
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+            }
+
             Text(if (isTa) "வானிலை மற்றும் பாதுகாப்பான தெளிப்பு வழிகாட்டி" else "Weather & Safe Spraying Forecast", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(4.dp))
             Text(if (isTa) "பாதுகாப்பான மருந்து தெளிப்பிற்கான மழை மற்றும் காற்றின் வேக முன்னறிவிப்பு." else "Hourly rainfall and wind speed forecast for safe crop spraying.", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1666,7 +1700,7 @@ fun WeatherSprayingModule() {
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     val isSafe = sprayWindow?.isSafeNow ?: weather?.spraySafe ?: false
-                    val statusText = if (isLoading) {
+                    val statusText = if (isLoadingTelemetry) {
                         if (isTa) "வானிலை தரவுகள் ஆய்வு செய்யப்படுகின்றன..." else "Assessing Weather Telemetry..."
                     } else if (weather != null || sprayWindow != null) {
                         if (isSafe) {
@@ -1681,10 +1715,10 @@ fun WeatherSprayingModule() {
 
                     Text(statusText, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = statusColor)
                     Spacer(modifier = Modifier.height(4.dp))
-                    val adviceText = if (isLoading) {
+                    val adviceText = if (isLoadingTelemetry) {
                         if (isTa) "வானிலை மையத்தின் சமீபத்திய தரவு பெறப்படுகிறது..." else "Fetching latest automated weather station data..."
                     } else {
-                        val backendTa = sprayWindow?.verdictTa
+                        val backendTa = sprayWindow?.verdictTa ?: weather?.sprayAdviceTa
                         if (isTa && !backendTa.isNullOrBlank()) backendTa
                         else sprayWindow?.verdict ?: weather?.sprayAdvice ?: (if (isTa) "வானிலை தரவை பெற முடியவில்லை. இணைய இணைப்பை சரிபார்க்கவும்." else "Live meteorological data could not be retrieved. Please verify internet connection.")
                     }
@@ -1694,18 +1728,76 @@ fun WeatherSprayingModule() {
                         color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 17.sp
                     )
+
+                    val conditionName = if (isTa) (weather?.conditionTextTa ?: weather?.conditionText) else weather?.conditionText
+                    if (!conditionName.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = if (isTa) "வானிலை சூழல்: $conditionName" else "Condition: $conditionName",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
+
+            val temp = weather?.temperatureC
+            val apparentTemp = weather?.apparentTemperatureC
+            val wind = weather?.windSpeedKmh ?: sprayWindow?.currentWindKmh
+            val gusts = weather?.windGustsKmh ?: sprayWindow?.currentWindGustsKmh
+
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                val wind = weather?.windSpeedKmh ?: sprayWindow?.currentWindKmh ?: 0.0
-                val precip = weather?.precipitationMm ?: 0.0
-                val humidity = weather?.humidityPercent ?: sprayWindow?.currentHumidityPct ?: 0.0
-                MetricChip(if (isTa) "காற்றின் வேகம்" else "Wind Speed", if (weather != null || sprayWindow != null) "${wind.toInt()} km/h" else "--", Modifier.weight(1f))
-                MetricChip(if (isTa) "மழைப்பொழிவு" else "Precipitation", if (weather != null) "${precip.toInt()} mm" else "--", Modifier.weight(1f))
-                MetricChip(if (isTa) "ஈரப்பதம்" else "Humidity", if (weather != null || sprayWindow != null) "${humidity.toInt()}%" else "--", Modifier.weight(1f))
+                val tempStr = if (temp != null) {
+                    if (apparentTemp != null) "${temp.toInt()}°C (${apparentTemp.toInt()}°)" else "${temp.toInt()}°C"
+                } else "--"
+                MetricChip(if (isTa) "வெப்பநிலை (உணர்வு)" else "Temp (Feels like)", tempStr, Modifier.weight(1f))
+
+                val windStr = if (wind != null) {
+                    if (gusts != null && gusts > wind) {
+                        val gustLabel = if (isTa) "காற்றுவீச்சு" else "Gusts"
+                        "${wind.toInt()} km/h ($gustLabel ${gusts.toInt()})"
+                    } else "${wind.toInt()} km/h"
+                } else "--"
+                MetricChip(if (isTa) "காற்று & காற்றுவீச்சு" else "Wind & Gusts", windStr, Modifier.weight(1f))
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val precip = weather?.precipitationMm
+            val humidity = weather?.humidityPercent ?: sprayWindow?.currentHumidityPct
+            val cloud = weather?.cloudCoverPct
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                val rainStr = if (precip != null) "${precip.toInt()} mm" else "--"
+                MetricChip(if (isTa) "மழைப்பொழிவு" else "Precipitation", rainStr, Modifier.weight(1f))
+
+                val humStr = if (humidity != null) "${humidity.toInt()}%" else "--"
+                MetricChip(if (isTa) "ஈரப்பதம்" else "Humidity", humStr, Modifier.weight(1f))
+
+                val cloudStr = if (cloud != null) "${cloud.toInt()}%" else "--"
+                MetricChip(if (isTa) "மேகமூட்டம்" else "Cloud Cover", cloudStr, Modifier.weight(1f))
+            }
+
+            val freshness = weather?.dataFreshnessLabel
+            if (!freshness.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = if (isTa) "தகவல் புதுப்பிப்பு: $freshness" else "Data Freshness: $freshness",
+                    fontSize = 10.5.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (isTa) "அறிவியல் குறிப்பு: Open-Meteo/ECMWF உயர்-துல்லிய எண் கணித முன்னறிவிப்பு மாதிரி (10-நாள்). களப்பணி ஆய்வுக்கருவி அல்ல."
+                       else "Scientific Note: Open-Meteo/ECMWF numerical weather prediction model forecast (10-day). Not in-situ ground sensor.",
+                fontSize = 9.5.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                lineHeight = 13.sp
+            )
         }
     }
 }

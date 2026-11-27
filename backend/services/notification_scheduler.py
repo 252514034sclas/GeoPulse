@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 import models
 from database import SessionLocal
 from services.agricultural_decision_engine import AgriculturalDecisionEngine
-from services.fcm_service import send_fcm_notification
+from services.fcm_service import send_fcm_notification, is_simulation_mode
+from adapters.open_meteo_adapter import OpenMeteoAdapter
 
 logger = logging.getLogger("geopulse.notification_scheduler")
 
@@ -126,9 +127,6 @@ def evaluate_user_fields(
         query = query.filter(models.FieldModel.id == target_field_id)
     fields = query.all()
 
-    # Shared or local weather
-    weather = db.query(models.WeatherModel).first()
-
     # Active registered devices for this user
     devices = db.query(models.DeviceTokenModel).filter(
         models.DeviceTokenModel.user_id == user_id,
@@ -143,6 +141,9 @@ def evaluate_user_fields(
     min_pref_weight = priority_weight.get(pref.min_priority.upper(), 1)
 
     for field in fields:
+        # Fetch field-specific live or cached meteorological conditions
+        field_weather = OpenMeteoAdapter.get_forecast(field.latitude, field.longitude)
+
         # Fetch latest satellite observation for this field
         satellite_rec = db.query(models.SatelliteRecordModel).filter(
             models.SatelliteRecordModel.field_id == field.id
@@ -155,7 +156,7 @@ def evaluate_user_fields(
 
         candidate_alerts = AgriculturalDecisionEngine.evaluate_field(
             field=field,
-            weather=weather,
+            weather=field_weather,
             soil_moisture=soil_moisture,
             satellite_record=satellite_rec,
             current_time=now_ist
@@ -378,6 +379,7 @@ class NotificationSchedulerService:
 
         return {
             "scheduler_operational": self._is_running,
+            "cloud_scheduler_operational": False,
             "engine": "InProcessAsyncTimerDaemon",
             "timezone": "Asia/Kolkata",
             "current_time_ist": now_ist.strftime("%Y-%m-%d %H:%M:%S IST"),
@@ -389,9 +391,12 @@ class NotificationSchedulerService:
             "execution_history_count": len(self._execution_history),
             "recent_executions": self._execution_history[-5:],
             "deployment_status": "LOCAL_DEVELOPMENT_STANDALONE",
+            "cloud_deployment_status": "PENDING_PRODUCTION_INFRASTRUCTURE",
+            "fcm_delivery_mode": "SIMULATION_MODE" if is_simulation_mode() else "LIVE_HTTP_V1",
             "notes": (
-                "Scheduler daemon active. Runs daily morning agronomy evaluation at 06:00 IST. "
-                "Distributed multi-worker synchronization (Redis/Celery) scheduled for cloud cluster deployment."
+                "Local in-process asyncio scheduler daemon is active and tracks 06:00 IST in Asia/Kolkata. "
+                "Production cloud scheduler (AWS EventBridge / Cloud Scheduler / Celery Redis) and live remote FCM key "
+                "remain pending deployment in the production cloud environment."
             )
         }
 

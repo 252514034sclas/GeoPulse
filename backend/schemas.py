@@ -137,14 +137,36 @@ class WeatherSchema(BaseModel):
     id: int
     location: str
     temperature_c: float
+    apparent_temperature_c: Optional[float] = None
     humidity_percent: float
     precipitation_mm: float
+    rain_next_24h_mm: Optional[float] = None
+    rain_next_48h_mm: Optional[float] = None
+    precipitation_probability_pct: Optional[float] = None
     wind_speed_kmh: float
+    wind_direction_deg: Optional[float] = None
+    wind_gusts_kmh: Optional[float] = None
+    cloud_cover_pct: Optional[float] = None
+    uv_index: Optional[float] = None
+    temp_min_c: Optional[float] = None
+    temp_max_c: Optional[float] = None
+    weather_code: Optional[int] = None
+    condition_text: Optional[str] = None
+    condition_text_ta: Optional[str] = None
     spray_safe: bool
     spray_advice: str
+    spray_advice_ta: Optional[str] = None
     status_message: str
     data_source: str
+    data_freshness_label: Optional[str] = None
+    is_live: bool = True
+    is_cached: bool = False
+    is_model_forecast: bool = True
+    field_id: Optional[int] = None
+    field_name: Optional[str] = None
     updated_at: datetime
+    hourly_forecast: Optional[List[Dict[str, Any]]] = None
+    daily_forecast: Optional[List[Dict[str, Any]]] = None
 
     class Config:
         from_attributes = True
@@ -155,8 +177,15 @@ class SprayWindowResponse(BaseModel):
     current_humidity_pct: float
     current_rain_prob_pct: float
     verdict: str
+    verdict_ta: Optional[str] = None
     recommended_hours: List[str]
+    recommended_hours_ta: Optional[List[str]] = None
     cautions: List[str]
+    cautions_ta: Optional[List[str]] = None
+    current_wind_gusts_kmh: Optional[float] = None
+    temperature_c: Optional[float] = None
+    field_id: Optional[int] = None
+    field_name: Optional[str] = None
 
 # -------------------------------------------------------------
 # Soil Moisture Schemas
